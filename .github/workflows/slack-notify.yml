@@ -1,0 +1,21 @@
+name: PR & Merge Slack Notification
+
+on:
+  pull_request:
+    types: [opened, reopened, closed]
+
+jobs:
+  slack-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack for PR / Merge
+        run: |
+          if [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"✅ *${{ github.event.pull_request.title }}* PR이 *MERGE* 되었습니다.\n${{ github.event.pull_request.html_url }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+          elif [[ "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ]]; then
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"📢 새 PR *${{ github.event.pull_request.title }}* by *${{ github.event.pull_request.user.login }}*\n${{ github.event.pull_request.html_url }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+          fi
