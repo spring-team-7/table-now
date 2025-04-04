@@ -41,3 +41,8 @@ out/
 
 ## QueryDSL Q Class
 /src/main/generated/
+
+## log
+/data/auto.cnf
+/data/binlog.index
+/data/mysql.sock
