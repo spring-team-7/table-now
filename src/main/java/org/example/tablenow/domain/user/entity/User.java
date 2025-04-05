@@ -34,7 +34,7 @@ public class User extends TimeStamped {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private UserRole userRole;
 
     private String imageUrl;
 
@@ -54,7 +54,7 @@ public class User extends TimeStamped {
         this.name = name;
         this.nickname = nickname;
         this.phoneNumber = phoneNumber;
-        this.role = userRole;
+        this.userRole = userRole;
     }
 
     public static User fromAuthUser(AuthUser authUser) {

@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.tablenow.domain.auth.TokenState;
+import org.example.tablenow.global.entity.TimeStamped;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RefreshToken {
+public class RefreshToken extends TimeStamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,25 +23,24 @@ public class RefreshToken {
     private Long userId;
 
     @Column(nullable = false)
-    private String refreshToken;
+    private String token;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private TokenState tokenState;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDateTime expiredAt;
 
     @Builder
     public RefreshToken(Long userId) {
         this.userId = userId;
-        this.refreshToken = UUID.randomUUID().toString();
-        this.tokenState = TokenState.VALID;
-        this.updatedAt = LocalDateTime.now();
+        this.token = UUID.randomUUID().toString();
+        this.expiredAt = LocalDateTime.now().plusDays(7); // 만료 시간 7일
     }
 
-    public void updateTokenStatus(TokenState tokenStatus){
-        this.tokenState = tokenStatus;
-        this.updatedAt = LocalDateTime.now();
+    public void updateToken() {
+        this.token = UUID.randomUUID().toString();
+        this.expiredAt = LocalDateTime.now().plusDays(7); // 만료 시간 갱신
+    }
+
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(this.expiredAt);
     }
 }

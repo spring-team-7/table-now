@@ -17,9 +17,9 @@ public enum UserRole {
 
     private final String userRole;
 
-    public static UserRole of(String role) {
+    public static UserRole of(String userRole) {
         return Arrays.stream(UserRole.values())
-                .filter(r -> r.name().equalsIgnoreCase(role))
+                .filter(r -> r.name().equalsIgnoreCase(userRole))
                 .findFirst()
                 .orElseThrow(() -> new HandledException(ErrorCode.BAD_REQUEST, "유효하지 않은 UserRole입니다."));
     }

@@ -36,15 +36,15 @@ public class SignupRequest {
     private String phoneNumber;
 
     @NotNull(message = "유저 타입 정보는 필수입니다.")
-    private UserRole role;
+    private UserRole userRole;
 
     @Builder
-    private SignupRequest(String email, String password, String name, String nickname, String phoneNumber, UserRole role) {
+    private SignupRequest(String email, String password, String name, String nickname, String phoneNumber, UserRole userRole) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.nickname = nickname;
         this.phoneNumber = phoneNumber;
-        this.role = role;
+        this.userRole = userRole;
     }
 }

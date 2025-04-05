@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
+import org.example.tablenow.domain.auth.entity.RefreshToken;
 import org.example.tablenow.domain.user.dto.response.UserResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
@@ -13,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class AuthService {
@@ -24,7 +24,6 @@ public class AuthService {
 
     @Transactional
     public UserResponse signup(SignupRequest request) {
-
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new HandledException(ErrorCode.CONFLICT, "이미 가입된 이메일입니다.");
         }
@@ -37,7 +36,7 @@ public class AuthService {
                 .name(request.getName())
                 .nickname(request.getNickname())
                 .phoneNumber(request.getPhoneNumber())
-                .userRole(request.getRole())
+                .userRole(request.getUserRole())
                 .build();
 
         User savedUser = userRepository.save(newUser);
@@ -48,7 +47,7 @@ public class AuthService {
                 .name(savedUser.getName())
                 .nickname(savedUser.getNickname())
                 .phoneNumber(savedUser.getPhoneNumber())
-                .role(savedUser.getRole().name())
+                .userRole(savedUser.getUserRole().name())
                 .build();
     }
 
@@ -65,6 +64,20 @@ public class AuthService {
             throw new HandledException(ErrorCode.AUTHORIZATION, "비밀번호가 일치하지 않습니다.");
         }
 
+        return generateTokenResponse(user);
+    }
+
+    @Transactional
+    public TokenResponse refreshToken(String token) {
+        RefreshToken refreshToken = tokenService.validateRefreshToken(token);
+
+        User user = userRepository.findById(refreshToken.getUserId())
+                .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "해당 유저를 찾을 수 없습니다."));
+
+        return generateTokenResponse(user);
+    }
+
+    private TokenResponse generateTokenResponse(User user) {
         // Access & Refresh Token 생성
         String accessToken = tokenService.createAccessToken(user);
         String refreshToken = tokenService.createRefreshToken(user);
