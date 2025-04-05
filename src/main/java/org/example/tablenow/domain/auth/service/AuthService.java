@@ -1,13 +1,14 @@
 package org.example.tablenow.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
+import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.user.dto.response.UserResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final TokenService tokenService;
 
     @Transactional
     public UserResponse signup(SignupRequest request) {
@@ -48,6 +49,29 @@ public class AuthService {
                 .nickname(savedUser.getNickname())
                 .phoneNumber(savedUser.getPhoneNumber())
                 .role(savedUser.getRole().name())
+                .build();
+    }
+
+    @Transactional
+    public TokenResponse signin(SigninRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "해당 유저를 찾을 수 없습니다."));
+
+        if (user.getDeletedAt() != null) {
+            throw new HandledException(ErrorCode.AUTHORIZATION, "이미 탈퇴한 사용자입니다.");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new HandledException(ErrorCode.AUTHORIZATION, "비밀번호가 일치하지 않습니다.");
+        }
+
+        // Access & Refresh Token 생성
+        String accessToken = tokenService.createAccessToken(user);
+        String refreshToken = tokenService.createRefreshToken(user);
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 }

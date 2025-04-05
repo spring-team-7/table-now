@@ -1,12 +1,12 @@
 package org.example.tablenow.domain.user.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
 @Builder
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserResponse {
     private final Long id;
     private final String email;

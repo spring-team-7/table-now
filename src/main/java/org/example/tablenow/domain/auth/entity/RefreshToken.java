@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.auth.TokenState;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -18,21 +19,29 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long userId;
 
-    private String token;
+    @Column(nullable = false)
+    private String refreshToken;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TokenState tokenState;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     @Builder
     public RefreshToken(Long userId) {
         this.userId = userId;
-        this.token = UUID.randomUUID().toString();
+        this.refreshToken = UUID.randomUUID().toString();
         this.tokenState = TokenState.VALID;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateTokenStatus(TokenState tokenStatus){
         this.tokenState = tokenStatus;
+        this.updatedAt = LocalDateTime.now();
     }
 }
