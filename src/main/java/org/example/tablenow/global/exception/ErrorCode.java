@@ -5,10 +5,12 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+
     AUTHORIZATION(HttpStatus.UNAUTHORIZED, "Unauthorized"),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "Bad Request"),
-    NOT_FOUND(HttpStatus.NOT_FOUND, "Not Found"),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "Forbidden");
+    CONFLICT(HttpStatus.CONFLICT, "Conflict"),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "Forbidden"),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "Not Found");
 
     private final HttpStatus status;
     private final String defaultMessage;
