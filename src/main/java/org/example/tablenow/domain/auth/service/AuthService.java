@@ -87,4 +87,8 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .build();
     }
+
+    public void logout(String token) {
+        tokenService.deleteRefreshToken(token);
+    }
 }

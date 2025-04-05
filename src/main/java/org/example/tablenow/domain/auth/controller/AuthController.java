@@ -52,6 +52,27 @@ public class AuthController {
         return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        // 리프레시 토큰이 존재할 경우 DB에서 삭제
+        if (refreshToken != null) {
+            authService.logout(refreshToken);
+        }
+
+        // 쿠키에서 리프레시 토큰 제거
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("로그아웃에 성공했습니다.");
+    }
+
     private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
         cookie.setHttpOnly(true);
