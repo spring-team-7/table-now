@@ -8,6 +8,7 @@ import org.example.tablenow.domain.category.service.CategoryService;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
+import org.example.tablenow.domain.store.dto.response.StoreDeleteResponseDto;
 import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
 import org.example.tablenow.domain.store.dto.response.StoreUpdateResponseDto;
 import org.example.tablenow.domain.store.entity.Store;
@@ -77,10 +78,7 @@ public class StoreService {
 
         Store store = findStore(id);
 
-        // 요청한 유저 ID가 가게 주인인지 확인
-        if (!store.getUser().getId().equals(user.getId())) {
-            throw new AuthorizationException(ErrorCode.AUTHORIZATION.getDefaultMessage());
-        }
+        validStoreOwnerId(store, user);
 
         Category category = store.getCategory();
         if (requestDto.getCategoryId() != null) {
@@ -105,9 +103,29 @@ public class StoreService {
         return StoreUpdateResponseDto.fromStore(store);
     }
 
+    @Transactional
+    public StoreDeleteResponseDto deleteStore(Long id) {
+        // TODO AuthUser -> User
+        User user = new User();
+
+        Store store = findStore(id);
+
+        validStoreOwnerId(store, user);
+
+        storeRepository.delete(store);
+        return StoreDeleteResponseDto.fromStore(store.getId());
+    }
+
     public Store findStore(Long id) {
         return storeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND.getDefaultMessage()));
+    }
+
+    private void validStoreOwnerId(Store store, User user) {
+        // 요청한 유저 ID가 가게 주인인지 확인
+        if (!store.getUser().getId().equals(user.getId())) {
+            throw new AuthorizationException(ErrorCode.AUTHORIZATION.getDefaultMessage());
+        }
     }
 
     private void validStoreTimes(LocalTime startTime, LocalTime endTime) {

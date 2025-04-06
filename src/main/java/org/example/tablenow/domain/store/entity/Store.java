@@ -69,4 +69,8 @@ public class Store extends TimeStamped {
         this.endTime = endTime;
         this.category = category;
     }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

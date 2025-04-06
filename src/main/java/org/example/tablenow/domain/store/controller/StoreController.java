@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
+import org.example.tablenow.domain.store.dto.response.StoreDeleteResponseDto;
 import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
 import org.example.tablenow.domain.store.dto.response.StoreUpdateResponseDto;
 import org.example.tablenow.domain.store.service.StoreService;
@@ -43,6 +44,11 @@ public class StoreController {
     }
 
     // 가게 삭제
+    @Secured("ROLE_OWNER")
+    @DeleteMapping("/owner/stores/{id}")
+    public ResponseEntity<StoreDeleteResponseDto> deleteStore(@PathVariable Long id) {
+        return ResponseEntity.ok(storeService.deleteStore(id));
+    }
 
     // 가게 목록 조회
 
