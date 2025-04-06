@@ -7,10 +7,7 @@ import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.category.service.CategoryService;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
-import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
-import org.example.tablenow.domain.store.dto.response.StoreDeleteResponseDto;
-import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
-import org.example.tablenow.domain.store.dto.response.StoreUpdateResponseDto;
+import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.user.entity.User;
@@ -18,6 +15,10 @@ import org.example.tablenow.global.exception.AuthorizationException;
 import org.example.tablenow.global.exception.BadRequestException;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,6 +115,12 @@ public class StoreService {
 
         storeRepository.delete(store);
         return StoreDeleteResponseDto.fromStore(store.getId());
+    }
+
+    public Page<StoreSearchResponseDto> findAllStores(int page, int size, String sort, String direction, Long categoryId, String search) {
+        Sort sortOption = Sort.by(Sort.Direction.fromString(direction), sort);
+        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+        return storeRepository.searchStores(pageable, categoryId, search);
     }
 
     public Store findStore(Long id) {

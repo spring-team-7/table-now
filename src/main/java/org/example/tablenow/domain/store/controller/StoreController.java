@@ -4,11 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
-import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
-import org.example.tablenow.domain.store.dto.response.StoreDeleteResponseDto;
-import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
-import org.example.tablenow.domain.store.dto.response.StoreUpdateResponseDto;
+import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.service.StoreService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
@@ -51,6 +49,16 @@ public class StoreController {
     }
 
     // 가게 목록 조회
+    @GetMapping("/stores")
+    public ResponseEntity<Page<StoreSearchResponseDto>> findAllStores(@RequestParam(defaultValue = "1") int page,
+                                                                      @RequestParam(defaultValue = "10") int size,
+                                                                      @RequestParam(defaultValue = "name") String sort,
+                                                                      @RequestParam(defaultValue = "asc") String direction,
+                                                                      @RequestParam(required = false) Long categoryId,
+                                                                      @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(storeService.findAllStores(page, size, sort, direction, categoryId, search));
+    }
 
     // 가게 정보 조회
 
