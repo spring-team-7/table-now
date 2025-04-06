@@ -50,7 +50,7 @@ public class StoreController {
 
     // 가게 목록 조회
     @GetMapping("/stores")
-    public ResponseEntity<Page<StoreSearchResponseDto>> findAllStores(@RequestParam(defaultValue = "1") int page,
+    public ResponseEntity<Page<StoreSearchResponseDto>> getStores(@RequestParam(defaultValue = "1") int page,
                                                                       @RequestParam(defaultValue = "10") int size,
                                                                       @RequestParam(defaultValue = "name") String sort,
                                                                       @RequestParam(defaultValue = "asc") String direction,
