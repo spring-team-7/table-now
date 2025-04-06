@@ -28,12 +28,13 @@ public class Store extends TimeStamped {
     private String imageUrl;
     @Min(0)
     private int capacity;
+    @Min(0)
+    private int deposit;
     @Column(nullable = false)
     private LocalTime startTime;
     @Column(nullable = false)
     private LocalTime endTime;
-    @Min(0)
-    private int deposit;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -43,17 +44,29 @@ public class Store extends TimeStamped {
     private LocalDateTime deletedAt;
 
     @Builder
-    private Store(String name, Long id, String description, String address, String imageUrl, int capacity, LocalTime startTime, LocalTime endTime, int deposit, User user, Category category) {
-        this.name = name;
+    private Store(Long id, String name, String description, String address, String imageUrl, int capacity, int deposit, LocalTime startTime, LocalTime endTime, User user, Category category) {
         this.id = id;
+        this.name = name;
         this.description = description;
         this.address = address;
         this.imageUrl = imageUrl;
         this.capacity = capacity;
+        this.deposit = deposit;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.deposit = deposit;
         this.user = user;
+        this.category = category;
+    }
+
+    public void update(String name, String description, String address, String imageUrl, int capacity, int deposit, LocalTime startTime, LocalTime endTime, Category category) {
+        this.name = name;
+        this.description = description;
+        this.address = address;
+        this.imageUrl = imageUrl;
+        this.capacity = capacity;
+        this.deposit = deposit;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.category = category;
     }
 }

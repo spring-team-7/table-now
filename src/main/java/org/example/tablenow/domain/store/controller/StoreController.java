@@ -3,8 +3,10 @@ package org.example.tablenow.domain.store.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
+import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
 import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
+import org.example.tablenow.domain.store.dto.response.StoreUpdateResponseDto;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -34,6 +36,11 @@ public class StoreController {
     }
 
     // 가게 수정
+    @Secured("ROLE_OWNER")
+    @PatchMapping("/owner/stores/{id}")
+    public ResponseEntity<StoreUpdateResponseDto> updateStore(@PathVariable Long id, @Valid @RequestBody StoreUpdateRequestDto requestDto) {
+        return ResponseEntity.ok(storeService.updateStore(id, requestDto));
+    }
 
     // 가게 삭제
 
