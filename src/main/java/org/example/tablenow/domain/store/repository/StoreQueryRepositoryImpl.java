@@ -4,7 +4,10 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.example.tablenow.domain.store.entity.Store;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 import static org.example.tablenow.domain.store.entity.QStore.store;
 
@@ -23,6 +26,18 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                         storeDeletedAtIsNotNull()
                 )
                 .fetchOne();
+    }
+
+    @Override
+    public List<Store> findAllByUserId(Long userId) {
+        return queryFactory.select(store)
+                .from(store)
+                .leftJoin(store.category).fetchJoin()
+                .where(
+                        storeUserIdEq(userId),
+                        storeDeletedAtIsNotNull()
+                )
+                .fetch();
     }
 
     private BooleanExpression storeUserIdEq(Long userId) {

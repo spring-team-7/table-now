@@ -4,13 +4,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
+import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -27,6 +27,11 @@ public class StoreController {
     }
 
     // 내 가게 목록 조회
+    @Secured("ROLE_OWNER")
+    @GetMapping("/owner/stores")
+    public ResponseEntity<List<StoreResponseDto>> findMyStores() {
+        return ResponseEntity.ok(storeService.findMyStores());
+    }
 
     // 가게 수정
 

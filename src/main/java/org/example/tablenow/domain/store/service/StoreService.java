@@ -6,6 +6,7 @@ import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.category.service.CategoryService;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.response.StoreCreateResponseDto;
+import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.user.entity.User;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,5 +55,12 @@ public class StoreService {
 
         Store savedStore = storeRepository.save(store);
         return StoreCreateResponseDto.fromStore(savedStore);
+    }
+
+    public List<StoreResponseDto> findMyStores() {
+        // TODO AuthUser -> User
+        User user = new User();
+        List<Store> stores = storeRepository.findAllByUserId(user.getId());
+        return stores.stream().map(StoreResponseDto::fromStore).collect(Collectors.toList());
     }
 }
