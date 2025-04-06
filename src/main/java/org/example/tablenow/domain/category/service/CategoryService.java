@@ -48,7 +48,7 @@ public class CategoryService {
         return categories.stream().map(CategoryResponseDto::fromCategory).collect(Collectors.toList());
     }
 
-    private Category findCategory(Long id) {
+    public Category findCategory(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND.getDefaultMessage()));
     }
