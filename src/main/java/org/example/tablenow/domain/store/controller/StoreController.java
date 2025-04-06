@@ -61,6 +61,10 @@ public class StoreController {
     }
 
     // 가게 정보 조회
+    @GetMapping("/stores/{id}")
+    public ResponseEntity<StoreResponseDto> getStore(@PathVariable Long id) {
+        return ResponseEntity.ok(storeService.findStore(id));
+    }
 
     // 가게 인기 검색 랭킹 조회
 

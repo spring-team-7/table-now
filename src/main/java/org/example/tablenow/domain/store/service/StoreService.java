@@ -77,7 +77,7 @@ public class StoreService {
         // TODO AuthUser -> User
         User user = new User();
 
-        Store store = findStore(id);
+        Store store = getStore(id);
 
         validStoreOwnerId(store, user);
 
@@ -109,7 +109,7 @@ public class StoreService {
         // TODO AuthUser -> User
         User user = new User();
 
-        Store store = findStore(id);
+        Store store = getStore(id);
 
         validStoreOwnerId(store, user);
 
@@ -123,7 +123,11 @@ public class StoreService {
         return storeRepository.searchStores(pageable, categoryId, search);
     }
 
-    public Store findStore(Long id) {
+    public StoreResponseDto findStore(Long id) {
+        return StoreResponseDto.fromStore(getStore(id));
+    }
+
+    public Store getStore(Long id) {
         return storeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND.getDefaultMessage()));
     }
