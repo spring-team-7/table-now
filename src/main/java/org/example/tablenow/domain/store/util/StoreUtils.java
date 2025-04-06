@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.store.util;
 
+import io.micrometer.common.util.StringUtils;
 import org.example.tablenow.domain.store.entity.Store;
 
 import java.time.LocalTime;
@@ -23,5 +24,15 @@ public class StoreUtils {
             currentTime = currentTime.plusHours(1);
         }
         return timeSlots;
+    }
+
+    public static String normalizeKeyword(String keyword) {
+        if (StringUtils.isEmpty(keyword)) {
+            return "";
+        }
+        return keyword.trim()
+                .replaceAll("\\s+", " ")
+                .replaceAll("[^\\p{L}\\p{N} ]", "")   // 한글, 영문, 숫자 외 제거 (공백 허용)
+                .toLowerCase();
     }
 }

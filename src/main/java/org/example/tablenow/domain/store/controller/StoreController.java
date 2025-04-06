@@ -67,5 +67,8 @@ public class StoreController {
     }
 
     // 가게 인기 검색 랭킹 조회
-
+    @GetMapping("/stores/ranking")
+    public ResponseEntity<List<StoreRankingResponseDto>> getStoreRanking(@RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(storeService.getStoreRanking(limit));
+    }
 }

@@ -12,5 +12,5 @@ public interface StoreQueryRepository {
 
     List<Store> findAllByUserId(Long id);
 
-    Page<StoreSearchResponseDto> searchStores(Pageable pageable, Long categoryId, String search);
+    Page<StoreSearchResponseDto> searchStores(Pageable pageable, Long categoryId, String keyword);
 }

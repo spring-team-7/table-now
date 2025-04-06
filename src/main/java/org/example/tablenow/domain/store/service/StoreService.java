@@ -10,6 +10,8 @@ import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.repository.StoreRepository;
+import org.example.tablenow.domain.store.util.StoreRedisKey;
+import org.example.tablenow.domain.store.util.StoreUtils;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.AuthorizationException;
 import org.example.tablenow.global.exception.BadRequestException;
@@ -19,12 +21,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +40,7 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final CategoryService categoryService;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public StoreCreateResponseDto saveStore(@Valid StoreCreateRequestDto requestDto) {
@@ -120,11 +127,37 @@ public class StoreService {
     public Page<StoreSearchResponseDto> findAllStores(int page, int size, String sort, String direction, Long categoryId, String search) {
         Sort sortOption = Sort.by(Sort.Direction.fromString(direction), sort);
         Pageable pageable = PageRequest.of(page - 1, size, sortOption);
-        return storeRepository.searchStores(pageable, categoryId, search);
+        String keyword = StringUtils.isEmpty(search) ? "" : StoreUtils.normalizeKeyword(search);
+
+        // TODO 사용자 기준 어뷰징 방지
+        if (!StringUtils.isEmpty(search)) {
+            redisTemplate.opsForZSet().incrementScore(StoreRedisKey.STORE_RANK_KEY, keyword, 1);
+        }
+        return storeRepository.searchStores(pageable, categoryId, keyword);
     }
 
     public StoreResponseDto findStore(Long id) {
         return StoreResponseDto.fromStore(getStore(id));
+    }
+
+    public List<StoreRankingResponseDto> getStoreRanking(int limit) {
+        List<StoreRankingResponseDto> result = new ArrayList<>();
+        Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet()
+                .reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1); // 0~9
+
+        if (tuples == null || tuples.isEmpty()) {
+            return result;
+        }
+
+        int rank = 1;
+        for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+            result.add(StoreRankingResponseDto.builder()
+                    .rank(rank++)
+                    .keyword(tuple.getValue())
+                    .score(tuple.getScore().intValue())
+                    .build());
+        }
+        return result;
     }
 
     public Store getStore(Long id) {

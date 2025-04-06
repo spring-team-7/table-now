@@ -53,7 +53,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
     }
 
     @Override
-    public Page<StoreSearchResponseDto> searchStores(Pageable pageable, Long categoryId, String search) {
+    public Page<StoreSearchResponseDto> searchStores(Pageable pageable, Long categoryId, String keyword) {
 
         JPAQuery<StoreSearchResponseDto> query = queryFactory.select(Projections.constructor(
                         StoreSearchResponseDto.class,
@@ -71,7 +71,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
         query.where(
                 storeDeletedAtIsNotNull(),
                 storeCategoryIdEq(categoryId),
-                storeNameContains(search)
+                storeNameContains(keyword)
         );
         // 정렬 조건
         List<OrderSpecifier<?>> orderSpecifiers = toOrderSpecifiers(pageable.getSort());
@@ -85,7 +85,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                 .where(
                         storeDeletedAtIsNotNull(),
                         storeCategoryIdEq(categoryId),
-                        storeNameContains(search)
+                        storeNameContains(keyword)
                 )
                 .fetchOne();
 
@@ -104,8 +104,8 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
         return Objects.nonNull(categoryId) ? store.category.id.eq(categoryId) : null;
     }
 
-    private BooleanExpression storeNameContains(String search) {
-        return Objects.nonNull(search) ? store.name.contains(search) : null;
+    private BooleanExpression storeNameContains(String keyword) {
+        return Objects.nonNull(keyword) ? store.name.contains(keyword) : null;
     }
 
     private List<OrderSpecifier<?>> toOrderSpecifiers(Sort sort) {
