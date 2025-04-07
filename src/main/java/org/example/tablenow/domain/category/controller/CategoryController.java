@@ -41,7 +41,7 @@ public class CategoryController {
     }
 
     // 카테고리 목록 조회
-    @GetMapping("/v1/admin/categories")
+    @GetMapping("/v1/categories")
     public ResponseEntity<List<CategoryResponseDto>> getCategories() {
         return ResponseEntity.ok(categoryService.findAllCategories());
     }

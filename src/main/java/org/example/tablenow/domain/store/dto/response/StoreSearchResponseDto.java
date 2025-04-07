@@ -1,10 +1,12 @@
 package org.example.tablenow.domain.store.dto.response;
 
 import lombok.Builder;
+import lombok.Getter;
 import org.example.tablenow.domain.store.entity.Store;
 
 import java.time.LocalTime;
 
+@Getter
 public class StoreSearchResponseDto {
     private final Long storeId;
     private final String name;
