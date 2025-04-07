@@ -77,6 +77,11 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
+    @Transactional
+    public void logout(String token) {
+        tokenService.deleteRefreshToken(token);
+    }
+
     private TokenResponse generateTokenResponse(User user) {
         // Access & Refresh Token 생성
         String accessToken = tokenService.createAccessToken(user);
@@ -86,9 +91,5 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-    }
-
-    public void logout(String token) {
-        tokenService.deleteRefreshToken(token);
     }
 }
