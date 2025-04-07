@@ -13,13 +13,18 @@ import java.time.LocalDateTime;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     boolean existsByStoreIdAndReservedAt(Long storeId, LocalDateTime reservedAt);
     boolean existsByStoreIdAndReservedAtAndIdNot(Long storeId, @NotNull LocalDateTime reservedAt, Long id);
-//    Page<Reservation> findByUserId(Long userId, Pageable pageable);
 
-    // TODO: 유저 적용 후 r.userId -> r.user.id로 변경 필요
     @Query("""
     SELECT r FROM Reservation r
-    WHERE r.userId = :userId 
+    WHERE r.user.id = :userId
       AND (:status IS NULL OR r.status = :status)
     """)
     Page<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status, Pageable pageable);
+
+    @Query("""
+    SELECT r FROM Reservation r
+    WHERE r.store.id = :storeId
+      AND (:status IS NULL OR r.status = :status)
+    """)
+    Page<Reservation> findByStoreIdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 
 import java.time.LocalDateTime;
@@ -18,7 +20,7 @@ public class Reservation extends TimeStamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /*
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;
@@ -26,10 +28,6 @@ public class Reservation extends TimeStamped {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-     */
-
-    private Long storeId;
-    private Long userId;
 
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
@@ -38,9 +36,9 @@ public class Reservation extends TimeStamped {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Reservation(Long userId, Long storeId, LocalDateTime reservedAt) {
-        this.userId = userId;
-        this.storeId = storeId;
+    public Reservation(User user, Store store, LocalDateTime reservedAt) {
+        this.user = user;
+        this.store = store;
         this.reservedAt = reservedAt;
         this.status = ReservationStatus.RESERVED;
     }
@@ -51,5 +49,9 @@ public class Reservation extends TimeStamped {
 
     public void cancel() {
         this.status = ReservationStatus.CANCELED;
+    }
+
+    public void complete() {
+        this.status = ReservationStatus.COMPLETED;
     }
 }
