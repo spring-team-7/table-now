@@ -13,10 +13,9 @@ import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.store.util.StoreRedisKey;
 import org.example.tablenow.domain.store.util.StoreUtils;
 import org.example.tablenow.domain.user.entity.User;
-import org.example.tablenow.global.exception.AuthorizationException;
-import org.example.tablenow.global.exception.BadRequestException;
+import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
-import org.example.tablenow.global.exception.NotFoundException;
+import org.example.tablenow.global.exception.HandledException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,18 +41,19 @@ public class StoreService {
     private final CategoryService categoryService;
     private final RedisTemplate<String, String> redisTemplate;
 
+    private static final Long MAX_STORES_COUNT = 3L;
+
     @Transactional
-    public StoreCreateResponseDto saveStore(@Valid StoreCreateRequestDto requestDto) {
-        // TODO AuthUser -> User
-        User user = new User();
+    public StoreCreateResponseDto saveStore(AuthUser authUser, @Valid StoreCreateRequestDto requestDto) {
+        User user = User.fromAuthUser(authUser);
 
         Category category = categoryService.findCategory(requestDto.getCategoryId());
 
         validStoreTimes(requestDto.getStartTime(), requestDto.getEndTime());
 
         Long count = storeRepository.countActiveStoresByUser(user.getId());
-        if (count == 3) {
-            throw new BadRequestException("최대 등록 가게 수를 초과하였습니다.");
+        if (MAX_STORES_COUNT.equals(count)) {
+            throw new HandledException(ErrorCode.STORE_EXCEED_MAX);
         }
 
         Store store = Store.builder()
@@ -62,6 +62,7 @@ public class StoreService {
                 .address(requestDto.getAddress())
                 .imageUrl(requestDto.getImageUrl())
                 .capacity(requestDto.getCapacity())
+                .deposit(requestDto.getDeposit())
                 .startTime(requestDto.getStartTime())
                 .endTime(requestDto.getEndTime())
                 .user(user)
@@ -72,17 +73,15 @@ public class StoreService {
         return StoreCreateResponseDto.fromStore(savedStore);
     }
 
-    public List<StoreResponseDto> findMyStores() {
-        // TODO AuthUser -> User
-        User user = new User();
+    public List<StoreResponseDto> findMyStores(AuthUser authUser) {
+        User user = User.fromAuthUser(authUser);
         List<Store> stores = storeRepository.findAllByUserId(user.getId());
         return stores.stream().map(StoreResponseDto::fromStore).collect(Collectors.toList());
     }
 
     @Transactional
-    public StoreUpdateResponseDto updateStore(Long id, @Valid StoreUpdateRequestDto requestDto) {
-        // TODO AuthUser -> User
-        User user = new User();
+    public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, @Valid StoreUpdateRequestDto requestDto) {
+        User user = User.fromAuthUser(authUser);
 
         Store store = getStore(id);
 
@@ -96,7 +95,6 @@ public class StoreService {
         // 업데이트 필드 구분
         LocalTime startTime = Objects.isNull(requestDto.getStartTime()) ? store.getStartTime() : requestDto.getStartTime();
         LocalTime endTime = Objects.isNull(requestDto.getEndTime()) ? store.getEndTime() : requestDto.getEndTime();
-
         validStoreTimes(startTime, endTime);
 
         String name = StringUtils.isEmpty(requestDto.getName()) ? store.getName() : requestDto.getName();
@@ -112,9 +110,8 @@ public class StoreService {
     }
 
     @Transactional
-    public StoreDeleteResponseDto deleteStore(Long id) {
-        // TODO AuthUser -> User
-        User user = new User();
+    public StoreDeleteResponseDto deleteStore(Long id, AuthUser authUser) {
+        User user = User.fromAuthUser(authUser);
 
         Store store = getStore(id);
 
@@ -162,19 +159,19 @@ public class StoreService {
 
     public Store getStore(Long id) {
         return storeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND.getDefaultMessage()));
+                .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
     }
 
     private void validStoreOwnerId(Store store, User user) {
         // 요청한 유저 ID가 가게 주인인지 확인
         if (!store.getUser().getId().equals(user.getId())) {
-            throw new AuthorizationException(ErrorCode.AUTHORIZATION.getDefaultMessage());
+            throw new HandledException(ErrorCode.STORE_FORBIDDEN);
         }
     }
 
     private void validStoreTimes(LocalTime startTime, LocalTime endTime) {
         if (!startTime.isBefore(endTime)) {
-            throw new BadRequestException("시작시간은 종료시간보다 이전이어야 합니다.");
+            throw new HandledException(ErrorCode.BAD_REQUEST);
         }
     }
 }

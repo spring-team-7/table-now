@@ -3,7 +3,9 @@ package org.example.tablenow.domain.store.enums;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
-import org.example.tablenow.global.exception.BadRequestException;
+import org.apache.coyote.BadRequestException;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 
 import java.time.LocalDateTime;
 
@@ -41,6 +43,6 @@ public enum StoreSortField {
                 return field;
             }
         }
-        throw new BadRequestException("정렬할 수 없는 필드입니다: " + property);
+        throw new HandledException(ErrorCode.BAD_REQUEST);
     }
 }

@@ -15,7 +15,7 @@ public class StoreSearchResponseDto {
     private final LocalTime endTime;
 
     @Builder
-    private StoreSearchResponseDto(Long storeId, String name, Long categoryId, String categoryName, String imageUrl, LocalTime startTime, LocalTime endTime) {
+    public StoreSearchResponseDto(Long storeId, String name, Long categoryId, String categoryName, String imageUrl, LocalTime startTime, LocalTime endTime) {
         this.storeId = storeId;
         this.name = name;
         this.categoryId = categoryId;

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class CategoryController {
 
@@ -21,27 +21,27 @@ public class CategoryController {
 
     // 카테고리 등록
     @Secured("ROLE_ADMIN")
-    @PostMapping("/admin/categories")
+    @PostMapping("/v1/admin/categories")
     public ResponseEntity<CategoryResponseDto> saveCategory(@Valid @RequestBody CategoryRequestDto requestDto) {
         return ResponseEntity.ok(categoryService.saveCategory(requestDto));
     }
 
     // 카테고리 수정
     @Secured("ROLE_ADMIN")
-    @PatchMapping("/admin/categories/{id}")
+    @PatchMapping("/v1/admin/categories/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequestDto requestDto) {
         return ResponseEntity.ok(categoryService.updateCategory(id, requestDto));
     }
 
     // 카테고리 삭제
     @Secured("ROLE_ADMIN")
-    @DeleteMapping("/admin/categories/{id}")
+    @DeleteMapping("/v1/admin/categories/{id}")
     public ResponseEntity<CategoryDeleteResponseDto> deleteCategory(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.deleteCategory(id));
     }
 
     // 카테고리 목록 조회
-    @GetMapping("/admin/categories")
+    @GetMapping("/v1/admin/categories")
     public ResponseEntity<List<CategoryResponseDto>> getCategories() {
         return ResponseEntity.ok(categoryService.findAllCategories());
     }

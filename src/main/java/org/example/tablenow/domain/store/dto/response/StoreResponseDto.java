@@ -1,10 +1,12 @@
 package org.example.tablenow.domain.store.dto.response;
 
 import lombok.Builder;
+import lombok.Getter;
 import org.example.tablenow.domain.store.entity.Store;
 
 import java.time.LocalTime;
 
+@Getter
 public class StoreResponseDto {
     private final Long storeId;
     private final String name;
@@ -20,7 +22,7 @@ public class StoreResponseDto {
     private final int deposit;
 
     @Builder
-    private StoreResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, int capacity, LocalTime startTime, LocalTime endTime, int deposit) {
+    public StoreResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, int capacity, LocalTime startTime, LocalTime endTime, int deposit) {
         this.storeId = storeId;
         this.name = name;
         this.userId = userId;

@@ -26,7 +26,7 @@ public class StoreCreateResponseDto {
     private final LocalDateTime createdAt;
 
     @Builder
-    private StoreCreateResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, int capacity, LocalTime startTime, LocalTime endTime, int deposit, LocalDateTime createdAt) {
+    public StoreCreateResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, int capacity, LocalTime startTime, LocalTime endTime, int deposit, LocalDateTime createdAt) {
         this.storeId = storeId;
         this.name = name;
         this.userId = userId;

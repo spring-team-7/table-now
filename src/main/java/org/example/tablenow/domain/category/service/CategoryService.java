@@ -8,7 +8,7 @@ import org.example.tablenow.domain.category.dto.response.CategoryResponseDto;
 import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.category.repository.CategoryRepository;
 import org.example.tablenow.global.exception.ErrorCode;
-import org.example.tablenow.global.exception.NotFoundException;
+import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +50,6 @@ public class CategoryService {
 
     public Category findCategory(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND.getDefaultMessage()));
+                .orElseThrow(() -> new HandledException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 }
