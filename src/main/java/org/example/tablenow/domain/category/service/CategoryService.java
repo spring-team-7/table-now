@@ -1,6 +1,5 @@
 package org.example.tablenow.domain.category.service;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.category.dto.request.CategoryRequestDto;
 import org.example.tablenow.domain.category.dto.response.CategoryDeleteResponseDto;
@@ -22,14 +21,14 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Transactional
-    public CategoryResponseDto saveCategory(@Valid CategoryRequestDto requestDto) {
+    public CategoryResponseDto saveCategory(CategoryRequestDto requestDto) {
         Category category = Category.builder().name(requestDto.getName()).build();
         Category savedCategory = categoryRepository.save(category);
         return CategoryResponseDto.fromCategory(savedCategory);
     }
 
     @Transactional
-    public CategoryResponseDto updateCategory(Long id, @Valid CategoryRequestDto requestDto) {
+    public CategoryResponseDto updateCategory(Long id, CategoryRequestDto requestDto) {
         Category category = findCategory(id);
         category.updateName(requestDto.getName());
         return CategoryResponseDto.fromCategory(category);

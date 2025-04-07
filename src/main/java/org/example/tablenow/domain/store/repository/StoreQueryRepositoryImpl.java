@@ -8,6 +8,7 @@ import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.example.tablenow.domain.store.dto.response.StoreResponseDto;
 import org.example.tablenow.domain.store.dto.response.StoreSearchResponseDto;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.enums.StoreSortField;
@@ -21,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static org.example.tablenow.domain.category.entity.QCategory.category;
 import static org.example.tablenow.domain.store.entity.QStore.store;
+import static org.example.tablenow.domain.user.entity.QUser.user;
 
 @Repository
 @RequiredArgsConstructor
@@ -41,10 +44,25 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
     }
 
     @Override
-    public List<Store> findAllByUserId(Long userId) {
-        return queryFactory.select(store)
+    public List<StoreResponseDto> findAllByUserId(Long userId) {
+        return queryFactory.select(Projections.constructor(
+                        StoreResponseDto.class,
+                        store.id,
+                        store.name,
+                        user.id,
+                        category.id,
+                        category.name,
+                        store.description,
+                        store.address,
+                        store.imageUrl,
+                        store.capacity,
+                        store.startTime,
+                        store.endTime,
+                        store.deposit
+                ))
                 .from(store)
-                .leftJoin(store.category).fetchJoin()
+                .join(store.user, user)
+                .join(store.category, category)
                 .where(
                         storeUserIdEq(userId),
                         storeDeletedAtIsNotNull()
@@ -54,25 +72,21 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
 
     @Override
     public Page<StoreSearchResponseDto> searchStores(Pageable pageable, Long categoryId, String keyword) {
-
+        BooleanExpression[] conditions = {storeDeletedAtIsNotNull(), storeCategoryIdEq(categoryId), storeNameContains(keyword)};
         JPAQuery<StoreSearchResponseDto> query = queryFactory.select(Projections.constructor(
                         StoreSearchResponseDto.class,
                         store.id,
                         store.name,
-                        store.category.id,
-                        store.category.name,
+                        category.id,
+                        category.name,
                         store.imageUrl,
                         store.startTime,
                         store.endTime
                 ))
                 .from(store)
-                .leftJoin(store.category).fetchJoin();
+                .join(store.category, category);
         // 검색 조건
-        query.where(
-                storeDeletedAtIsNotNull(),
-                storeCategoryIdEq(categoryId),
-                storeNameContains(keyword)
-        );
+        query.where(conditions);
         // 정렬 조건
         List<OrderSpecifier<?>> orderSpecifiers = toOrderSpecifiers(pageable.getSort());
         query.orderBy(orderSpecifiers.toArray(OrderSpecifier[]::new));
@@ -80,13 +94,10 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
         query.limit(pageable.getPageSize());
 
         List<StoreSearchResponseDto> stores = query.fetch();
+
         Long totalSize = queryFactory.select(Wildcard.count)
                 .from(store)
-                .where(
-                        storeDeletedAtIsNotNull(),
-                        storeCategoryIdEq(categoryId),
-                        storeNameContains(keyword)
-                )
+                .where(conditions)
                 .fetchOne();
 
         return PageableExecutionUtils.getPage(stores, pageable, () -> totalSize);
