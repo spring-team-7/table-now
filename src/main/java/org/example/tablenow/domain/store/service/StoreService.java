@@ -1,7 +1,5 @@
 package org.example.tablenow.domain.store.service;
 
-import io.micrometer.common.util.StringUtils;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.category.service.CategoryService;
@@ -24,13 +22,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +42,7 @@ public class StoreService {
     private static final Long MAX_STORES_COUNT = 3L;
 
     @Transactional
-    public StoreCreateResponseDto saveStore(AuthUser authUser, @Valid StoreCreateRequestDto requestDto) {
+    public StoreCreateResponseDto saveStore(AuthUser authUser, StoreCreateRequestDto requestDto) {
         User user = User.fromAuthUser(authUser);
 
         Category category = categoryService.findCategory(requestDto.getCategoryId());
@@ -52,7 +50,7 @@ public class StoreService {
         validStoreTimes(requestDto.getStartTime(), requestDto.getEndTime());
 
         Long count = storeRepository.countActiveStoresByUser(user.getId());
-        if (MAX_STORES_COUNT.equals(count)) {
+        if (count >= MAX_STORES_COUNT) {
             throw new HandledException(ErrorCode.STORE_EXCEED_MAX);
         }
 
@@ -75,12 +73,11 @@ public class StoreService {
 
     public List<StoreResponseDto> findMyStores(AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
-        List<Store> stores = storeRepository.findAllByUserId(user.getId());
-        return stores.stream().map(StoreResponseDto::fromStore).collect(Collectors.toList());
+        return storeRepository.findAllByUserId(user.getId());
     }
 
     @Transactional
-    public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, @Valid StoreUpdateRequestDto requestDto) {
+    public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, StoreUpdateRequestDto requestDto) {
         User user = User.fromAuthUser(authUser);
 
         Store store = getStore(id);
@@ -97,10 +94,10 @@ public class StoreService {
         LocalTime endTime = Objects.isNull(requestDto.getEndTime()) ? store.getEndTime() : requestDto.getEndTime();
         validStoreTimes(startTime, endTime);
 
-        String name = StringUtils.isEmpty(requestDto.getName()) ? store.getName() : requestDto.getName();
-        String description = StringUtils.isEmpty(requestDto.getDescription()) ? store.getDescription() : requestDto.getDescription();
-        String address = StringUtils.isEmpty(requestDto.getAddress()) ? store.getAddress() : requestDto.getAddress();
-        String imageUrl = StringUtils.isEmpty(requestDto.getImageUrl()) ? store.getImageUrl() : store.getImageUrl();
+        String name = StringUtils.hasText(requestDto.getName()) ? requestDto.getName() : store.getName();
+        String description = StringUtils.hasText(requestDto.getDescription()) ? requestDto.getDescription() : store.getDescription();
+        String address = StringUtils.hasText(requestDto.getAddress()) ? requestDto.getAddress() : store.getAddress();
+        String imageUrl = StringUtils.hasText(requestDto.getImageUrl()) ? requestDto.getImageUrl() : store.getImageUrl();
 
         int capacity = Objects.isNull(requestDto.getCapacity()) ? store.getCapacity() : requestDto.getCapacity();
         int deposit = Objects.isNull(requestDto.getDeposit()) ? store.getDeposit() : requestDto.getDeposit();
@@ -124,13 +121,13 @@ public class StoreService {
     public Page<StoreSearchResponseDto> findAllStores(int page, int size, String sort, String direction, Long categoryId, String search) {
         Sort sortOption = Sort.by(Sort.Direction.fromString(direction), sort);
         Pageable pageable = PageRequest.of(page - 1, size, sortOption);
-        String keyword = StringUtils.isEmpty(search) ? "" : StoreUtils.normalizeKeyword(search);
 
         // TODO 사용자 기준 어뷰징 방지
-        if (!StringUtils.isEmpty(search)) {
+        if (StringUtils.hasText(search)) {
+            String keyword = StoreUtils.normalizeKeyword(search);
             redisTemplate.opsForZSet().incrementScore(StoreRedisKey.STORE_RANK_KEY, keyword, 1);
         }
-        return storeRepository.searchStores(pageable, categoryId, keyword);
+        return storeRepository.searchStores(pageable, categoryId, search);
     }
 
     public StoreResponseDto findStore(Long id) {
@@ -162,7 +159,7 @@ public class StoreService {
                 .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
     }
 
-    private void validStoreOwnerId(Store store, User user) {
+    public void validStoreOwnerId(Store store, User user) {
         // 요청한 유저 ID가 가게 주인인지 확인
         if (!store.getUser().getId().equals(user.getId())) {
             throw new HandledException(ErrorCode.STORE_FORBIDDEN);

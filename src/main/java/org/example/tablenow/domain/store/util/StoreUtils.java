@@ -1,7 +1,7 @@
 package org.example.tablenow.domain.store.util;
 
-import io.micrometer.common.util.StringUtils;
 import org.example.tablenow.domain.store.entity.Store;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class StoreUtils {
     }
 
     public static String normalizeKeyword(String keyword) {
-        if (StringUtils.isEmpty(keyword)) {
+        if (!StringUtils.hasText(keyword)) {
             return "";
         }
         return keyword.trim()
