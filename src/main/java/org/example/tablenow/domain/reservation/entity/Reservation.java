@@ -48,4 +48,8 @@ public class Reservation extends TimeStamped {
     public void updateReservedAt(LocalDateTime reservedAt) {
         this.reservedAt = reservedAt;
     }
+
+    public void cancel() {
+        this.status = ReservationStatus.CANCELED;
+    }
 }
