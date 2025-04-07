@@ -50,7 +50,7 @@ public class StoreService {
         validStoreTimes(requestDto.getStartTime(), requestDto.getEndTime());
 
         Long count = storeRepository.countActiveStoresByUser(user.getId());
-        if (MAX_STORES_COUNT.equals(count)) {
+        if (count >= MAX_STORES_COUNT) {
             throw new HandledException(ErrorCode.STORE_EXCEED_MAX);
         }
 
@@ -159,7 +159,7 @@ public class StoreService {
                 .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
     }
 
-    private void validStoreOwnerId(Store store, User user) {
+    public void validStoreOwnerId(Store store, User user) {
         // 요청한 유저 ID가 가게 주인인지 확인
         if (!store.getUser().getId().equals(user.getId())) {
             throw new HandledException(ErrorCode.STORE_FORBIDDEN);

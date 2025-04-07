@@ -38,7 +38,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                 .from(store)
                 .where(
                         storeUserIdEq(userId),
-                        storeDeletedAtIsNotNull()
+                        storeDeletedAtIsNull()
                 )
                 .fetchOne();
     }
@@ -65,14 +65,13 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                 .join(store.category, category)
                 .where(
                         storeUserIdEq(userId),
-                        storeDeletedAtIsNotNull()
+                        storeDeletedAtIsNull()
                 )
                 .fetch();
     }
 
     @Override
     public Page<StoreSearchResponseDto> searchStores(Pageable pageable, Long categoryId, String keyword) {
-        BooleanExpression[] conditions = {storeDeletedAtIsNotNull(), storeCategoryIdEq(categoryId), storeNameContains(keyword)};
         JPAQuery<StoreSearchResponseDto> query = queryFactory.select(Projections.constructor(
                         StoreSearchResponseDto.class,
                         store.id,
@@ -86,7 +85,9 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                 .from(store)
                 .join(store.category, category);
         // 검색 조건
+        BooleanExpression[] conditions = {storeDeletedAtIsNull(), storeCategoryIdEq(categoryId), storeNameContains(keyword)};
         query.where(conditions);
+
         // 정렬 조건
         List<OrderSpecifier<?>> orderSpecifiers = toOrderSpecifiers(pageable.getSort());
         query.orderBy(orderSpecifiers.toArray(OrderSpecifier[]::new));
@@ -107,8 +108,8 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
         return store.user.id.eq(userId);
     }
 
-    private BooleanExpression storeDeletedAtIsNotNull() {
-        return store.deletedAt.isNotNull();
+    private BooleanExpression storeDeletedAtIsNull() {
+        return store.deletedAt.isNull();
     }
 
     private BooleanExpression storeCategoryIdEq(Long categoryId) {
