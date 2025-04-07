@@ -33,19 +33,22 @@ public class ReservationService {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(request.getStoreId());
 
-        if (reservationRepository.existsByStoreIdAndReservedAt(request.getStoreId(), request.getReservedAt())) {
+        if (reservationRepository.isReservedStatusInUse(request.getStoreId(), request.getReservedAt())) {
             throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
         }
+
+        // TODO: 가게 오픈 및 마감시간 검증 필요
 
         Reservation reservation = Reservation.builder()
                 .user(user)
                 .store(store)
                 .reservedAt(request.getReservedAt())
                 .build();
+        validateReservationOwner(reservation, user);
 
         reservationRepository.save(reservation);
 
-        return toResponseDto(reservation);
+        return ReservationResponseDto.fromReservation(reservation);
     }
 
     @Transactional
@@ -53,16 +56,11 @@ public class ReservationService {
         User user = User.fromAuthUser(authUser);
         Reservation reservation = getReservation(id);
 
-        if (!reservation.getUser().getId().equals(user.getId())) {
-            throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
-        }
-
+        validateReservationOwner(reservation, user);
         validateReservationUpdateDuplication(id, request, reservation);
-
         reservation.updateReservedAt(request.getReservedAt());
-        Reservation updated = reservationRepository.findById(reservation.getId()).orElseThrow();
 
-        return toResponseDto(updated);
+        return ReservationResponseDto.fromReservation(reservation);
     }
 
     @Transactional(readOnly = true)
@@ -71,42 +69,39 @@ public class ReservationService {
         Pageable pageable = PageRequest.of(page - 1, size);
 
         return reservationRepository.findByUserIdAndStatus(user.getId(), status, pageable)
-                .map(this::toResponseDto);
+                .map(ReservationResponseDto::fromReservation);
     }
 
     @Transactional(readOnly = true)
     public Page<ReservationResponseDto> getStoreReservations(AuthUser authUser, Long storeId, ReservationStatus status, int page, int size) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(storeId);
-
-        if (!store.getUser().getId().equals(user.getId())) {
-            throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
-        }
+        storeService.validStoreOwnerId(store, user);
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
         return reservationRepository.findByStoreIdAndStatus(store.getId(), status, pageable)
-                .map(this::toResponseDto);
+                .map(ReservationResponseDto::fromReservation);
     }
 
     @Transactional
     public ReservationStatusResponseDto completeReservation(AuthUser authUser, Long id, ReservationStatusChangeRequestDto request) {
+        User user = User.fromAuthUser(authUser);
         Reservation reservation = getReservation(id);
-        reservation.complete();
+        storeService.validStoreOwnerId(reservation.getStore(), user);
+
+        reservation.updateStatus(request.getStatus());
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
 
     @Transactional
-    public ReservationStatusResponseDto deleteReservation(AuthUser authUser, Long id) {
+    public ReservationStatusResponseDto cancelReservation(AuthUser authUser, Long id) {
         User user = User.fromAuthUser(authUser);
         Reservation reservation = getReservation(id);
+        validateReservationOwner(reservation, user);
 
-        if (!reservation.getUser().getId().equals(user.getId())) {
-            throw new HandledException(ErrorCode.FORBIDDEN);
-        }
-
-        reservation.cancel();
+        reservation.tryCancel();
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
@@ -114,6 +109,12 @@ public class ReservationService {
     private Reservation getReservation(Long id) {
         return reservationRepository.findById(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
+    }
+
+    private static void validateReservationOwner(Reservation reservation, User user) {
+        if (!reservation.getUser().getId().equals(user.getId())) {
+            throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
+        }
     }
 
     private void validateReservationUpdateDuplication(Long id, ReservationUpdateRequestDto request, Reservation reservation) {
@@ -130,16 +131,5 @@ public class ReservationService {
         if (isDuplicated) {
             throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
         }
-    }
-
-    private ReservationResponseDto toResponseDto(Reservation reservation) {
-        return ReservationResponseDto.builder()
-                .reservationId(reservation.getId())
-                .storeId(reservation.getStore().getId())
-                .reservedAt(reservation.getReservedAt())
-                .createdAt(reservation.getCreatedAt())
-                .modifiedAt(reservation.getUpdatedAt())
-                .status(reservation.getStatus())
-                .build();
     }
 }

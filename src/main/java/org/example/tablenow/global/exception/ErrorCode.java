@@ -26,7 +26,7 @@ public enum ErrorCode {
     RESERVATION_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 예약에 접근할 수 있는 권한이 없습니다."),
     RESERVATION_DUPLICATE(HttpStatus.CONFLICT, "해당 시간에는 이미 예약이 존재합니다."),
     RESERVATION_ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 취소된 예약입니다."),
-    RESERVATION_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "이미 완료된 예약입니다."),
+    RESERVATION_STATUS_ALREADY_SET(HttpStatus.BAD_REQUEST, "이미 설정된 예약 상태입니다."),
     RESERVATION_TIME_INVALID(HttpStatus.BAD_REQUEST, "예약 시간은 정각 또는 30분 단위여야 합니다."),
     RESERVATION_STATUS_INVALID(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다."),
 

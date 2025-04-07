@@ -1,6 +1,5 @@
 package org.example.tablenow.domain.reservation.repository;
 
-import jakarta.validation.constraints.NotNull;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.springframework.data.domain.Page;
@@ -11,8 +10,15 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    boolean existsByStoreIdAndReservedAt(Long storeId, LocalDateTime reservedAt);
-    boolean existsByStoreIdAndReservedAtAndIdNot(Long storeId, @NotNull LocalDateTime reservedAt, Long id);
+    @Query("""
+    select count(r) > 0 from Reservation r
+    where r.store.id = :storeId
+      and r.reservedAt = :reservedAt
+      and r.status <> 'CANCELED'
+    """)
+    boolean isReservedStatusInUse(Long storeId, LocalDateTime reservedAt);
+
+    boolean existsByStoreIdAndReservedAtAndIdNot(Long storeId, LocalDateTime reservedAt, Long id);
 
     @Query("""
     SELECT r FROM Reservation r

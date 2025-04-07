@@ -66,7 +66,7 @@ public class ReservationController {
     }
 
     @Secured("ROLE_OWNER")
-    @PatchMapping("/v1/reservations/{id}")
+    @PatchMapping("/v1/owner/reservations/{id}")
     public ResponseEntity<ReservationStatusResponseDto> completeReservation(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long id,
@@ -76,10 +76,10 @@ public class ReservationController {
     }
 
     @DeleteMapping("/v1/reservations/{id}")
-    public ResponseEntity<ReservationStatusResponseDto> deleteReservation(
+    public ResponseEntity<ReservationStatusResponseDto> cancelReservation(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long id
     ) {
-        return ResponseEntity.ok((reservationService.deleteReservation(authUser, id)));
+        return ResponseEntity.ok((reservationService.cancelReservation(authUser, id)));
     }
 }

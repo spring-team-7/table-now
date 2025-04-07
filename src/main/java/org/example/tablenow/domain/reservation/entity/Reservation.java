@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 
 import java.time.LocalDateTime;
 
@@ -15,11 +17,9 @@ import java.time.LocalDateTime;
 @Table(name = "reservation")
 @NoArgsConstructor
 public class Reservation extends TimeStamped {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
@@ -47,11 +47,21 @@ public class Reservation extends TimeStamped {
         this.reservedAt = reservedAt;
     }
 
-    public void cancel() {
+    public void tryCancel() {
+        if (this.status == ReservationStatus.CANCELED) {
+            throw new HandledException(ErrorCode.RESERVATION_ALREADY_CANCELED);
+        }
         this.status = ReservationStatus.CANCELED;
+        this.deletedAt = LocalDateTime.now();
     }
 
-    public void complete() {
-        this.status = ReservationStatus.COMPLETED;
+    public void updateStatus(ReservationStatus newStatus) {
+        if (this.status == newStatus) {
+            throw new HandledException(ErrorCode.RESERVATION_STATUS_ALREADY_SET);
+        }
+        if (this.status == ReservationStatus.CANCELED) {
+            throw new HandledException(ErrorCode.RESERVATION_ALREADY_CANCELED);
+        }
+        this.status = newStatus;
     }
 }
