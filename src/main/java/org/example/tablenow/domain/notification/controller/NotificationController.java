@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.notification.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.notification.dto.request.NotificationAlarmRequestDto;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
@@ -10,7 +11,6 @@ import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.global.dto.AuthUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,10 +23,9 @@ public class NotificationController {
   private final NotificationService notificationService;
 
   // 알림 생성
-  @Secured("ROLE_OWNER")
   @PostMapping
   public ResponseEntity<NotificationResponseDto> createNotification(
-      @RequestBody NotificationRequestDto requestDto){
+      @Valid @RequestBody NotificationRequestDto requestDto){
     NotificationResponseDto responseDto = notificationService.createNotification(requestDto);
     return new ResponseEntity<>(responseDto, HttpStatus.OK);
   }
