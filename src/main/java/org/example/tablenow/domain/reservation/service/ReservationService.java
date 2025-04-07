@@ -13,6 +13,8 @@ import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +34,7 @@ public class ReservationService {
         Store store = storeService.getStore(request.getStoreId());
 
         if (reservationRepository.existsByStoreIdAndReservedAt(request.getStoreId(), request.getReservedAt())) {
-            throw new IllegalArgumentException("해당 시간에는 이미 예약이 존재합니다.");
+            throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
         }
 
         Reservation reservation = Reservation.builder()
@@ -49,11 +51,10 @@ public class ReservationService {
     @Transactional
     public ReservationResponseDto updateReservation(AuthUser authUser, Long id, ReservationUpdateRequestDto request) {
         User user = User.fromAuthUser(authUser);
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("예약이 존재하지 않습니다."));
+        Reservation reservation = getReservation(id);
 
         if (!reservation.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("해당 예약을 한 사용자와 다릅니다.");
+            throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
         }
 
         validateReservationUpdateDuplication(id, request, reservation);
@@ -62,18 +63,6 @@ public class ReservationService {
         Reservation updated = reservationRepository.findById(reservation.getId()).orElseThrow();
 
         return toResponseDto(updated);
-    }
-
-    private void validateReservationUpdateDuplication(Long id, ReservationUpdateRequestDto request, Reservation reservation) {
-        // TODO: 취소된 예약은 수정할 수 없도록 예외 추가
-
-        if (reservationRepository.existsByStoreIdAndReservedAtAndIdNot(
-                reservation.getStore().getId(),
-                request.getReservedAt(),
-                id)
-        ) {
-            throw new IllegalArgumentException("해당 날짜 및 시간에는 이미 예약이 존재합니다.");
-        }
     }
 
     @Transactional(readOnly = true)
@@ -91,7 +80,7 @@ public class ReservationService {
         Store store = storeService.getStore(storeId);
 
         if (!store.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("해당 가게의 사장님이 아닙니다.");
+            throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
         }
 
         Pageable pageable = PageRequest.of(page - 1, size);
@@ -102,8 +91,7 @@ public class ReservationService {
 
     @Transactional
     public ReservationStatusResponseDto completeReservation(AuthUser authUser, Long id, ReservationStatusChangeRequestDto request) {
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("예약이 존재하지 않습니다."));
+        Reservation reservation = getReservation(id);
         reservation.complete();
 
         return ReservationStatusResponseDto.fromReservation(reservation);
@@ -111,12 +99,37 @@ public class ReservationService {
 
     @Transactional
     public ReservationStatusResponseDto deleteReservation(AuthUser authUser, Long id) {
-        // TODO: 해당 예약을 한 유저와 같은 유저인지 확인하는 로직 추가
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("예약이 존재하지 않습니다."));
+        User user = User.fromAuthUser(authUser);
+        Reservation reservation = getReservation(id);
+
+        if (!reservation.getUser().getId().equals(user.getId())) {
+            throw new HandledException(ErrorCode.FORBIDDEN);
+        }
+
         reservation.cancel();
 
         return ReservationStatusResponseDto.fromReservation(reservation);
+    }
+
+    private Reservation getReservation(Long id) {
+        return reservationRepository.findById(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
+    }
+
+    private void validateReservationUpdateDuplication(Long id, ReservationUpdateRequestDto request, Reservation reservation) {
+        if (reservation.getStatus() == ReservationStatus.CANCELED) {
+            throw new HandledException(ErrorCode.RESERVATION_ALREADY_CANCELED);
+        }
+
+        boolean isDuplicated = reservationRepository.existsByStoreIdAndReservedAtAndIdNot(
+                reservation.getStore().getId(),
+                request.getReservedAt(),
+                id
+        );
+
+        if (isDuplicated) {
+            throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
+        }
     }
 
     private ReservationResponseDto toResponseDto(Reservation reservation) {
