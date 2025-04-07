@@ -3,6 +3,7 @@ package org.example.tablenow.domain.auth.service;
 import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
+import org.example.tablenow.domain.auth.repository.RefreshTokenRepository;
 import org.example.tablenow.domain.user.dto.response.UserResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
@@ -11,8 +12,6 @@ import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,8 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @Transactional
 class AuthServiceTest {
-
-    private static final Logger log = LoggerFactory.getLogger(AuthServiceTest.class);
     @Autowired
     private AuthService authService;
 
@@ -36,6 +33,9 @@ class AuthServiceTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -54,7 +54,7 @@ class AuthServiceTest {
         // Exception Start
 
         @Test
-        void 중복된_이메일로_가입_시_예외_발생() {
+        void 중복된_이메일로_가입_시_예외() {
             // given
             authService.signup(request);
 
@@ -103,7 +103,6 @@ class AuthServiceTest {
 
         @Test
         void 해당_이메일의_사용자가_존재하지_않을_시_예외() {
-            // given
             // when & then
             assertThatThrownBy(() -> authService.signin(request))
                     .isInstanceOf(HandledException.class)
@@ -188,8 +187,6 @@ class AuthServiceTest {
 
         @Test
         void 성공() {
-            // given
-
             // when
             TokenResponse tokenResponse = authService.refreshToken(oldRefreshToken);
             String newAccessToken = tokenResponse.getAccessToken();
@@ -200,6 +197,23 @@ class AuthServiceTest {
             assertThat(newRefreshToken).isNotNull();
             assertThat(newAccessToken).isNotEqualTo(oldAccessToken);
             assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken);
+        }
+    }
+
+    @Nested
+    class 로그아웃 {
+        User user = User.builder()
+                .id(-1L)
+                .build();
+        String refreshToken = tokenService.createRefreshToken(user);
+
+        @Test
+        void 성공() {
+            // when
+            authService.logout(refreshToken);
+
+            // then
+            assertThat(refreshTokenRepository.findByToken(refreshToken)).isEmpty();
         }
     }
 }

@@ -45,4 +45,8 @@ public class RefreshToken extends TimeStamped {
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiredAt);
     }
+
+    public void expireToken() {
+        this.expiredAt = LocalDateTime.now();
+    }
 }
