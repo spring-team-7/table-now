@@ -2,6 +2,7 @@ package org.example.tablenow.domain.notification.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
+import org.example.tablenow.domain.notification.dto.response.NotificationAlarmResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationUpdateReadResponseDto;
 import org.example.tablenow.domain.notification.entity.Notification;
@@ -25,25 +26,28 @@ public class NotificationService {
   // 알림 생성
   public NotificationResponseDto createNotification(NotificationRequestDto requestDto) {
     User findUser = userRepository.findById(requestDto.getUserId())
-        .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND));
+        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
-    //알람 수신 여부 확인
-    if(!findUser.getIsAlarmEnabled()){
-      throw new HandledException(ErrorCode.FORBIDDEN, "알림 수신을 거부한 사용자입니다.");
+    //알람 수신 여부 확인(수신 거부된 사람한테 못 보냄)
+    if (!findUser.getIsAlarmEnabled()) {
+      throw new HandledException(ErrorCode.NOTIFICATION_DISABLED);
     }
 
-    Notification notification = new Notification(findUser, requestDto.getType(), requestDto.getContent());
+    Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
     notificationRepository.save(notification);
 
     return new NotificationResponseDto(notification);
   }
 
   // 알림 조회
-  public List<NotificationResponseDto> findNotifications(User user) {
-    List<Notification> notificationList = notificationRepository.findAllByUserOrderByCreatedAtDesc(user);
+  public List<NotificationResponseDto> findNotifications(Long userId) {
+    User findUser = userRepository.findById(userId)
+        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+
+    List<Notification> notificationList = notificationRepository.findAllByUserOrderByCreatedAtDesc(findUser);
     ArrayList<NotificationResponseDto> responseList = new ArrayList<>();
 
-    for (Notification notification : notificationList){
+    for (Notification notification : notificationList) {
       responseList.add(new NotificationResponseDto(notification));
     }
 
@@ -52,15 +56,27 @@ public class NotificationService {
 
   // 알림 읽음 처리
   @Transactional
-  public NotificationUpdateReadResponseDto updateNotificationRead(Long notificationId, User user) {
+  public NotificationUpdateReadResponseDto updateNotificationRead(Long notificationId, Long userId) {
     Notification findNotification = notificationRepository.findById(notificationId)
-        .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "조회한 알람이 존재하지 않습니다."));
+        .orElseThrow(() -> new HandledException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
-    if (!findNotification.getUser().getId().equals(user.getId())){
-      throw new HandledException(ErrorCode.FORBIDDEN, "알람을 받은 본인만 읽음 처리를 할 수 있습니다.");
+    if (!findNotification.getUser().getId().equals(userId)) {
+      throw new HandledException(ErrorCode.NOTIFICATION_MISMATCH);
     }
 
     findNotification.updateRead();
-    return new NotificationUpdateReadResponseDto(findNotification.getId(),findNotification.getIsRead());
+    return new NotificationUpdateReadResponseDto(findNotification.getId(), findNotification.getIsRead());
+  }
+
+  //알람 수신 여부
+  @Transactional
+  public NotificationAlarmResponseDto updateNotificationAlarm(Long userId, boolean isAlarmEnabled) {
+    User findUser = userRepository.findById(userId)
+        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+    // 알람 수신 여부 업데이트
+    findUser.updateAlarmSetting(isAlarmEnabled);
+
+    return new NotificationAlarmResponseDto(findUser.getIsAlarmEnabled(), findUser.getUpdatedAt());
   }
 }
+

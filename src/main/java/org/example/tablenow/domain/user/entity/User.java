@@ -65,4 +65,8 @@ public class User extends TimeStamped {
                 .userRole(UserRole.of(authUser.getAuthorities().iterator().next().getAuthority()))
                 .build();
     }
+
+    public void updateAlarmSetting(boolean isAlarmEnabled){
+        this.isAlarmEnabled = isAlarmEnabled;
+    }
 }
