@@ -15,6 +15,8 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken extends TimeStamped {
 
+    private static final long EXPIRATION_DAYS = 7; // 만료 시간 7일
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,12 +34,12 @@ public class RefreshToken extends TimeStamped {
     public RefreshToken(Long userId) {
         this.userId = userId;
         this.token = UUID.randomUUID().toString();
-        this.expiredAt = LocalDateTime.now().plusDays(7); // 만료 시간 7일
+        this.expiredAt = LocalDateTime.now().plusDays(EXPIRATION_DAYS);
     }
 
     public void updateToken() {
         this.token = UUID.randomUUID().toString();
-        this.expiredAt = LocalDateTime.now().plusDays(7); // 만료 시간 갱신
+        this.expiredAt = LocalDateTime.now().plusDays(EXPIRATION_DAYS); // 만료 시간 갱신
     }
 
     public boolean isExpired() {

@@ -15,7 +15,7 @@ import org.example.tablenow.global.exception.HandledException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api")
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
@@ -23,12 +23,12 @@ public class AuthController {
     private final AuthService authService;
     private static final int REFRESH_TOKEN_TIME = 7 * 24 * 60 * 60; // 7일
 
-    @PostMapping("/signup")
+    @PostMapping("/v1/auth/signup")
     public ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.ok(authService.signup(request));
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/v1/auth/signin")
     public ResponseEntity<AccessTokenResponse> signin(
             @Valid @RequestBody SigninRequest request,
             HttpServletResponse response
@@ -38,7 +38,7 @@ public class AuthController {
         return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));
     }
 
-    @PostMapping("/refresh")
+    @PostMapping("/v1/auth/refresh")
     public ResponseEntity<AccessTokenResponse> refreshToken(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
@@ -52,7 +52,7 @@ public class AuthController {
         return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/v1/auth/logout")
     public ResponseEntity<String> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
