@@ -43,6 +43,10 @@ public class EventService {
     public EventResponseDto updateEvent(Long id, EventUpdateRequestDto request) {
         Event event = getEvent(id);
 
+        if (event.getStatus() != EventStatus.READY) {
+            throw new HandledException(ErrorCode.INVALID_EVENT_STATUS);
+        }
+
         event.update(
                 request.getOpenAt(),
                 request.getEventTime(),
