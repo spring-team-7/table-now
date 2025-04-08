@@ -32,6 +32,15 @@ public enum ErrorCode {
     STORE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 가게의 요청 권한이 없습니다."),
     STORE_BAD_REQUEST_TIME(HttpStatus.BAD_REQUEST, "시작시간은 종료시간보다 이전이어야 합니다."),
 
+    // RESERVATION
+    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "예약이 존재하지 않습니다."),
+    RESERVATION_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 예약에 접근할 수 있는 권한이 없습니다."),
+    RESERVATION_DUPLICATE(HttpStatus.CONFLICT, "해당 시간에는 이미 예약이 존재합니다."),
+    RESERVATION_TIME_INVALID(HttpStatus.BAD_REQUEST, "예약 시간은 정각 또는 30분 단위여야 합니다."),
+    RESERVATION_STATUS_INVALID(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다."),
+    RESERVATION_STATUS_UPDATE_FORBIDDEN(HttpStatus.BAD_REQUEST, "예약 상태에서만 변경할 수 있습니다."),
+
+
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
