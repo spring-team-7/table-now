@@ -39,12 +39,12 @@ public class TokenService {
     @Transactional
     public RefreshToken validateRefreshToken(String token) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
-                .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "토큰이 존재하지 않습니다."));
+                .orElseThrow(() -> new HandledException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
         if (refreshToken.isExpired()) {
             // 토큰이 만료되었을 경우 삭제
             refreshTokenRepository.delete(refreshToken);
-            throw new HandledException(ErrorCode.AUTHORIZATION, "토큰이 만료되었습니다.");
+            throw new HandledException(ErrorCode.EXPIRED_REFRESH_TOKEN);
         }
 
         return refreshToken;

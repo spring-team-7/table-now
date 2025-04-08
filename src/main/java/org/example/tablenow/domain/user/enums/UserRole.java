@@ -21,7 +21,7 @@ public enum UserRole {
         return Arrays.stream(UserRole.values())
                 .filter(r -> r.name().equalsIgnoreCase(userRole))
                 .findFirst()
-                .orElseThrow(() -> new HandledException(ErrorCode.BAD_REQUEST, "유효하지 않은 UserRole입니다."));
+                .orElseThrow(() -> new HandledException(ErrorCode.INVALID_USER_ROLE));
     }
 
     public static class Authority {
