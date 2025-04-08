@@ -31,6 +31,7 @@ public enum ErrorCode {
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 가게를 찾을 수 없습니다."),
     STORE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 가게의 요청 권한이 없습니다."),
     STORE_BAD_REQUEST_TIME(HttpStatus.BAD_REQUEST, "시작시간은 종료시간보다 이전이어야 합니다."),
+    STORE_CLOSED_TIME(HttpStatus.BAD_REQUEST,"가게 영업시간이 아닙니다."),
 
     // RESERVATION
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "예약이 존재하지 않습니다."),
@@ -40,6 +41,10 @@ public enum ErrorCode {
     RESERVATION_STATUS_INVALID(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다."),
     RESERVATION_STATUS_UPDATE_FORBIDDEN(HttpStatus.BAD_REQUEST, "예약 상태에서만 변경할 수 있습니다."),
 
+    // EVENT
+    EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "이벤트가 존재하지 않습니다."),
+    EVENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 시간에 이벤트가 존재합니다."),
+    INVALID_EVENT_STATUS(HttpStatus.BAD_REQUEST, "현재 상태에서는 해당 작업을 수행할 수 없습니다."),
 
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 

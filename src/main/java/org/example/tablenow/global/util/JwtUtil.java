@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j(topic = "JwtUtil")
 @Component
@@ -46,6 +47,7 @@ public class JwtUtil {
                         .claim("nickname", nickname)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME))
                         .setIssuedAt(date) // 발급일
+                        .setId(UUID.randomUUID().toString()) // 고유 ID
                         .signWith(key, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
     }

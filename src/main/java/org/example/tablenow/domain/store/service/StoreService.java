@@ -114,7 +114,7 @@ public class StoreService {
 
         validStoreOwnerId(store, user);
 
-        storeRepository.delete(store);
+        store.delete();
         return StoreDeleteResponseDto.fromStore(store.getId());
     }
 
