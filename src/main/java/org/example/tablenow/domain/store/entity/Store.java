@@ -11,6 +11,8 @@ import org.example.tablenow.global.entity.TimeStamped;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -72,5 +74,21 @@ public class Store extends TimeStamped {
 
     public void delete() {
         this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isOpenAt(LocalDateTime dateTime) {
+        LocalTime time = dateTime.toLocalTime();
+        return !time.isBefore(this.startTime) && !time.isAfter(this.endTime);
+    }
+
+    public List<LocalTime> getStoreTimeSlots() {
+        List<LocalTime> timeSlots = new ArrayList<>();
+
+        LocalTime currentTime = this.startTime;
+        while (currentTime.isBefore(endTime)) {
+            timeSlots.add(currentTime);
+            currentTime = currentTime.plusHours(1);
+        }
+        return timeSlots;
     }
 }
