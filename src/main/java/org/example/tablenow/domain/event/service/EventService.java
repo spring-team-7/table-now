@@ -6,7 +6,7 @@ import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
 import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
-import org.example.tablenow.domain.event.entity.EventStatus;
+import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
+import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.global.entity.TimeStamped;
 
