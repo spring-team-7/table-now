@@ -2,15 +2,8 @@ spring:
   application:
     name: table-now
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-        use_sql_comments: true
-        dialect: org.hibernate.dialect.MySQLDialect
+  config:
+    import: optional:file:.env[.properties]
 
   security:
     oauth2:
