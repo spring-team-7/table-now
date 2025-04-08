@@ -6,10 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.reservation.dto.request.ReservationRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationStatusChangeRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationUpdateRequestDto;
-import org.example.tablenow.domain.reservation.dto.response.ReservationStatusResponseDto;
 import org.example.tablenow.domain.reservation.dto.response.ReservationResponseDto;
+import org.example.tablenow.domain.reservation.dto.response.ReservationStatusResponseDto;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.service.ReservationService;
+import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +54,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.getReservations(authUser, status, page, size));
     }
 
-    @Secured("ROLE_OWNER")
+    @Secured(UserRole.Authority.OWNER)
     @GetMapping("/v1/owner/stores/{storeId}/reservations")
     public ResponseEntity<Page<ReservationResponseDto>> getStoreReservations(
             @AuthenticationPrincipal AuthUser authUser,
@@ -65,7 +66,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.getStoreReservations(authUser, storeId, status, page, size));
     }
 
-    @Secured("ROLE_OWNER")
+    @Secured(UserRole.Authority.OWNER)
     @PatchMapping("/v1/owner/reservations/{id}")
     public ResponseEntity<ReservationStatusResponseDto> completeReservation(
             @AuthenticationPrincipal AuthUser authUser,
