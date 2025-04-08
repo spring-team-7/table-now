@@ -45,7 +45,6 @@ class NotificationServiceTest {
 
   @Test
   void 알림_정상_생성() {
-    when(user.getIsAlarmEnabled()).thenReturn(true);
 
     NotificationRequestDto notificationRequestDto = new NotificationRequestDto();
     ReflectionTestUtils.setField(notificationRequestDto, "userId", 1L);
@@ -53,8 +52,10 @@ class NotificationServiceTest {
     ReflectionTestUtils.setField(notificationRequestDto, "content", "예약 알림");
 
     when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    when(user.getIsAlarmEnabled()).thenReturn(true);
+
     when(notificationRepository.save(any(Notification.class)))
-        .thenReturn(new Notification(user, NotificationType.REMIND, "예약 알림"));
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     NotificationResponseDto result = notificationService.createNotification(notificationRequestDto);
 
