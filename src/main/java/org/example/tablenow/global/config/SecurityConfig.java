@@ -2,6 +2,7 @@ package org.example.tablenow.global.config;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.global.filter.JwtAuthenticationFilter;
+import org.example.tablenow.global.security.handler.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,6 +22,7 @@ import org.springframework.security.web.servletapi.SecurityContextHolderAwareReq
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,7 +41,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/v1/auth/kakao")
+                        .successHandler(oAuth2SuccessHandler)
                 )
                 .build();
     }

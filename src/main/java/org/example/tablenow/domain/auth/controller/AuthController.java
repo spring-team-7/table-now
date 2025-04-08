@@ -9,7 +9,8 @@ import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.AccessTokenResponse;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.service.AuthService;
-import org.example.tablenow.domain.auth.service.SocialAuthService;
+import org.example.tablenow.domain.auth.service.KakaoAuthService;
+import org.example.tablenow.domain.auth.service.NaverAuthService;
 import org.example.tablenow.domain.user.dto.response.UserResponse;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
@@ -22,7 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final SocialAuthService socialAuthService;
+    private final KakaoAuthService kakaoAuthService;
+    private final NaverAuthService naverAuthService;
     private static final int REFRESH_TOKEN_TIME = 7 * 24 * 60 * 60; // 7일
 
     @PostMapping("/v1/auth/signup")
@@ -80,7 +82,18 @@ public class AuthController {
             @RequestParam String code,
             HttpServletResponse response
     ) {
-        TokenResponse tokenResponse = socialAuthService.kakaoLogin(code);
+        TokenResponse tokenResponse = kakaoAuthService.login(code);
+
+        addRefreshTokenToCookie(response, tokenResponse.getRefreshToken());
+        return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));
+    }
+
+    @GetMapping("/v1/auth/naver")
+    public ResponseEntity<AccessTokenResponse> naverLogin(
+            @RequestParam String code,
+            HttpServletResponse response
+    ) {
+        TokenResponse tokenResponse = naverAuthService.login(code);
 
         addRefreshTokenToCookie(response, tokenResponse.getRefreshToken());
         return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));

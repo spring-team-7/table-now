@@ -1,11 +1,10 @@
 package org.example.tablenow.domain.auth.service;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
-import org.example.tablenow.domain.auth.oAuth.KakaoUserInfo;
+import org.example.tablenow.domain.auth.oAuth.NaverUserInfo;
 import org.example.tablenow.domain.auth.oAuth.OAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.OAuthProvider;
 import org.example.tablenow.domain.user.entity.User;
@@ -25,7 +24,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 @Service
-public class SocialAuthService {
+public class NaverAuthService {
 
     private final UserRepository userRepository;
     private final TokenService tokenService;
@@ -34,19 +33,14 @@ public class SocialAuthService {
     private final OAuthProperties OAuthProperties;
 
     @Transactional
-    public TokenResponse kakaoLogin(String code) {
-        // 1. 인가 코드로 액세스 토큰 요청
-        String kakaoAccessToken = getKakaoAccessToken(code);
+    public TokenResponse login(String code) {
+        String naverAccessToken = getNaverAccessToken(code);
+        Map<String, Object> userInfo = getNaverUserInfo(naverAccessToken);
+        NaverUserInfo naverUserInfo = NaverUserInfo.from(userInfo);
 
-        // 2. 액세스 토큰으로 사용자 정보 요청
-        Map<String, Object> userInfo = getKakaoUserInfo(kakaoAccessToken);
-        KakaoUserInfo kakaoUserInfo = KakaoUserInfo.from(userInfo);
+        User user = userRepository.findByEmail(naverUserInfo.getEmail())
+                .orElseGet(() -> registerNewUser(naverUserInfo));
 
-        // 3. 유저 정보 조회 또는 신규 회원 가입
-        User user = userRepository.findByEmail(kakaoUserInfo.getEmail())
-                .orElseGet(() -> registerNewUser(kakaoUserInfo));
-
-        // 4. JWT 토큰 생성
         String accessToken = tokenService.createAccessToken(user);
         String refreshToken = tokenService.createRefreshToken(user);
         return TokenResponse.builder()
@@ -55,16 +49,16 @@ public class SocialAuthService {
                 .build();
     }
 
-    private String getKakaoAccessToken(String code) {
+    private String getNaverAccessToken(String code) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", OAuthProperties.getRegistration().getKakao().getClientId());
-        formData.add("client_secret", OAuthProperties.getRegistration().getKakao().getClientSecret());
-        formData.add("redirect_uri", OAuthProperties.getRegistration().getKakao().getRedirectUri());
-        formData.add("grant_type", OAuthProperties.getRegistration().getKakao().getAuthorizationGrantType());
+        formData.add("client_id", OAuthProperties.getRegistration().getNaver().getClientId());
+        formData.add("client_secret", OAuthProperties.getRegistration().getNaver().getClientSecret());
+        formData.add("redirect_uri", OAuthProperties.getRegistration().getNaver().getRedirectUri());
+        formData.add("grant_type", OAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
         formData.add("code", code);
 
         return webClient.post()
-                .uri(OAuthProperties.getProvider().getKakao().getTokenUri())
+                .uri(OAuthProperties.getProvider().getNaver().getTokenUri())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(formData)
                 .retrieve()
@@ -73,13 +67,15 @@ public class SocialAuthService {
                 .block();
     }
 
-    private Map<String, Object> getKakaoUserInfo(String accessToken) {
-        return webClient.get()
-                .uri(OAuthProperties.getProvider().getKakao().getUserInfoUri())
+    private Map<String, Object> getNaverUserInfo(String accessToken) {
+        Map<String, Object> responseMap = webClient.get()
+                .uri(OAuthProperties.getProvider().getNaver().getUserInfoUri())
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
+
+        return (Map<String, Object>) responseMap.get("response");
     }
 
     private String extractAccessToken(String response) {
@@ -91,17 +87,17 @@ public class SocialAuthService {
         }
     }
 
-    private User registerNewUser(KakaoUserInfo kakaoUserInfo) {
-        User newUser = User.builder()
-                .email(kakaoUserInfo.getEmail())
-                .name(kakaoUserInfo.getName())
-                .nickname(kakaoUserInfo.getNickname())
+    private User registerNewUser(NaverUserInfo naverUserInfo) {
+        User user = User.builder()
+                .email(naverUserInfo.getEmail())
+                .name(naverUserInfo.getName())
+                .nickname(naverUserInfo.getNickname())
                 .userRole(UserRole.ROLE_USER)
-                .oauthId(kakaoUserInfo.getId())
-                .oauthProvider(OAuthProvider.KAKAO)
-                .imageUrl(kakaoUserInfo.getProfileImage())
-                .phoneNumber(kakaoUserInfo.getPhoneNumber())
+                .oauthId(naverUserInfo.getId())
+                .oauthProvider(OAuthProvider.NAVER)
+                .imageUrl(naverUserInfo.getProfileImage())
+                .phoneNumber(naverUserInfo.getPhoneNumber())
                 .build();
-        return userRepository.save(newUser);
+        return userRepository.save(user);
     }
 }
