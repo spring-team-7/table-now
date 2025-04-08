@@ -6,8 +6,8 @@ import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WaitlistRepository extends JpaRepository<Waitlist, Long> {
-  // 아직 알림을 받지 않은 대기 등록 존재 유무 판별
+  // 한 유저가 동일한 가게 중복 등록 방지
   boolean existsByUserAndStoreAndIsNotifiedFalse(User user, Store store);
-  // 대기 인원 체크용(알림 안받은 사람만)
+  // 해당 가게에서 대기 인원 수 조회 (알림 미수신만)
   long countByStoreAndIsNotifiedFalse(Store store);
 }
