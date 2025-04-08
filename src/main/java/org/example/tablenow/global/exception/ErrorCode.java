@@ -44,6 +44,7 @@ public enum ErrorCode {
     // EVENT
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "이벤트가 존재하지 않습니다."),
     EVENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 시간에 이벤트가 존재합니다."),
+    INVALID_EVENT_STATUS(HttpStatus.BAD_REQUEST, "현재 상태에서는 해당 작업을 수행할 수 없습니다."),
 
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
 
