@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.event.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
 import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
@@ -18,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService {
@@ -77,6 +82,17 @@ public class EventService {
 
         eventRepository.delete(event);
         return EventDeleteResponseDto.fromEvent(event);
+    }
+
+    @Transactional
+    public void openEventsIfDue() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Event> eventsToOpen = eventRepository.findAllByStatusAndOpenAtLessThanEqual(EventStatus.READY, now);
+
+        for (Event event : eventsToOpen) {
+            event.changeStatus(EventStatus.OPENED);
+            log.info("이벤트 오픈됨: id={}, store={}, openAt={}", event.getId(), event.getStore().getName(), event.getOpenAt());
+        }
     }
 
     protected Event getEvent(Long id) {

@@ -56,6 +56,10 @@ public class Event extends TimeStamped {
         if (limitPeople != null) this.limitPeople = limitPeople;
     }
 
+    public void changeStatus(EventStatus status) {
+        this.status = status;
+    }
+
     public static Event create(Store store, EventRequestDto dto) {
         return Event.builder()
                 .store(store)

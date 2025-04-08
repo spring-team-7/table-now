@@ -7,9 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
     boolean existsByStoreIdAndEventTime(Long storeId, LocalDateTime eventTime);
-
     Page<Event> findByStatus(EventStatus status, Pageable pageable);
+    List<Event> findAllByStatusAndOpenAtLessThanEqual(EventStatus status, LocalDateTime now);
 }
