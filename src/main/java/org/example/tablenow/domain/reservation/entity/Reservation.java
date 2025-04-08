@@ -44,24 +44,24 @@ public class Reservation extends TimeStamped {
     }
 
     public void updateReservedAt(LocalDateTime reservedAt) {
+        validateUpdatableStatus();
         this.reservedAt = reservedAt;
     }
 
     public void tryCancel() {
-        if (this.status == ReservationStatus.CANCELED) {
-            throw new HandledException(ErrorCode.RESERVATION_ALREADY_CANCELED);
-        }
+        validateUpdatableStatus();
         this.status = ReservationStatus.CANCELED;
         this.deletedAt = LocalDateTime.now();
     }
 
     public void updateStatus(ReservationStatus newStatus) {
-        if (this.status == newStatus) {
-            throw new HandledException(ErrorCode.RESERVATION_STATUS_ALREADY_SET);
-        }
-        if (this.status == ReservationStatus.CANCELED) {
-            throw new HandledException(ErrorCode.RESERVATION_ALREADY_CANCELED);
-        }
+        validateUpdatableStatus();
         this.status = newStatus;
+    }
+
+    private void validateUpdatableStatus() {
+        if (this.status != ReservationStatus.RESERVED) {
+            throw new HandledException(ErrorCode.RESERVATION_STATUS_UPDATE_FORBIDDEN);
+        }
     }
 }

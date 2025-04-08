@@ -57,7 +57,7 @@ public class ReservationService {
         Reservation reservation = getReservation(id);
 
         validateReservationOwner(reservation, user);
-        validateReservationUpdateDuplication(id, request, reservation);
+        validateReservationTimeDuplicated(id, request, reservation);
         reservation.updateReservedAt(request.getReservedAt());
 
         return ReservationResponseDto.fromReservation(reservation);
@@ -111,17 +111,13 @@ public class ReservationService {
                 .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
     }
 
-    private static void validateReservationOwner(Reservation reservation, User user) {
+    private void validateReservationOwner(Reservation reservation, User user) {
         if (!reservation.getUser().getId().equals(user.getId())) {
             throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
         }
     }
 
-    private void validateReservationUpdateDuplication(Long id, ReservationUpdateRequestDto request, Reservation reservation) {
-        if (reservation.getStatus() == ReservationStatus.CANCELED) {
-            throw new HandledException(ErrorCode.RESERVATION_ALREADY_CANCELED);
-        }
-
+    private void validateReservationTimeDuplicated(Long id, ReservationUpdateRequestDto request, Reservation reservation) {
         boolean isDuplicated = reservationRepository.existsByStoreIdAndReservedAtAndIdNot(
                 reservation.getStore().getId(),
                 request.getReservedAt(),
