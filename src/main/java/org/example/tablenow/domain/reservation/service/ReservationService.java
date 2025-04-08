@@ -41,7 +41,7 @@ public class ReservationService {
 
         validateReservedAtHalfHour(request.getReservedAt());
         if (!store.isOpenAt(request.getReservedAt())) {
-            throw new HandledException(ErrorCode.STORE_FORBIDDEN);
+            throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
         }
 
         Reservation reservation = Reservation.builder()
