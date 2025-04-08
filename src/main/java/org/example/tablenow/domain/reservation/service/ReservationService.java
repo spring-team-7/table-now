@@ -21,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
@@ -37,7 +39,10 @@ public class ReservationService {
             throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
         }
 
-        // TODO: 가게 오픈 및 마감시간 검증 필요
+        validateReservedAtHalfHour(request.getReservedAt());
+        if (!store.isOpenAt(request.getReservedAt())) {
+            throw new HandledException(ErrorCode.STORE_FORBIDDEN);
+        }
 
         Reservation reservation = Reservation.builder()
                 .user(user)
@@ -56,8 +61,7 @@ public class ReservationService {
         User user = User.fromAuthUser(authUser);
         Reservation reservation = getReservation(id);
 
-        validateReservationOwner(reservation, user);
-        validateReservationTimeDuplicated(id, request, reservation);
+        validateUpdatableReservation(user, id, request, reservation);
         reservation.updateReservedAt(request.getReservedAt());
 
         return ReservationResponseDto.fromReservation(reservation);
@@ -111,6 +115,12 @@ public class ReservationService {
                 .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
     }
 
+    private void validateUpdatableReservation(User user, Long id, ReservationUpdateRequestDto request, Reservation reservation) {
+        validateReservationOwner(reservation, user);
+        validateReservationTimeDuplicated(id, request, reservation);
+        validateReservedAtHalfHour(request.getReservedAt());
+    }
+
     private void validateReservationOwner(Reservation reservation, User user) {
         if (!reservation.getUser().getId().equals(user.getId())) {
             throw new HandledException(ErrorCode.RESERVATION_FORBIDDEN);
@@ -128,4 +138,12 @@ public class ReservationService {
             throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
         }
     }
+
+    private void validateReservedAtHalfHour(LocalDateTime reservedAt) {
+        int minute = reservedAt.getMinute();
+        if (minute != 0 && minute != 30) {
+            throw new HandledException(ErrorCode.RESERVATION_TIME_INVALID);
+        }
+    }
+
 }
