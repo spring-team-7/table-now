@@ -44,7 +44,7 @@ public class AuthController {
             HttpServletResponse response
     ) {
         if (refreshToken == null) {
-            throw new HandledException(ErrorCode.BAD_REQUEST, "리프레시 토큰이 없습니다.");
+            throw new HandledException(ErrorCode.REFRESH_TOKEN_MISSING);
         }
 
         TokenResponse tokenResponse = authService.refreshToken(refreshToken);
