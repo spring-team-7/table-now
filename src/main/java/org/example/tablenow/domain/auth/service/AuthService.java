@@ -25,7 +25,7 @@ public class AuthService {
     @Transactional
     public UserResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new HandledException(ErrorCode.CONFLICT, "이미 가입된 이메일입니다.");
+            throw new HandledException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -54,14 +54,14 @@ public class AuthService {
     @Transactional
     public TokenResponse signin(SigninRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "해당 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getDeletedAt() != null) {
-            throw new HandledException(ErrorCode.AUTHORIZATION, "이미 탈퇴한 사용자입니다.");
+            throw new HandledException(ErrorCode.ALREADY_DELETED_USER);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new HandledException(ErrorCode.AUTHORIZATION, "비밀번호가 일치하지 않습니다.");
+            throw new HandledException(ErrorCode.INCORRECT_PASSWORD);
         }
 
         return generateTokenResponse(user);
@@ -72,9 +72,13 @@ public class AuthService {
         RefreshToken refreshToken = tokenService.validateRefreshToken(token);
 
         User user = userRepository.findById(refreshToken.getUserId())
-                .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "해당 유저를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
         return generateTokenResponse(user);
+    }
+
+    @Transactional
+    public void logout(String token) {
+        tokenService.deleteRefreshToken(token);
     }
 
     private TokenResponse generateTokenResponse(User user) {
@@ -86,9 +90,5 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-    }
-
-    public void logout(String token) {
-        tokenService.deleteRefreshToken(token);
     }
 }
