@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.service.TokenService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
 import org.example.tablenow.domain.user.dto.request.UserDeleteRequest;
+import org.example.tablenow.domain.user.dto.response.UserProfileResponse;
 import org.example.tablenow.domain.user.dto.response.SimpleUserResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
@@ -48,6 +49,11 @@ public class UserService {
                 .id(user.getId())
                 .message("비밀번호가 성공적으로 수정되었습니다.")
                 .build();
+    }
+
+    public UserProfileResponse getUserProfile(AuthUser authUser) {
+        User user = findUserById(authUser.getId());
+        return UserProfileResponse.fromUser(user);
     }
 
     private User findUserById(Long id) {
