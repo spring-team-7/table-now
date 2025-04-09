@@ -13,6 +13,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,17 +77,21 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_등록 {
-        StoreCreateRequestDto dto = StoreCreateRequestDto.builder()
-                .name("맛있는 가게")
-                .description("가게 설명입니다.")
-                .address("서울특별시 강남구 테헤란로11길 1 1층")
-                .imageUrl(null)
-                .capacity(100)
-                .startTime(LocalTime.of(9, 00))
-                .endTime(LocalTime.of(21, 00))
-                .deposit(10000)
-                .categoryId(categoryId)
-                .build();
+        StoreCreateRequestDto dto = new StoreCreateRequestDto();
+
+        @BeforeEach
+        void setUp() {
+            ReflectionTestUtils.setField(dto, "name", "맛있는 가게");
+            ReflectionTestUtils.setField(dto, "description", "가게 설명입니다.");
+            ReflectionTestUtils.setField(dto, "address", "서울특별시 강남구 테헤란로11길 1 1층");
+            ReflectionTestUtils.setField(dto, "imageUrl", "대표이미지");
+            ReflectionTestUtils.setField(dto, "capacity", 100);
+            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(9, 00));
+            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(21, 00));
+            ReflectionTestUtils.setField(dto, "deposit", 10000);
+            ReflectionTestUtils.setField(dto, "categoryId", categoryId);
+        }
+
 
         @Test
         void 존재하지_않는_카테고리_조회_시_예외_발생() {
@@ -147,13 +152,15 @@ public class StoreServiceTest {
 
     @Nested
     class 내_가게_목록_조회 {
+        Long storeId1 = 1L;
         Store store1 = Store.builder()
-                .id(1L)
+                .id(storeId1)
                 .user(owner)
                 .category(category)
                 .build();
+        Long storeId2 = 2L;
         Store store2 = Store.builder()
-                .id(2L)
+                .id(storeId2)
                 .user(owner)
                 .category(category)
                 .build();
@@ -167,10 +174,16 @@ public class StoreServiceTest {
 
             // when
             List<StoreResponseDto> response = storeService.findMyStores(authOwner);
+            StoreResponseDto firstResult = response.get(0);
 
             // then
             assertNotNull(response);
             assertEquals(response.size(), 2);
+            assertAll(
+                    () -> assertEquals(firstResult.getStoreId(), storeId1),
+                    () -> assertEquals(firstResult.getUserId(), ownerId),
+                    () -> assertEquals(firstResult.getCategoryId(), categoryId)
+            );
         }
     }
 
@@ -178,17 +191,20 @@ public class StoreServiceTest {
     class 가게_수정 {
         Long categoryId2 = 2L;
         Category category2 = Category.builder().id(categoryId2).name("분식").build();
-        StoreUpdateRequestDto dto = StoreUpdateRequestDto.builder()
-                .name("더 맛있는 가게")
-                .description("더 맛있는 가게")
-                .address("서울특별시 강남구 테헤란로22길 2 2층")
-                .imageUrl("수정이미지")
-                .capacity(200)
-                .startTime(LocalTime.of(8, 00))
-                .endTime(LocalTime.of(22, 00))
-                .deposit(20000)
-                .categoryId(categoryId2)
-                .build();
+        StoreUpdateRequestDto dto = new StoreUpdateRequestDto();
+
+        @BeforeEach
+        void setUp() {
+            ReflectionTestUtils.setField(dto, "name", "더 맛있는 가게");
+            ReflectionTestUtils.setField(dto, "description", "더 맛있는 가게 설명입니다.");
+            ReflectionTestUtils.setField(dto, "address", "서울특별시 강남구 테헤란로22길 2 2층");
+            ReflectionTestUtils.setField(dto, "imageUrl", "수정이미지");
+            ReflectionTestUtils.setField(dto, "capacity", 200);
+            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(8, 00));
+            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(22, 00));
+            ReflectionTestUtils.setField(dto, "deposit", 20000);
+            ReflectionTestUtils.setField(dto, "categoryId", categoryId2);
+        }
 
         @Test
         void 존재하지_않는_가게_조회_시_예외_발생() {
@@ -244,7 +260,7 @@ public class StoreServiceTest {
 
         @Test
         void 요청_데이터가_비어있을_경우_수정_성공() {
-            StoreUpdateRequestDto emptyDto = StoreUpdateRequestDto.builder().build();
+            StoreUpdateRequestDto emptyDto = new StoreUpdateRequestDto();
             // given
             given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
 
@@ -253,11 +269,13 @@ public class StoreServiceTest {
 
             // then
             assertNotNull(response);
-            assertEquals(response.getName(), store.getName());
-            assertEquals(response.getImageUrl(), store.getImageUrl());
-            assertEquals(response.getStartTime(), store.getStartTime());
-            assertEquals(response.getEndTime(), store.getEndTime());
-            assertEquals(response.getCategoryId(), store.getCategory().getId());
+            assertAll(
+                    () -> assertEquals(response.getName(), store.getName()),
+                    () -> assertEquals(response.getImageUrl(), store.getImageUrl()),
+                    () -> assertEquals(response.getStartTime(), store.getStartTime()),
+                    () -> assertEquals(response.getEndTime(), store.getEndTime()),
+                    () -> assertEquals(response.getCategoryId(), store.getCategory().getId())
+            );
         }
 
         @Test
@@ -271,11 +289,13 @@ public class StoreServiceTest {
 
             // then
             assertNotNull(response);
-            assertEquals(response.getName(), dto.getName());
-            assertEquals(response.getImageUrl(), dto.getImageUrl());
-            assertEquals(response.getStartTime(), dto.getStartTime());
-            assertEquals(response.getEndTime(), dto.getEndTime());
-            assertEquals(response.getCategoryId(), dto.getCategoryId());
+            assertAll(
+                    () -> assertEquals(response.getName(), dto.getName()),
+                    () -> assertEquals(response.getImageUrl(), dto.getImageUrl()),
+                    () -> assertEquals(response.getStartTime(), dto.getStartTime()),
+                    () -> assertEquals(response.getEndTime(), dto.getEndTime()),
+                    () -> assertEquals(response.getCategoryId(), dto.getCategoryId())
+            );
         }
     }
 
