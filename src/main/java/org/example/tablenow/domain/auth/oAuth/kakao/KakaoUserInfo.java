@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.auth.oAuth;
+package org.example.tablenow.domain.auth.oAuth.kakao;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.tablenow.domain.auth.oAuth.OAuthProvider;
+import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.entity.TimeStamped;

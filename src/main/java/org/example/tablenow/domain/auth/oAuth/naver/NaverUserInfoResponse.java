@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.auth.oAuth;
+package org.example.tablenow.domain.auth.oAuth.naver;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
