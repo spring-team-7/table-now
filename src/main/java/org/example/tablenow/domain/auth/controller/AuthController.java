@@ -11,7 +11,7 @@ import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.service.AuthService;
 import org.example.tablenow.domain.auth.service.KakaoAuthService;
 import org.example.tablenow.domain.auth.service.NaverAuthService;
-import org.example.tablenow.domain.user.dto.response.UserResponse;
+import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class AuthController {
     private static final int REFRESH_TOKEN_TIME = 7 * 24 * 60 * 60; // 7일
 
     @PostMapping("/v1/auth/signup")
-    public ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.ok(authService.signup(request));
     }
 
