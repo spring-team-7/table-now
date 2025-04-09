@@ -7,7 +7,7 @@ import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
 import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
-import org.example.tablenow.domain.event.entity.EventStatus;
+import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.service.EventService;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.springframework.data.domain.Page;

@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.entity.TimeStamped;
@@ -20,6 +21,7 @@ public class User extends TimeStamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String email;
 
     private String password;
@@ -38,16 +40,18 @@ public class User extends TimeStamped {
 
     private String imageUrl;
 
-    private String oAuthProvider;
+    @Enumerated(EnumType.STRING)
+    private OAuthProvider oauthProvider;
 
-    private String oAuthId;
+    private String oauthId;
 
     private Boolean isAlarmEnabled;
 
     private LocalDateTime deletedAt;
 
     @Builder
-    public User(Long id, String email, String password, String name, String nickname, String phoneNumber, UserRole userRole) {
+    public User(Long id, String email, String password, String name, String nickname, String phoneNumber, UserRole userRole,
+                String oauthId, OAuthProvider oauthProvider, String imageUrl) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -55,6 +59,9 @@ public class User extends TimeStamped {
         this.nickname = nickname;
         this.phoneNumber = phoneNumber;
         this.userRole = userRole;
+        this.oauthId = oauthId;
+        this.oauthProvider = oauthProvider;
+        this.imageUrl = imageUrl;
     }
 
     public static User fromAuthUser(AuthUser authUser) {
@@ -64,5 +71,9 @@ public class User extends TimeStamped {
                 .nickname(authUser.getNickname())
                 .userRole(UserRole.of(authUser.getAuthorities().iterator().next().getAuthority()))
                 .build();
+    }
+
+    public void updateAlarmSetting(boolean isAlarmEnabled){
+        this.isAlarmEnabled = isAlarmEnabled;
     }
 }

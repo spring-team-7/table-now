@@ -24,7 +24,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponseDto saveCategory(CategoryRequestDto requestDto) {
-        findCategoryByName(requestDto.getName()).ifPresent(category -> {
+        findCategoryByName(requestDto.getName()).ifPresent(it -> {
             throw new HandledException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         });
         Category category = Category.builder().name(requestDto.getName()).build();
@@ -35,6 +35,9 @@ public class CategoryService {
     @Transactional
     public CategoryResponseDto updateCategory(Long id, CategoryRequestDto requestDto) {
         Category category = findCategory(id);
+        findCategoryByName(requestDto.getName()).ifPresent(it -> {
+            throw new HandledException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+        });
         category.updateName(requestDto.getName());
         return CategoryResponseDto.fromCategory(category);
     }
