@@ -1,0 +1,19 @@
+package org.example.tablenow.domain.notification.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import org.example.tablenow.domain.notification.enums.NotificationType;
+
+@Getter
+public class NotificationRequestDto {
+
+  @NotNull(message = "userId를 입력해주세요.")
+  private Long userId;
+
+  @NotNull(message = "알림 타입을 입력해주세요.")
+  private NotificationType type;
+
+  @NotBlank(message = "알림 내용을 입력해주세요.")
+  private String content;
+}
