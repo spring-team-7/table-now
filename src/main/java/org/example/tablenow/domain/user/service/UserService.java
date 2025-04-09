@@ -3,9 +3,10 @@ package org.example.tablenow.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.service.TokenService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
+import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
 import org.example.tablenow.domain.user.dto.request.UserDeleteRequest;
-import org.example.tablenow.domain.user.dto.response.UserProfileResponse;
 import org.example.tablenow.domain.user.dto.response.SimpleUserResponse;
+import org.example.tablenow.domain.user.dto.response.UserProfileResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.dto.AuthUser;
@@ -51,8 +52,24 @@ public class UserService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(AuthUser authUser) {
         User user = findUserById(authUser.getId());
+        return UserProfileResponse.fromUser(user);
+    }
+
+    @Transactional
+    public UserProfileResponse updateUserProfile(AuthUser authUser, UpdateProfileRequest request) {
+        User user = findUserById(authUser.getId());
+
+        if (request.getNickname() != null) {
+            user.updateNickname(request.getNickname());
+        }
+
+        if (request.getPhoneNumber() != null) {
+            user.updatePhoneNumber(request.getPhoneNumber());
+        }
+
         return UserProfileResponse.fromUser(user);
     }
 

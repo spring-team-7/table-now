@@ -84,4 +84,12 @@ public class User extends TimeStamped {
     public void updatePassword(String newPassword) {
         this.password = newPassword;
     }
+
+    public void updateNickname(String newNickname) {
+        this.nickname = newNickname;
+    }
+
+    public void updatePhoneNumber(String newPhoneNumber) {
+        this.phoneNumber = newPhoneNumber;
+    }
 }

@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
+import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
 import org.example.tablenow.domain.user.dto.request.UserDeleteRequest;
 import org.example.tablenow.domain.user.dto.response.UserProfileResponse;
 import org.example.tablenow.domain.user.dto.response.SimpleUserResponse;
@@ -49,5 +50,13 @@ public class UserController {
     @GetMapping("v1/users")
     public ResponseEntity<UserProfileResponse> getUserProfile(@AuthenticationPrincipal AuthUser authUser) {
         return ResponseEntity.ok(userService.getUserProfile(authUser));
+    }
+
+    @PatchMapping("v1/users")
+    public ResponseEntity<UserProfileResponse> updateUserProfile(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        return ResponseEntity.ok(userService.updateUserProfile(authUser, request));
     }
 }

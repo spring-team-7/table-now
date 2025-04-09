@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.user.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.user.entity.User;
@@ -13,7 +14,8 @@ public class UserProfileResponse {
     private final String nickname;
     private final String phoneNumber;
     private final String imageUrl;
-    private final boolean isSocialUser;
+    @JsonProperty("isSocialUser")
+    private final boolean socialUser;
 
     public static UserProfileResponse fromUser(User user) {
         return UserProfileResponse.builder()
@@ -23,7 +25,7 @@ public class UserProfileResponse {
                 .nickname(user.getNickname())
                 .phoneNumber(user.getPhoneNumber())
                 .imageUrl(user.getImageUrl())
-                .isSocialUser(user.getOauthProvider() != null)
+                .socialUser(user.getOauthProvider() != null)
                 .build();
     }
 }
