@@ -1,0 +1,480 @@
+package org.example.tablenow.domain.store.service;
+
+import org.example.tablenow.domain.category.entity.Category;
+import org.example.tablenow.domain.category.service.CategoryService;
+import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
+import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
+import org.example.tablenow.domain.store.dto.response.*;
+import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.repository.StoreRepository;
+import org.example.tablenow.domain.store.util.StoreRedisKey;
+import org.example.tablenow.domain.user.entity.User;
+import org.example.tablenow.domain.user.enums.UserRole;
+import org.example.tablenow.global.dto.AuthUser;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.DefaultTypedTuple;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.LocalTime;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+
+@ExtendWith(MockitoExtension.class)
+public class StoreServiceTest {
+
+    @Mock
+    private StoreRepository storeRepository;
+    @Mock
+    private CategoryService categoryService;
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+    @Mock
+    private ZSetOperations<String, String> zSetOperations;
+
+    @InjectMocks
+    private StoreService storeService;
+
+    Long userId = 1L;
+    Long ownerId = 2L;
+    AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+    User user = User.fromAuthUser(authUser);
+    AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+    User owner = User.fromAuthUser(authOwner);
+
+    Long categoryId = 1L;
+    Category category = Category.builder().id(categoryId).name("한식").build();
+
+    Long storeId = 1L;
+    Store store = Store.builder()
+            .id(storeId)
+            .name("맛있는 가게")
+            .description("가게 설명입니다.")
+            .address("서울특별시 강남구 테헤란로11길 1 1층")
+            .imageUrl(null)
+            .capacity(100)
+            .startTime(LocalTime.of(9, 00))
+            .endTime(LocalTime.of(21, 00))
+            .deposit(10000)
+            .user(owner)
+            .category(category)
+            .build();
+
+    @Nested
+    class 가게_등록 {
+        StoreCreateRequestDto dto = StoreCreateRequestDto.builder()
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .categoryId(categoryId)
+                .build();
+
+        @Test
+        void 존재하지_않는_카테고리_조회_시_예외_발생() {
+            // given
+            given(categoryService.findCategory(anyLong()))
+                    .willThrow(new HandledException(ErrorCode.CATEGORY_NOT_FOUND));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.saveStore(authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.CATEGORY_NOT_FOUND.getDefaultMessage());
+        }
+
+        @Test
+        void 가게_시작_시간이_종료_시간_이후인_경우_예외_발생() {
+            // given
+            given(categoryService.findCategory(anyLong())).willReturn(category);
+            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(22, 00));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.saveStore(authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_BAD_REQUEST_TIME.getDefaultMessage());
+        }
+
+        @Test
+        void 가게_최대_등록_수를_초과하는_경우_예외_발생() {
+            // given
+            given(categoryService.findCategory(anyLong())).willReturn(category);
+            given(storeRepository.countActiveStoresByUser(anyLong())).willReturn(3L);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.saveStore(authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_EXCEED_MAX.getDefaultMessage());
+        }
+
+        @Test
+        void 등록_성공() {
+            // given
+            given(categoryService.findCategory(anyLong())).willReturn(category);
+            given(storeRepository.countActiveStoresByUser(anyLong())).willReturn(0L);
+            given(storeRepository.save(any(Store.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+            // when
+            StoreCreateResponseDto response = storeService.saveStore(authOwner, dto);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getName(), dto.getName());
+            assertEquals(response.getUserId(), authOwner.getId());
+            assertEquals(response.getCategoryId(), category.getId());
+        }
+    }
+
+    @Nested
+    class 내_가게_목록_조회 {
+        Store store1 = Store.builder()
+                .id(1L)
+                .user(owner)
+                .category(category)
+                .build();
+        Store store2 = Store.builder()
+                .id(2L)
+                .user(owner)
+                .category(category)
+                .build();
+
+        @Test
+        void 조회_성공() {
+            // given
+            List<Store> stores = List.of(store1, store2);
+            List<StoreResponseDto> findResult = stores.stream().map(StoreResponseDto::fromStore).toList();
+            given(storeRepository.findAllByUserId(anyLong())).willReturn(findResult);
+
+            // when
+            List<StoreResponseDto> response = storeService.findMyStores(authOwner);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.size(), 2);
+        }
+    }
+
+    @Nested
+    class 가게_수정 {
+        Long categoryId2 = 2L;
+        Category category2 = Category.builder().id(categoryId2).name("분식").build();
+        StoreUpdateRequestDto dto = StoreUpdateRequestDto.builder()
+                .name("더 맛있는 가게")
+                .description("더 맛있는 가게")
+                .address("서울특별시 강남구 테헤란로22길 2 2층")
+                .imageUrl("수정이미지")
+                .capacity(200)
+                .startTime(LocalTime.of(8, 00))
+                .endTime(LocalTime.of(22, 00))
+                .deposit(20000)
+                .categoryId(categoryId2)
+                .build();
+
+        @Test
+        void 존재하지_않는_가게_조회_시_예외_발생() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.updateStore(storeId, authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_NOT_FOUND.getDefaultMessage());
+        }
+
+        @Test
+        void 가게_주인이_아닌_경우_예외_발생() {
+            // given
+            ReflectionTestUtils.setField(store, "user", user);
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.updateStore(storeId, authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_FORBIDDEN.getDefaultMessage());
+        }
+
+        @Test
+        void 존재하지_않는_카테고리_조회_시_예외_발생() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+            given(categoryService.findCategory(anyLong()))
+                    .willThrow(new HandledException(ErrorCode.CATEGORY_NOT_FOUND));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.updateStore(storeId, authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.CATEGORY_NOT_FOUND.getDefaultMessage());
+        }
+
+        @Test
+        void 가게_시작_시간이_종료_시간_이후인_경우_예외_발생() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(7, 30));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.updateStore(storeId, authOwner, dto)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_BAD_REQUEST_TIME.getDefaultMessage());
+        }
+
+        @Test
+        void 요청_데이터가_비어있을_경우_수정_성공() {
+            StoreUpdateRequestDto emptyDto = StoreUpdateRequestDto.builder().build();
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, emptyDto);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getName(), store.getName());
+            assertEquals(response.getImageUrl(), store.getImageUrl());
+            assertEquals(response.getStartTime(), store.getStartTime());
+            assertEquals(response.getEndTime(), store.getEndTime());
+            assertEquals(response.getCategoryId(), store.getCategory().getId());
+        }
+
+        @Test
+        void 수정_성공() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+            given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+            // when
+            StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getName(), dto.getName());
+            assertEquals(response.getImageUrl(), dto.getImageUrl());
+            assertEquals(response.getStartTime(), dto.getStartTime());
+            assertEquals(response.getEndTime(), dto.getEndTime());
+            assertEquals(response.getCategoryId(), dto.getCategoryId());
+        }
+    }
+
+    @Nested
+    class 가게_삭제 {
+        @Test
+        void 존재하지_않는_가게_조회_시_예외_발생() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.deleteStore(storeId, authOwner)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_NOT_FOUND.getDefaultMessage());
+        }
+
+        @Test
+        void 가게_주인이_아닌_경우_예외_발생() {
+            // given
+            ReflectionTestUtils.setField(store, "user", user);
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.deleteStore(storeId, authOwner)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_FORBIDDEN.getDefaultMessage());
+        }
+
+        @Test
+        void 삭제_성공() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreDeleteResponseDto response = storeService.deleteStore(storeId, authOwner);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getStoreId(), storeId);
+        }
+    }
+
+    @Nested
+    class 가게_목록_조회 {
+        @Test
+        void asc_desc_외_정렬_입력_시_예외_발생() {
+            // given
+            String sortField = "name";
+            String sortOrder = "average";
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.findAllStores(1, 10, sortField, sortOrder, null, null)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.INVALID_ORDER_VALUE.getDefaultMessage());
+        }
+
+        @Test
+        void 존재하지_않는_정렬_기준_입력_시_예외_발생() {
+            // given
+            String sortField = "description";
+            String sortOrder = "asc";
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.findAllStores(1, 10, sortField, sortOrder, null, null)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.INVALID_SORT_FIELD.getDefaultMessage());
+        }
+
+        @Test
+        void 검색어_제외_조회_성공() {
+            // given
+            int page = 1;
+            int size = 10;
+            String sortField = "createdAt";
+            String sortOrder = "desc";
+
+            Page<StoreSearchResponseDto> result = new PageImpl<>(List.of(StoreSearchResponseDto.fromStore(store)));
+            given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
+
+            // when
+            Page<StoreSearchResponseDto> response = storeService.findAllStores(page, size, sortField, sortOrder, categoryId, "");
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getTotalElements(), 1);
+        }
+
+        @Test
+        void 조회_성공() {
+            // given
+            int page = 1;
+            int size = 10;
+            String sortField = "createdAt";
+            String sortOrder = "desc";
+            String search = "맛있는";
+            Set<ZSetOperations.TypedTuple<String>> mockResult = new HashSet<>();
+
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.incrementScore(StoreRedisKey.STORE_RANK_KEY, search, 1L)).willReturn(1.0);
+
+            Page<StoreSearchResponseDto> result = new PageImpl<>(List.of(StoreSearchResponseDto.fromStore(store)));
+            given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
+
+            // when
+            Page<StoreSearchResponseDto> response = storeService.findAllStores(page, size, sortField, sortOrder, categoryId, search);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getTotalElements(), 1);
+        }
+    }
+
+    @Nested
+    class 가게_상세_조회 {
+
+        @Test
+        void 존재하지_않는_가게_조회_시_예외_발생() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.findStore(storeId)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_NOT_FOUND.getDefaultMessage());
+        }
+
+        @Test
+        void 조회_성공() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreResponseDto response = storeService.findStore(storeId);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getStoreId(), storeId);
+            assertEquals(response.getName(), store.getName());
+        }
+    }
+
+    @Nested
+    class 가게_인기_검색_랭킹_조회 {
+        int limit = 10;
+        Set<ZSetOperations.TypedTuple<String>> mockResult = new HashSet<>();
+        ZSetOperations.TypedTuple<String> tuple1 = new DefaultTypedTuple<>("김치찌개", 100.0);
+        ZSetOperations.TypedTuple<String> tuple2 = new DefaultTypedTuple<>("제육볶음", 90.0);
+
+        @Test
+        void 캐시_키_초기화_후_조회_성공() {
+            // given
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1))
+                    .willReturn(null);
+
+            // when
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.size(), 0);
+        }
+
+        @Test
+        void 캐시_빈_내부_데이터_조회_성공() {
+            // given
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1))
+                    .willReturn(Collections.emptySet());
+
+            // when
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.size(), 0);
+        }
+
+        @Test
+        void 조회_성공() {
+            // given
+            mockResult.add(tuple1);
+            mockResult.add(tuple2);
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1))
+                    .willReturn(mockResult);
+
+            // when
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.size(), 2);
+        }
+    }
+
+}

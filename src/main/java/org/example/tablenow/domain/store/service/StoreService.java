@@ -7,6 +7,7 @@ import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.enums.StoreSortField;
 import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.store.util.StoreRedisKey;
 import org.example.tablenow.domain.store.util.StoreUtils;
@@ -119,15 +120,19 @@ public class StoreService {
     }
 
     public Page<StoreSearchResponseDto> findAllStores(int page, int size, String sort, String direction, Long categoryId, String search) {
-        Sort sortOption = Sort.by(Sort.Direction.fromString(direction), sort);
-        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+        try {
+            Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
+            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
-        // TODO 사용자 기준 어뷰징 방지
-        if (StringUtils.hasText(search)) {
-            String keyword = StoreUtils.normalizeKeyword(search);
-            redisTemplate.opsForZSet().incrementScore(StoreRedisKey.STORE_RANK_KEY, keyword, 1);
+            // TODO 사용자 기준 어뷰징 방지
+            if (StringUtils.hasText(search)) {
+                String keyword = StoreUtils.normalizeKeyword(search);
+                redisTemplate.opsForZSet().incrementScore(StoreRedisKey.STORE_RANK_KEY, keyword, 1);
+            }
+            return storeRepository.searchStores(pageable, categoryId, search);
+        } catch (IllegalArgumentException e) {
+            throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
         }
-        return storeRepository.searchStores(pageable, categoryId, search);
     }
 
     public StoreResponseDto findStore(Long id) {
@@ -155,7 +160,7 @@ public class StoreService {
     }
 
     public Store getStore(Long id) {
-        return storeRepository.findById(id)
+        return storeRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
     }
 
@@ -168,7 +173,7 @@ public class StoreService {
 
     private void validStoreTimes(LocalTime startTime, LocalTime endTime) {
         if (!startTime.isBefore(endTime)) {
-            throw new HandledException(ErrorCode.BAD_REQUEST);
+            throw new HandledException(ErrorCode.STORE_BAD_REQUEST_TIME);
         }
     }
 }
