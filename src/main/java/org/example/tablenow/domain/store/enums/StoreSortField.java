@@ -3,7 +3,6 @@ package org.example.tablenow.domain.store.enums;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
-import org.apache.coyote.BadRequestException;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 
@@ -45,4 +44,14 @@ public enum StoreSortField {
         }
         throw new HandledException(ErrorCode.BAD_REQUEST);
     }
+
+    public static String fromString(String property) {
+        for (StoreSortField field : values()) {
+            if (field.property.equals(property)) {
+                return field.property;
+            }
+        }
+        throw new HandledException(ErrorCode.INVALID_SORT_FIELD);
+    }
+
 }
