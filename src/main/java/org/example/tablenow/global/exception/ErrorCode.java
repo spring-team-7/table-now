@@ -48,12 +48,12 @@ public enum ErrorCode {
 
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
 
-    // 알림
+    // NOTIFICATION
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림이 존재하지 않습니다."),
     NOTIFICATION_DISABLED(HttpStatus.FORBIDDEN, "알림 수신을 거부한 사용자입니다."),
     NOTIFICATION_MISMATCH(HttpStatus.FORBIDDEN, "알람을 받은 본인만 읽음 처리를 할 수 있습니다."),
 
-    // 대기 등록
+    // WAITLIST
     WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT,"이미 대기중인 사용자 입니다."),
     WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다.");
 

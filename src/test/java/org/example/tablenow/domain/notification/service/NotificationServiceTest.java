@@ -180,6 +180,43 @@ class NotificationServiceTest {
     assertEquals(ErrorCode.NOTIFICATION_MISMATCH.getStatus(), exception.getHttpStatus());
   }
 
+    @Test
+    void 전체_읽음처리_성공() {
+      // given
+      Notification n1 = new Notification(user, NotificationType.REMIND, "알림1");
+      Notification n2 = new Notification(user, NotificationType.VACANCY, "알림2");
+
+      ReflectionTestUtils.setField(n1, "id", 10L);
+      ReflectionTestUtils.setField(n2, "id", 11L);
+      ReflectionTestUtils.setField(user, "id", 1L);
+
+      given(userRepository.findById(1L)).willReturn(Optional.of(user));
+      given(notificationRepository.findAllByUserAndIsReadFalse(user)).willReturn(List.of(n1, n2));
+
+      // when
+      List<NotificationUpdateReadResponseDto> result =
+          notificationService.updateAllNotificationRead(1L);
+
+      // then
+      assertTrue(result.get(0).getIsRead());
+      assertTrue(n1.getIsRead());
+      assertTrue(n2.getIsRead());
+    }
+
+    @Test
+    void 유저를_찾지_못해서_전체읽음_실패() {
+      // given
+      given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+      // when & then
+      HandledException exception = assertThrows(HandledException.class, () -> {
+        notificationService.updateAllNotificationRead(1L);
+      });
+
+      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+    }
+
+
   @Test
   void 알람_수신_설정_변경_성공() {
     // given

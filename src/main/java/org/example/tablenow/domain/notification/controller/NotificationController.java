@@ -17,11 +17,12 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class NotificationController {
   private final NotificationService notificationService;
 
   // 알림 생성
-  @PostMapping("/api/v1/notifications")
+  @PostMapping("/v1/notifications")
   public ResponseEntity<NotificationResponseDto> createNotification(
       @Valid @RequestBody NotificationRequestDto requestDto) {
     NotificationResponseDto notificationResponseDto = notificationService.createNotification(requestDto);
@@ -29,14 +30,14 @@ public class NotificationController {
   }
 
   // 알림 조회
-  @GetMapping("/api/v1/notifications")
+  @GetMapping("/v1/notifications")
   public ResponseEntity<List<NotificationResponseDto>> getNotifications(@AuthenticationPrincipal AuthUser authUser) {
     List<NotificationResponseDto> responseDtos = notificationService.findNotifications(authUser.getId());
     return ResponseEntity.ok(responseDtos);
   }
 
   // 알림 읽음 처리
-  @PatchMapping("/api/v1/notifications/{notificationId}")
+  @PatchMapping("/v1/notifications/{notificationId}")
   public ResponseEntity<NotificationUpdateReadResponseDto> updateNotificationRead(
       @PathVariable Long notificationId,
       @AuthenticationPrincipal AuthUser authUser) {
@@ -44,8 +45,15 @@ public class NotificationController {
     return ResponseEntity.ok(notificationUpdateReadResponseDto);
   }
 
+  // 알림 전체 읽음 처리
+  @PatchMapping("/v1/notifications/readAll")
+  public ResponseEntity<List<NotificationUpdateReadResponseDto>> updateAllNotificationRead(@AuthenticationPrincipal AuthUser authUser){
+    List<NotificationUpdateReadResponseDto> notificationUpdateReadResponseDtos = notificationService.updateAllNotificationRead(authUser.getId());
+    return ResponseEntity.ok(notificationUpdateReadResponseDtos);
+  }
+
   // 알림 수신 여부
-  @PatchMapping("/api/v1/notifications/settings")
+  @PatchMapping("/v1/notifications/settings")
   public ResponseEntity<NotificationAlarmResponseDto> updateNotificationAlarm(
       @RequestBody NotificationAlarmRequestDto requestDto,
       @AuthenticationPrincipal AuthUser authUser) {

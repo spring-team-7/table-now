@@ -43,6 +43,6 @@ public class WaitlistService {
     Waitlist waitlist = new Waitlist(findUser, findStore);
     waitlistRepository.save(waitlist);
 
-    return WaitlistResponseDto.from(waitlist);
+    return WaitlistResponseDto.fromWaitlist(waitlist);
   }
 }

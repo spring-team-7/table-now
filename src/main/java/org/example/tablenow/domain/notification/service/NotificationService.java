@@ -36,7 +36,7 @@ public class NotificationService {
     Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
     notificationRepository.save(notification);
 
-    return NotificationResponseDto.from(notification);
+    return NotificationResponseDto.fromNotification(notification);
   }
 
   // 알림 조회
@@ -47,7 +47,7 @@ public class NotificationService {
 
     List<Notification> notificationList = notificationRepository.findAllByUserOrderByCreatedAtDesc(findUser);
     return notificationList.stream()
-        .map(NotificationResponseDto::from)
+        .map(NotificationResponseDto::fromNotification)
         .toList();
   }
 
@@ -62,7 +62,20 @@ public class NotificationService {
     }
 
     findNotification.updateRead();
-    return NotificationUpdateReadResponseDto.from(findNotification);
+    return NotificationUpdateReadResponseDto.fromNotification(findNotification);
+  }
+
+  // 알림 전체 읽음 처리
+  @Transactional
+  public List<NotificationUpdateReadResponseDto> updateAllNotificationRead(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+
+    List<Notification> notificationList = notificationRepository.findAllByUserAndIsReadFalse(user);
+    return notificationList.stream()
+        .peek(Notification::updateRead)
+        .map(NotificationUpdateReadResponseDto::fromNotification)
+        .toList();
   }
 
   //알람 수신 여부
@@ -73,7 +86,8 @@ public class NotificationService {
     // 알람 수신 여부 업데이트
     findUser.updateAlarmSetting(isAlarmEnabled);
 
-    return NotificationAlarmResponseDto.from(findUser);
+    return NotificationAlarmResponseDto.fromNotification(findUser);
   }
+
 }
 

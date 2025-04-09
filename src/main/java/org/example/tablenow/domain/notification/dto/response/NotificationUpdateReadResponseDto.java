@@ -16,7 +16,7 @@ public class NotificationUpdateReadResponseDto {
     this.isRead = isRead;
   }
 
-  public static NotificationUpdateReadResponseDto from(Notification notification) {
+  public static NotificationUpdateReadResponseDto fromNotification(Notification notification) {
     return NotificationUpdateReadResponseDto.builder()
         .notificationId(notification.getId())
         .isRead(notification.getIsRead())

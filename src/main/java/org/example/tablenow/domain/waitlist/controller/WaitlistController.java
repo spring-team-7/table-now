@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/waitlist")
+@RequestMapping("/api")
 public class WaitlistController {
   private final WaitlistService waitlistService;
   // 빈자리 대기 등록
-  @PostMapping
+  @PostMapping("/v1/waitlist")
   public ResponseEntity<WaitlistResponseDto> registerWaitlist(
       @Valid @RequestBody WaitlistRequestDto requestDto,
       @AuthenticationPrincipal AuthUser authUser){
