@@ -14,19 +14,19 @@ public class PaymentCancelResponseDto {
     private final long paymentId;
     private final long reservationId;
     private final long userId;
-    private final String paymentNumber;
+    private final String paymentKey;
     private final String method;
     private final int price;
     private final PaymentStatus status;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public static PaymentCancelResponseDto from(Payment payment) {
+    public static PaymentCancelResponseDto fromPayment(Payment payment) {
         return new PaymentCancelResponseDto(
                 payment.getId(),
                 payment.getReservation().getId(),
                 payment.getUser().getId(),
-                payment.getPaymentNumber(),
+                payment.getPaymentKey(),
                 payment.getMethod(),
                 payment.getPrice(),
                 payment.getStatus(),

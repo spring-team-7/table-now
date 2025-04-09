@@ -13,13 +13,13 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/reservations/{reservationId}/payments")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping
+    @PostMapping("/v1/reservations/{reservationId}/payments")
     public ResponseEntity<PaymentCreateResponseDto> confirmPayment(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long reservationId,
@@ -28,7 +28,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.confirmPayment(authUser, reservationId, paymentCreateRequestDto));
     }
 
-    @GetMapping("/{paymentId}")
+    @GetMapping("/v1/reservations/{reservationId}/payments/{paymentId}")
     public ResponseEntity<PaymentGetResponseDto> getPayment(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long reservationId,
@@ -37,7 +37,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getPayment(authUser, reservationId, paymentId));
     }
 
-    @DeleteMapping("/{paymentId}")
+    @DeleteMapping("/v1/reservations/{reservationId}/payments/{paymentId}")
     public ResponseEntity<PaymentCancelResponseDto> cancelPayment (
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long reservationId,

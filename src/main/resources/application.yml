@@ -3,6 +3,8 @@ spring:
     name: table-now
   profiles:
     active: local
+  thymeleaf:
+    cache: false
 
   config:
     import: optional:file:.env[.properties]
@@ -55,3 +57,10 @@ spring:
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
+
+toss:
+  secret:
+    key: ${TOSS_SECRET_KEY}
+
+api:
+  key: ${API_KEY}

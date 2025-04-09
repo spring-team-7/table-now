@@ -19,13 +19,13 @@ public class Payment extends TimeStamped {
     private Long id;
 
     @NotBlank
-    private String paymentNumber;
+    private String paymentKey;
 
     @NotBlank
     private String method;
 
     @NotNull
-    @Min(1)
+    @Min(0)
     private int price;
 
     @NotNull
@@ -43,13 +43,18 @@ public class Payment extends TimeStamped {
 
     public Payment() {}
 
-    public Payment(String paymentNumber, String method, Integer price, PaymentStatus status, User user, Reservation reservation) {
-        this.paymentNumber = paymentNumber;
+    public Payment(String paymentKey, String method, Integer price, PaymentStatus status, User user, Reservation reservation) {
+        this.paymentKey = paymentKey;
         this.method = method;
         this.price = price;
         this.status = status;
         this.user = user;
         this.reservation = reservation;
+    }
+
+    public void changePaymentMethod(String mothod) {
+        this.method = mothod;
+        super.update();
     }
 
     public void changePaymentStatus(PaymentStatus status) {
