@@ -35,7 +35,7 @@ public class NotificationService {
     User findUser = userRepository.findById(requestDto.getUserId())
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
-    //알람 수신 여부 확인(수신 거부된 사람한테 못 보냄)
+    //알림 수신 여부 확인(수신 거부된 사람한테 못 보냄)
     if (!findUser.getIsAlarmEnabled()) {
       throw new HandledException(ErrorCode.NOTIFICATION_DISABLED);
     }
@@ -43,18 +43,9 @@ public class NotificationService {
     Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
     notificationRepository.save(notification);
 
-    // 빈자리 대기 알람일 경우에는 isNotified = true로 업데이트
-    if(requestDto.getType() == NotificationType.VACANCY){
-      if (requestDto.getStoreId() == null){
-        throw new HandledException(ErrorCode.NOTIFICATION_BAD_REQUEST);
-      }
-      Store findStore = storeService.getStore(requestDto.getStoreId());
-
-      Waitlist waitlist = waitlistRepository
-          .findByUserAndStoreAndIsNotifiedFalse(findUser,findStore)
-          .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUNND));
-
-      waitlist.updateNotified();
+    // 빈자리 대기 알림일 경우에는 isNotified = true로 업데이트
+    if (NotificationType.VACANCY.equals(requestDto.getType())) {
+      handleVacancyNotification(findUser, requestDto.getStoreId());
     }
 
     return NotificationResponseDto.fromNotification(notification);
@@ -108,6 +99,20 @@ public class NotificationService {
     findUser.updateAlarmSetting(isAlarmEnabled);
 
     return NotificationAlarmResponseDto.fromNotification(findUser);
+  }
+
+  private void handleVacancyNotification(User user, Long storeId) {
+    if (storeId == null) {
+      throw new HandledException(ErrorCode.NOTIFICATION_BAD_REQUEST);
+    }
+
+    Store store = storeService.getStore(storeId);
+
+    Waitlist waitlist = waitlistRepository
+        .findByUserAndStoreAndIsNotifiedFalse(user, store)
+        .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUNND));
+
+    waitlist.updateNotified();
   }
 
 }
