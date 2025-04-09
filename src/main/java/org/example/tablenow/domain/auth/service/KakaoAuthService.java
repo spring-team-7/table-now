@@ -13,6 +13,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -92,6 +93,8 @@ public class KakaoAuthService {
     }
 
     private User registerNewUser(KakaoUserInfo kakaoUserInfo) {
+        String normalizedPhoneNumber = PhoneNumberNormalizer.normalize(kakaoUserInfo.getPhoneNumber());
+
         User newUser = User.builder()
                 .email(kakaoUserInfo.getEmail())
                 .name(kakaoUserInfo.getName())
@@ -100,7 +103,7 @@ public class KakaoAuthService {
                 .oauthId(kakaoUserInfo.getId())
                 .oauthProvider(OAuthProvider.KAKAO)
                 .imageUrl(kakaoUserInfo.getProfileImage())
-                .phoneNumber(kakaoUserInfo.getPhoneNumber())
+                .phoneNumber(normalizedPhoneNumber)
                 .build();
         return userRepository.save(newUser);
     }

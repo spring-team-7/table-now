@@ -12,6 +12,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -88,6 +89,8 @@ public class NaverAuthService {
     }
 
     private User registerNewUser(NaverUserInfo naverUserInfo) {
+        String normalizedPhoneNumber = PhoneNumberNormalizer.normalize(naverUserInfo.getPhoneNumber());
+
         User user = User.builder()
                 .email(naverUserInfo.getEmail())
                 .name(naverUserInfo.getName())
@@ -96,7 +99,7 @@ public class NaverAuthService {
                 .oauthId(naverUserInfo.getId())
                 .oauthProvider(OAuthProvider.NAVER)
                 .imageUrl(naverUserInfo.getProfileImage())
-                .phoneNumber(naverUserInfo.getPhoneNumber())
+                .phoneNumber(normalizedPhoneNumber)
                 .build();
         return userRepository.save(user);
     }
