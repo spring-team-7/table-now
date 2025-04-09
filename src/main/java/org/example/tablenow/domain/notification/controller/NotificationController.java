@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.notification.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.notification.dto.request.NotificationAlarmRequestDto;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
@@ -9,6 +10,7 @@ import org.example.tablenow.domain.notification.dto.response.NotificationRespons
 import org.example.tablenow.domain.notification.dto.response.NotificationUpdateReadResponseDto;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.global.dto.AuthUser;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +33,12 @@ public class NotificationController {
 
   // 알림 조회
   @GetMapping("/v1/notifications")
-  public ResponseEntity<List<NotificationResponseDto>> getNotifications(@AuthenticationPrincipal AuthUser authUser) {
-    List<NotificationResponseDto> responseDtos = notificationService.findNotifications(authUser.getId());
-    return ResponseEntity.ok(responseDtos);
+  public ResponseEntity<Page<NotificationResponseDto>> getNotifications(
+      @AuthenticationPrincipal AuthUser authUser,
+      @Positive @RequestParam(defaultValue = "1") int page,
+      @Positive @RequestParam(defaultValue = "10") int size
+  ) {
+    return ResponseEntity.ok(notificationService.findNotifications(authUser.getId(), page, size));
   }
 
   // 알림 읽음 처리
