@@ -14,7 +14,6 @@ import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,6 +23,7 @@ public class NotificationService {
   private final UserRepository userRepository;
 
   // 알림 생성
+  @Transactional
   public NotificationResponseDto createNotification(NotificationRequestDto requestDto) {
     User findUser = userRepository.findById(requestDto.getUserId())
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
@@ -36,22 +36,19 @@ public class NotificationService {
     Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
     notificationRepository.save(notification);
 
-    return new NotificationResponseDto(notification);
+    return NotificationResponseDto.from(notification);
   }
 
   // 알림 조회
+  @Transactional(readOnly = true)
   public List<NotificationResponseDto> findNotifications(Long userId) {
     User findUser = userRepository.findById(userId)
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
     List<Notification> notificationList = notificationRepository.findAllByUserOrderByCreatedAtDesc(findUser);
-    ArrayList<NotificationResponseDto> responseList = new ArrayList<>();
-
-    for (Notification notification : notificationList) {
-      responseList.add(new NotificationResponseDto(notification));
-    }
-
-    return responseList;
+    return notificationList.stream()
+        .map(NotificationResponseDto::from)
+        .toList();
   }
 
   // 알림 읽음 처리
@@ -65,7 +62,7 @@ public class NotificationService {
     }
 
     findNotification.updateRead();
-    return new NotificationUpdateReadResponseDto(findNotification.getId(), findNotification.getIsRead());
+    return NotificationUpdateReadResponseDto.from(findNotification);
   }
 
   //알람 수신 여부
@@ -76,7 +73,7 @@ public class NotificationService {
     // 알람 수신 여부 업데이트
     findUser.updateAlarmSetting(isAlarmEnabled);
 
-    return new NotificationAlarmResponseDto(findUser.getIsAlarmEnabled(), findUser.getUpdatedAt());
+    return NotificationAlarmResponseDto.from(findUser);
   }
 }
 

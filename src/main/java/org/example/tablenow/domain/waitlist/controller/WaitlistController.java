@@ -6,7 +6,6 @@ import org.example.tablenow.domain.waitlist.dto.request.WaitlistRequestDto;
 import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
 import org.example.tablenow.domain.waitlist.service.WaitlistService;
 import org.example.tablenow.global.dto.AuthUser;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +25,6 @@ public class WaitlistController {
       @AuthenticationPrincipal AuthUser authUser){
 
     WaitlistResponseDto waitlistResponseDto = waitlistService.registerWaitlist(authUser.getId(), requestDto);
-    return new ResponseEntity<>(waitlistResponseDto, HttpStatus.OK);
+    return ResponseEntity.ok(waitlistResponseDto);
   }
 }

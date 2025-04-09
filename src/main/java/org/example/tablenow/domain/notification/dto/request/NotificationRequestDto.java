@@ -3,11 +3,9 @@ package org.example.tablenow.domain.notification.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.notification.enums.NotificationType;
 
 @Getter
-@NoArgsConstructor
 public class NotificationRequestDto {
 
   @NotNull(message = "userId를 입력해주세요.")

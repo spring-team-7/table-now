@@ -9,7 +9,6 @@ import org.example.tablenow.domain.notification.dto.response.NotificationRespons
 import org.example.tablenow.domain.notification.dto.response.NotificationUpdateReadResponseDto;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.global.dto.AuthUser;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,44 +17,39 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/notifications")
 public class NotificationController {
   private final NotificationService notificationService;
 
   // 알림 생성
-  @PostMapping
+  @PostMapping("/api/v1/notifications")
   public ResponseEntity<NotificationResponseDto> createNotification(
-      @Valid @RequestBody NotificationRequestDto requestDto){
-    NotificationResponseDto responseDto = notificationService.createNotification(requestDto);
-    return new ResponseEntity<>(responseDto, HttpStatus.OK);
+      @Valid @RequestBody NotificationRequestDto requestDto) {
+    NotificationResponseDto notificationResponseDto = notificationService.createNotification(requestDto);
+    return ResponseEntity.ok(notificationResponseDto);
   }
 
   // 알림 조회
-  @GetMapping
-  public ResponseEntity<List<NotificationResponseDto>> getNotifications(@AuthenticationPrincipal AuthUser authUser){
-
+  @GetMapping("/api/v1/notifications")
+  public ResponseEntity<List<NotificationResponseDto>> getNotifications(@AuthenticationPrincipal AuthUser authUser) {
     List<NotificationResponseDto> responseDtos = notificationService.findNotifications(authUser.getId());
-    return new ResponseEntity<>(responseDtos, HttpStatus.OK);
+    return ResponseEntity.ok(responseDtos);
   }
 
   // 알림 읽음 처리
-  @PatchMapping("/{notificationId}")
+  @PatchMapping("/api/v1/notifications/{notificationId}")
   public ResponseEntity<NotificationUpdateReadResponseDto> updateNotificationRead(
       @PathVariable Long notificationId,
       @AuthenticationPrincipal AuthUser authUser) {
-
-    NotificationUpdateReadResponseDto responseDto = notificationService.updateNotificationRead(notificationId, authUser.getId());
-    return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    NotificationUpdateReadResponseDto notificationUpdateReadResponseDto = notificationService.updateNotificationRead(notificationId, authUser.getId());
+    return ResponseEntity.ok(notificationUpdateReadResponseDto);
   }
 
   // 알림 수신 여부
-  @PatchMapping("/settings")
+  @PatchMapping("/api/v1/notifications/settings")
   public ResponseEntity<NotificationAlarmResponseDto> updateNotificationAlarm(
       @RequestBody NotificationAlarmRequestDto requestDto,
       @AuthenticationPrincipal AuthUser authUser) {
-
-    NotificationAlarmResponseDto responseDto = notificationService.updateNotificationAlarm(authUser.getId(), requestDto.isAlarmEnabled());
-    return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    NotificationAlarmResponseDto notificationAlarmResponseDto = notificationService.updateNotificationAlarm(authUser.getId(), requestDto.isAlarmEnabled());
+    return ResponseEntity.ok(notificationAlarmResponseDto);
   }
-
 }
