@@ -3,7 +3,7 @@ package org.example.tablenow.domain.event.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.event.entity.Event;
-import org.example.tablenow.domain.event.entity.EventStatus;
+import org.example.tablenow.domain.event.enums.EventStatus;
 
 import java.time.LocalDateTime;
 
