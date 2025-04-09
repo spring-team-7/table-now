@@ -7,8 +7,11 @@ import org.example.tablenow.domain.notification.dto.response.NotificationUpdateR
 import org.example.tablenow.domain.notification.entity.Notification;
 import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.repository.NotificationRepository;
+import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +41,12 @@ class NotificationServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private StoreService storeService;
+
+  @Mock
+  private WaitlistRepository waitlistRepository;
 
   @Mock
   private User user;
@@ -92,6 +101,52 @@ class NotificationServiceTest {
       });
 
       assertEquals(ErrorCode.NOTIFICATION_DISABLED.getStatus(), exception.getHttpStatus());
+    }
+  }
+  @Nested
+  class 빈자리_알림_예외 {
+
+    NotificationRequestDto dto;
+
+    @BeforeEach
+    void setUp() {
+      dto = new NotificationRequestDto();
+      ReflectionTestUtils.setField(dto, "userId", 1L);
+      ReflectionTestUtils.setField(dto, "type", NotificationType.VACANCY);
+      ReflectionTestUtils.setField(dto, "content", "빈자리 알림");
+    }
+
+    @Test
+    void StoreId_없어서_예외() {
+      // given
+      given(userRepository.findById(1L)).willReturn(Optional.of(user));
+      given(user.getIsAlarmEnabled()).willReturn(true);
+
+      // when & then
+      HandledException exception = assertThrows(HandledException.class, () ->
+          notificationService.createNotification(dto)
+      );
+
+      assertEquals(ErrorCode.NOTIFICATION_BAD_REQUEST.getStatus(), exception.getHttpStatus());
+    }
+
+    @Test
+    void 대기정보_없어서_예외() {
+      // given
+      ReflectionTestUtils.setField(dto, "storeId", 10L);
+      Store store = mock(Store.class);
+
+      given(userRepository.findById(1L)).willReturn(Optional.of(user));
+      given(user.getIsAlarmEnabled()).willReturn(true);
+      given(storeService.getStore(10L)).willReturn(store);
+      given(waitlistRepository.findByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(Optional.empty());
+
+      // when & then
+      HandledException exception = assertThrows(HandledException.class, () ->
+          notificationService.createNotification(dto)
+      );
+
+      assertEquals(ErrorCode.WAITLIST_NOT_FOUNND.getStatus(), exception.getHttpStatus());
     }
   }
 

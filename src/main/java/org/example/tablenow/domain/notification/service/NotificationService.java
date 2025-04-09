@@ -6,9 +6,14 @@ import org.example.tablenow.domain.notification.dto.response.NotificationAlarmRe
 import org.example.tablenow.domain.notification.dto.response.NotificationResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationUpdateReadResponseDto;
 import org.example.tablenow.domain.notification.entity.Notification;
+import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.repository.NotificationRepository;
+import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.domain.waitlist.entity.Waitlist;
+import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,8 @@ import java.util.List;
 public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
+  private final StoreService storeService;
+  private final WaitlistRepository waitlistRepository;
 
   // 알림 생성
   @Transactional
@@ -35,6 +42,20 @@ public class NotificationService {
 
     Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
     notificationRepository.save(notification);
+
+    // 빈자리 대기 알람일 경우에는 isNotified = true로 업데이트
+    if(requestDto.getType() == NotificationType.VACANCY){
+      if (requestDto.getStoreId() == null){
+        throw new HandledException(ErrorCode.NOTIFICATION_BAD_REQUEST);
+      }
+      Store findStore = storeService.getStore(requestDto.getStoreId());
+
+      Waitlist waitlist = waitlistRepository
+          .findByUserAndStoreAndIsNotifiedFalse(findUser,findStore)
+          .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUNND));
+
+      waitlist.updateNotified();
+    }
 
     return NotificationResponseDto.fromNotification(notification);
   }
