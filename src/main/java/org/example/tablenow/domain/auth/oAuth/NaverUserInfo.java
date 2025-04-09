@@ -3,11 +3,10 @@ package org.example.tablenow.domain.auth.oAuth;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Map;
-
 @Getter
 @Builder
 public class NaverUserInfo {
+
     private String id;
     private String name;
     private String nickname;
@@ -15,14 +14,14 @@ public class NaverUserInfo {
     private String profileImage;
     private String phoneNumber;
 
-    public static NaverUserInfo from(Map<String, Object> attributes) {
+    public static NaverUserInfo fromNaverUserInfoResponse(NaverUserInfoResponse.Response response) {
         return NaverUserInfo.builder()
-                .id((String) attributes.get("id"))
-                .name((String) attributes.get("name"))
-                .nickname((String) attributes.get("nickname"))
-                .email((String) attributes.get("email"))
-                .profileImage((String) attributes.get("profile_image"))
-                .phoneNumber((String) attributes.get("mobile"))
+                .id(response.getId())
+                .name(response.getName())
+                .nickname(response.getNickname())
+                .email(response.getEmail())
+                .profileImage(response.getProfile_image())
+                .phoneNumber(response.getMobile())
                 .build();
     }
 }

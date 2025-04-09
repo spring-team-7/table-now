@@ -3,11 +3,10 @@ package org.example.tablenow.domain.auth.oAuth;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Map;
-
 @Builder
 @Getter
 public class KakaoUserInfo {
+
     private String id;
     private String name;
     private String nickname;
@@ -15,24 +14,17 @@ public class KakaoUserInfo {
     private String profileImage;
     private String phoneNumber;
 
-    public static KakaoUserInfo from(Map<String, Object> attributes) {
-        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-
-        String id = String.valueOf(attributes.get("id"));
-        String name = (String) kakaoAccount.get("name");
-        String nickname = (String) profile.get("nickname");
-        String email = (String) kakaoAccount.get("email");
-        String profileImage = (String) profile.get("profile_image_url");
-        String phoneNumber = (String) kakaoAccount.get("phone_number");
+    public static KakaoUserInfo fromKakaoUserInfoResponse(KakaoUserInfoResponse response) {
+        KakaoUserInfoResponse.KakaoAccount account = response.getKakao_account();
+        KakaoUserInfoResponse.KakaoAccount.Profile profile = account.getProfile();
 
         return KakaoUserInfo.builder()
-                .id(id)
-                .name(name)
-                .nickname(nickname)
-                .email(email)
-                .profileImage(profileImage)
-                .phoneNumber(phoneNumber)
+                .id(String.valueOf(response.getId()))
+                .name(account.getName())
+                .nickname(profile.getNickname())
+                .email(account.getEmail())
+                .profileImage(profile.getProfile_image_url())
+                .phoneNumber(account.getPhone_number())
                 .build();
     }
 }
