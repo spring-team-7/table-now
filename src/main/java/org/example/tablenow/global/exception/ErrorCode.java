@@ -54,10 +54,12 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림이 존재하지 않습니다."),
     NOTIFICATION_DISABLED(HttpStatus.FORBIDDEN, "알림 수신을 거부한 사용자입니다."),
     NOTIFICATION_MISMATCH(HttpStatus.FORBIDDEN, "알람을 받은 본인만 읽음 처리를 할 수 있습니다."),
+    NOTIFICATION_BAD_REQUEST(HttpStatus.BAD_REQUEST, "가게 아이디 입력 필수입니다."),
 
     // WAITLIST
     WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT,"이미 대기중인 사용자 입니다."),
     WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다."),
+    WAITLIST_NOT_FOUNND(HttpStatus.NOT_FOUND, "대기 정보가 존재하지 않습니다."),
 
     // COMMON
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),
