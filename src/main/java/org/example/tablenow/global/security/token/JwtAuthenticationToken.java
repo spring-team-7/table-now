@@ -1,4 +1,4 @@
-package org.example.tablenow.global.config;
+package org.example.tablenow.global.security.token;
 
 import org.example.tablenow.global.dto.AuthUser;
 import org.springframework.security.authentication.AbstractAuthenticationToken;

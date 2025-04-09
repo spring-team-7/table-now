@@ -12,7 +12,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.user.enums.UserRole;
-import org.example.tablenow.global.config.JwtAuthenticationToken;
+import org.example.tablenow.global.security.token.JwtAuthenticationToken;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.util.JwtUtil;
 import org.springframework.http.HttpStatus;

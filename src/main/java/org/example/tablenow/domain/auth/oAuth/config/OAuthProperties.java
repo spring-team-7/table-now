@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.auth.oAuth;
+package org.example.tablenow.domain.auth.oAuth.config;
 
 import lombok.Getter;
 import lombok.Setter;
