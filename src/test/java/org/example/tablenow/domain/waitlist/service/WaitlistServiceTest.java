@@ -5,6 +5,7 @@ import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.waitlist.dto.request.WaitlistRequestDto;
+import org.example.tablenow.domain.waitlist.dto.response.WaitlistFindResponseDto;
 import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -140,6 +142,45 @@ class WaitlistServiceTest {
       );
 
       assertEquals(ErrorCode.WAITLIST_FULL.getStatus(), exception.getHttpStatus());
+    }
+  }
+
+  @Nested
+  class 내대기목록조회 {
+
+    @Test
+    void 내대기목록_정상조회() {
+      // given
+      given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+      Waitlist waitlist1 = new Waitlist(user, store);
+      Waitlist waitlist2 = new Waitlist(user, store);
+      ReflectionTestUtils.setField(waitlist1, "id", 1L);
+      ReflectionTestUtils.setField(waitlist2, "id", 2L);
+
+      given(waitlistRepository.findAllByUserAndIsNotifiedFalse(user))
+          .willReturn(List.of(waitlist1, waitlist2));
+
+      // when
+      List<WaitlistFindResponseDto> result = waitlistService.findMyWaitlist(1L);
+
+      // then
+      assertEquals(2, result.size());
+      assertEquals(1L, result.get(0).getWaitlistId());
+      assertEquals(2L, result.get(1).getWaitlistId());
+    }
+
+    @Test
+    void 유저없음으로_조회실패() {
+      // given
+      given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+      // when & then
+      HandledException exception = assertThrows(HandledException.class, () ->
+          waitlistService.findMyWaitlist(1L)
+      );
+
+      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
     }
   }
 }

@@ -6,9 +6,14 @@ import org.example.tablenow.domain.notification.dto.response.NotificationAlarmRe
 import org.example.tablenow.domain.notification.dto.response.NotificationResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationUpdateReadResponseDto;
 import org.example.tablenow.domain.notification.entity.Notification;
+import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.repository.NotificationRepository;
+import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.domain.waitlist.entity.Waitlist;
+import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,8 @@ import java.util.List;
 public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
+  private final StoreService storeService;
+  private final WaitlistRepository waitlistRepository;
 
   // 알림 생성
   @Transactional
@@ -28,7 +35,7 @@ public class NotificationService {
     User findUser = userRepository.findById(requestDto.getUserId())
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
-    //알람 수신 여부 확인(수신 거부된 사람한테 못 보냄)
+    //알림 수신 여부 확인(수신 거부된 사람한테 못 보냄)
     if (!findUser.getIsAlarmEnabled()) {
       throw new HandledException(ErrorCode.NOTIFICATION_DISABLED);
     }
@@ -36,7 +43,12 @@ public class NotificationService {
     Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
     notificationRepository.save(notification);
 
-    return NotificationResponseDto.from(notification);
+    // 빈자리 대기 알림일 경우에는 isNotified = true로 업데이트
+    if (NotificationType.VACANCY.equals(requestDto.getType())) {
+      handleVacancyNotification(findUser, requestDto.getStoreId());
+    }
+
+    return NotificationResponseDto.fromNotification(notification);
   }
 
   // 알림 조회
@@ -47,7 +59,7 @@ public class NotificationService {
 
     List<Notification> notificationList = notificationRepository.findAllByUserOrderByCreatedAtDesc(findUser);
     return notificationList.stream()
-        .map(NotificationResponseDto::from)
+        .map(NotificationResponseDto::fromNotification)
         .toList();
   }
 
@@ -62,7 +74,20 @@ public class NotificationService {
     }
 
     findNotification.updateRead();
-    return NotificationUpdateReadResponseDto.from(findNotification);
+    return NotificationUpdateReadResponseDto.fromNotification(findNotification);
+  }
+
+  // 알림 전체 읽음 처리
+  @Transactional
+  public List<NotificationUpdateReadResponseDto> updateAllNotificationRead(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+
+    List<Notification> notificationList = notificationRepository.findAllByUserAndIsReadFalse(user);
+    return notificationList.stream()
+        .peek(Notification::updateRead)
+        .map(NotificationUpdateReadResponseDto::fromNotification)
+        .toList();
   }
 
   //알람 수신 여부
@@ -73,7 +98,22 @@ public class NotificationService {
     // 알람 수신 여부 업데이트
     findUser.updateAlarmSetting(isAlarmEnabled);
 
-    return NotificationAlarmResponseDto.from(findUser);
+    return NotificationAlarmResponseDto.fromNotification(findUser);
   }
+
+  private void handleVacancyNotification(User user, Long storeId) {
+    if (storeId == null) {
+      throw new HandledException(ErrorCode.NOTIFICATION_BAD_REQUEST);
+    }
+
+    Store store = storeService.getStore(storeId);
+
+    Waitlist waitlist = waitlistRepository
+        .findByUserAndStoreAndIsNotifiedFalse(user, store)
+        .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUNND));
+
+    waitlist.updateNotified();
+  }
+
 }
 
