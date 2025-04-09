@@ -16,6 +16,7 @@ public enum ErrorCode {
     ALREADY_DELETED_USER(HttpStatus.BAD_REQUEST, "이미 탈퇴한 사용자입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일 입니다."),
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
+    FAILED_TO_PARSE_OAUTH_TOKEN(HttpStatus.INTERNAL_SERVER_ERROR, "소셜 로그인 토큰 파싱에 실패했습니다."),
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 권한입니다."),
     REFRESH_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "요청 쿠키에 리프레시 토큰이 존재하지 않습니다."),
@@ -41,17 +42,29 @@ public enum ErrorCode {
     RESERVATION_STATUS_INVALID(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다."),
     RESERVATION_STATUS_UPDATE_FORBIDDEN(HttpStatus.BAD_REQUEST, "예약 상태에서만 변경할 수 있습니다."),
 
+    // EVENT
+    EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "이벤트가 존재하지 않습니다."),
+    EVENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 시간에 이벤트가 존재합니다."),
+    INVALID_EVENT_STATUS(HttpStatus.BAD_REQUEST, "현재 상태에서는 해당 작업을 수행할 수 없습니다."),
+    EVENT_NOT_OPENED(HttpStatus.BAD_REQUEST, "현재 신청할 수 있는 이벤트가 아닙니다."),
+    EVENT_ALREADY_JOINED(HttpStatus.CONFLICT, "이미 해당 이벤트에 참가하였습니다."),
+    EVENT_FULL(HttpStatus.BAD_REQUEST, "이벤트 정원이 초과되었습니다."),
 
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
-
-    // 알림
+    // NOTIFICATION
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림이 존재하지 않습니다."),
     NOTIFICATION_DISABLED(HttpStatus.FORBIDDEN, "알림 수신을 거부한 사용자입니다."),
     NOTIFICATION_MISMATCH(HttpStatus.FORBIDDEN, "알람을 받은 본인만 읽음 처리를 할 수 있습니다."),
 
-    // 대기 등록
+    // WAITLIST
     WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT,"이미 대기중인 사용자 입니다."),
-    WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다.");
+    WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다."),
+
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
+  
+    INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),
+    INVALID_ORDER_VALUE(HttpStatus.BAD_REQUEST, "정렬 옵션이 잘못되었습니다. 오름차순(asc) 또는 내림차순(desc)을 선택해주세요."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+
 
     private final HttpStatus status;
     private final String defaultMessage;
