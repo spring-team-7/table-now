@@ -36,7 +36,8 @@ public class Reservation extends TimeStamped {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Reservation(User user, Store store, LocalDateTime reservedAt) {
+    public Reservation(Long id, User user, Store store, LocalDateTime reservedAt) {
+        this.id = id;
         this.user = user;
         this.store = store;
         this.reservedAt = reservedAt;
