@@ -14,6 +14,7 @@ import org.example.tablenow.domain.auth.service.NaverAuthService;
 import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.util.CookieUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -65,15 +66,7 @@ public class AuthController {
         if (refreshToken != null) {
             authService.logout(refreshToken);
         }
-
-        // 쿠키에서 리프레시 토큰 제거
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
-
+        CookieUtil.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok("로그아웃에 성공했습니다.");
     }
 
