@@ -45,6 +45,10 @@ public enum ErrorCode {
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "이벤트가 존재하지 않습니다."),
     EVENT_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 해당 시간에 이벤트가 존재합니다."),
     INVALID_EVENT_STATUS(HttpStatus.BAD_REQUEST, "현재 상태에서는 해당 작업을 수행할 수 없습니다."),
+    EVENT_NOT_OPENED(HttpStatus.BAD_REQUEST, "현재 신청할 수 있는 이벤트가 아닙니다."),
+    EVENT_ALREADY_JOINED(HttpStatus.CONFLICT, "이미 해당 이벤트에 참가하였습니다."),
+    EVENT_FULL(HttpStatus.BAD_REQUEST, "이벤트 정원이 초과되었습니다."),
+
 
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),
     INVALID_ORDER_VALUE(HttpStatus.BAD_REQUEST, "정렬 옵션이 잘못되었습니다. 오름차순(asc) 또는 내림차순(desc)을 선택해주세요."),
