@@ -76,4 +76,8 @@ public class User extends TimeStamped {
     public void updateAlarmSetting(boolean isAlarmEnabled){
         this.isAlarmEnabled = isAlarmEnabled;
     }
+
+    public void deleteUser() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
