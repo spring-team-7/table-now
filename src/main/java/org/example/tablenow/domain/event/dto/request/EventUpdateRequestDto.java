@@ -2,6 +2,7 @@ package org.example.tablenow.domain.event.dto.request;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -16,4 +17,11 @@ public class EventUpdateRequestDto {
     private LocalDateTime eventTime;
     @Min(value = 1, message = "최소 인원은 1명 이상이어야 합니다.")
     private Integer limitPeople;
+
+    @Builder
+    public EventUpdateRequestDto(LocalDateTime openAt, LocalDateTime eventTime, Integer limitPeople) {
+        this.openAt = openAt;
+        this.eventTime = eventTime;
+        this.limitPeople = limitPeople;
+    }
 }
