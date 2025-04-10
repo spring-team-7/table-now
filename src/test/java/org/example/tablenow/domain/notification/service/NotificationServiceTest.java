@@ -63,18 +63,16 @@ class NotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-      dto = new NotificationRequestDto();
-      ReflectionTestUtils.setField(dto, "userId", 1L);
-      ReflectionTestUtils.setField(dto, "type", NotificationType.REMIND);
-      ReflectionTestUtils.setField(dto, "content", "예약 알림");
-
-      ReflectionTestUtils.setField(user, "id", 1L);
+      dto = NotificationRequestDto.builder()
+          .userId(1L)
+          .type(NotificationType.REMIND)
+          .content("예약 알림")
+          .build();
     }
 
     @Test
     void 알림_정상_생성() {
       given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(user.getIsAlarmEnabled()).willReturn(true);
       given(notificationRepository.save(any(Notification.class))).willAnswer(invocation -> invocation.getArgument(0));
 
       NotificationResponseDto result = notificationService.createNotification(dto);
@@ -93,18 +91,8 @@ class NotificationServiceTest {
       assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
     }
 
-    @Test
-    void 알람수신_거부한_유저에게_알림_생성_실패() {
-      given(user.getIsAlarmEnabled()).willReturn(false);
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-
-      HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.createNotification(dto);
-      });
-
-      assertEquals(ErrorCode.NOTIFICATION_DISABLED.getStatus(), exception.getHttpStatus());
-    }
   }
+
   @Nested
   class 빈자리_알림_예외 {
 
@@ -112,10 +100,12 @@ class NotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-      dto = new NotificationRequestDto();
-      ReflectionTestUtils.setField(dto, "userId", 1L);
-      ReflectionTestUtils.setField(dto, "type", NotificationType.VACANCY);
-      ReflectionTestUtils.setField(dto, "content", "빈자리 알림");
+      dto = NotificationRequestDto.builder()
+          .userId(1L)
+          .type(NotificationType.VACANCY)
+          .content("빈자리 알림")
+          .build();
+
     }
 
     @Test
@@ -175,7 +165,7 @@ class NotificationServiceTest {
           .willReturn(page);
 
       // when
-      Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5,null); // 👈 여기 page=0 확인!
+      Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5, false); // 👈 여기 page=0 확인!
 
       // then
       assertEquals("알림1", result.getContent().get(0).getContent());
@@ -188,7 +178,7 @@ class NotificationServiceTest {
       given(userRepository.findById(1L)).willReturn(Optional.empty());
 
       HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.findNotifications(1L,1, 5,null);
+        notificationService.findNotifications(1L, 1, 5, false);
       });
 
       assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
@@ -246,41 +236,41 @@ class NotificationServiceTest {
     assertEquals(ErrorCode.NOTIFICATION_MISMATCH.getStatus(), exception.getHttpStatus());
   }
 
-    @Test
-    void 전체_읽음처리_성공() {
-      // given
-      Notification n1 = new Notification(user, NotificationType.REMIND, "알림1");
-      Notification n2 = new Notification(user, NotificationType.VACANCY, "알림2");
+  @Test
+  void 전체_읽음처리_성공() {
+    // given
+    Notification n1 = new Notification(user, NotificationType.REMIND, "알림1");
+    Notification n2 = new Notification(user, NotificationType.VACANCY, "알림2");
 
-      ReflectionTestUtils.setField(n1, "id", 10L);
-      ReflectionTestUtils.setField(n2, "id", 11L);
-      ReflectionTestUtils.setField(user, "id", 1L);
+    ReflectionTestUtils.setField(n1, "id", 10L);
+    ReflectionTestUtils.setField(n2, "id", 11L);
+    ReflectionTestUtils.setField(user, "id", 1L);
 
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(notificationRepository.findAllByUserAndIsReadFalse(user)).willReturn(List.of(n1, n2));
+    given(userRepository.findById(1L)).willReturn(Optional.of(user));
+    given(notificationRepository.findAllByUserAndIsReadFalse(user)).willReturn(List.of(n1, n2));
 
-      // when
-      List<NotificationUpdateReadResponseDto> result =
-          notificationService.updateAllNotificationRead(1L);
-
-      // then
-      assertTrue(result.get(0).getIsRead());
-      assertTrue(n1.getIsRead());
-      assertTrue(n2.getIsRead());
-    }
-
-    @Test
-    void 유저를_찾지_못해서_전체읽음_실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.empty());
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () -> {
+    // when
+    List<NotificationUpdateReadResponseDto> result =
         notificationService.updateAllNotificationRead(1L);
-      });
 
-      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
-    }
+    // then
+    assertTrue(result.get(0).getIsRead());
+    assertTrue(n1.getIsRead());
+    assertTrue(n2.getIsRead());
+  }
+
+  @Test
+  void 유저를_찾지_못해서_전체읽음_실패() {
+    // given
+    given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+    // when & then
+    HandledException exception = assertThrows(HandledException.class, () -> {
+      notificationService.updateAllNotificationRead(1L);
+    });
+
+    assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+  }
 
 
   @Test

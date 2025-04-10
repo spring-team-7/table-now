@@ -53,7 +53,7 @@ public class NotificationController {
 
   // 알림 전체 읽음 처리
   @PatchMapping("/v1/notifications/readAll")
-  public ResponseEntity<List<NotificationUpdateReadResponseDto>> updateAllNotificationRead(@AuthenticationPrincipal AuthUser authUser){
+  public ResponseEntity<List<NotificationUpdateReadResponseDto>> updateAllNotificationRead(@AuthenticationPrincipal AuthUser authUser) {
     List<NotificationUpdateReadResponseDto> notificationUpdateReadResponseDtos = notificationService.updateAllNotificationRead(authUser.getId());
     return ResponseEntity.ok(notificationUpdateReadResponseDtos);
   }

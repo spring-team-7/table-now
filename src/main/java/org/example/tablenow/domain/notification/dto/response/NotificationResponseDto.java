@@ -24,7 +24,8 @@ public class NotificationResponseDto {
     this.isRead = isRead;
     this.createdAt = createdAt;
   }
-  public static NotificationResponseDto fromNotification(Notification notification){
+
+  public static NotificationResponseDto fromNotification(Notification notification) {
     return NotificationResponseDto.builder()
         .notificationId(notification.getId())
         .type(notification.getType())

@@ -39,12 +39,7 @@ public class NotificationService {
     User findUser = userRepository.findById(requestDto.getUserId())
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
-    //알림 수신 여부 확인(수신 거부된 사람한테 못 보냄)
-    if (!findUser.getIsAlarmEnabled()) {
-      throw new HandledException(ErrorCode.NOTIFICATION_DISABLED);
-    }
-
-    Notification notification = new Notification(findUser,requestDto.getType(),requestDto.getContent());
+    Notification notification = new Notification(findUser, requestDto.getType(), requestDto.getContent());
     notificationRepository.save(notification);
 
     // 빈자리 대기 알림일 경우에는 isNotified = true로 업데이트
@@ -63,12 +58,9 @@ public class NotificationService {
 
     Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
 
-    if(isRead != null) {
-      return notificationRepository.findAllByUserAndIsRead(user, isRead, pageable)
-          .map(NotificationResponseDto::fromNotification);
-    }
-    return notificationRepository.findAllByUser(user, pageable)
-        .map(NotificationResponseDto::fromNotification);
+    return (isRead != null)
+        ? notificationRepository.findAllByUserAndIsRead(user, isRead, pageable).map(NotificationResponseDto::fromNotification)
+        : notificationRepository.findAllByUser(user, pageable).map(NotificationResponseDto::fromNotification);
   }
 
   // 알림 읽음 처리

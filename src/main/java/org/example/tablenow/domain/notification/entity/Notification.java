@@ -13,35 +13,36 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "notification")
 public class Notification {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NotificationType type;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private NotificationType type;
 
-    @Column(nullable = false, length = 500)
-    private String content;
+  @Column(nullable = false, length = 500)
+  private String content;
 
-    @Column(nullable = false)
-    private Boolean isRead = false;
+  @Column(nullable = false)
+  private Boolean isRead = false;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-    public Notification(User user, NotificationType type, String content) {
-        this.user = user;
-        this.type = type;
-        this.content = content;
-        this.isRead = false;
-        this.createdAt = LocalDateTime.now();
-    }
-    public void updateRead(){
-        this.isRead = true;
-    }
+  public Notification(User user, NotificationType type, String content) {
+    this.user = user;
+    this.type = type;
+    this.content = content;
+    this.isRead = false;
+    this.createdAt = LocalDateTime.now();
+  }
+
+  public void updateRead() {
+    this.isRead = true;
+  }
 }

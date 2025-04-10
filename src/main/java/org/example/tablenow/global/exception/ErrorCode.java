@@ -60,6 +60,7 @@ public enum ErrorCode {
     WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT,"이미 대기중인 사용자 입니다."),
     WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다."),
     WAITLIST_NOT_FOUNND(HttpStatus.NOT_FOUND, "대기 정보가 존재하지 않습니다."),
+    WAITLIST_NOT_ALLOWED(HttpStatus.CONFLICT, "빈자리가 있어 대기 등록이 불가능합니다."),
 
     // COMMON
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),

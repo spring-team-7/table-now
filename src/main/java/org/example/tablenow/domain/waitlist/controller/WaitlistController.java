@@ -18,11 +18,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class WaitlistController {
   private final WaitlistService waitlistService;
+
   // 빈자리 대기 등록
   @PostMapping("/v1/waitlist")
   public ResponseEntity<WaitlistResponseDto> registerWaitlist(
       @Valid @RequestBody WaitlistRequestDto requestDto,
-      @AuthenticationPrincipal AuthUser authUser){
+      @AuthenticationPrincipal AuthUser authUser) {
 
     WaitlistResponseDto waitlistResponseDto = waitlistService.registerWaitlist(authUser.getId(), requestDto);
     return ResponseEntity.ok(waitlistResponseDto);

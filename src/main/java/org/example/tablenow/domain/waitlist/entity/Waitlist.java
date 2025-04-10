@@ -28,13 +28,13 @@ public class Waitlist extends TimeStamped {
   @Column(name = "is_notified")
   private Boolean isNotified = false;
 
-  public Waitlist(User user, Store store){
+  public Waitlist(User user, Store store) {
     this.user = user;
     this.store = store;
     this.isNotified = false;
   }
 
-  public void updateNotified(){
+  public void updateNotified() {
     this.isNotified = true;
   }
 }

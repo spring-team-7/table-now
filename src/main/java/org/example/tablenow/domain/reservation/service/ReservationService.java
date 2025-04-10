@@ -10,6 +10,7 @@ import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.repository.ReservationRepository;
 import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
@@ -29,6 +30,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StoreService storeService;
+    private final StoreRepository storeRepository;
 
     @Transactional
     public ReservationResponseDto makeReservation(AuthUser authUser, ReservationRequestDto request) {
@@ -144,6 +146,15 @@ public class ReservationService {
         if (minute != 0 && minute != 30) {
             throw new HandledException(ErrorCode.RESERVATION_TIME_INVALID);
         }
+    }
+
+    public boolean hasVacancy(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+            .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
+
+        long reservedCount = reservationRepository.countReservedTables(storeId);
+
+        return reservedCount < store.getCapacity();
     }
 
 }

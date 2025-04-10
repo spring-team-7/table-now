@@ -21,4 +21,8 @@ public interface WaitlistRepository extends JpaRepository<Waitlist, Long> {
 
   // 빈자리 알림 보낼때 사용
   Optional<Waitlist> findByUserAndStoreAndIsNotifiedFalse(User user, Store store);
+
+  // 특정 가게 대기자 목록 조회
+  List<Waitlist> findAllByStoreAndIsNotifiedFalse(Store store);
+
 }

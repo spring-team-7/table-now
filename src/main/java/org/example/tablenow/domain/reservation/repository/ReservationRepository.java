@@ -6,8 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @Query("""
@@ -33,4 +35,14 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       AND (:status IS NULL OR r.status = :status)
     """)
     Page<Reservation> findByStoreIdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
+
+    @Query("""
+SELECT r FROM Reservation r
+WHERE r.status = 'RESERVED'
+AND r.reservedAt BETWEEN :start AND :end
+""")
+  List<Reservation> findAllByReservedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT COUNT(r) FROM Reservation r WHERE r.store.id = :storeId AND r.status = 'RESERVED'")
+    long countReservedTables(@Param("storeId") Long storeId);
 }
