@@ -61,6 +61,3 @@ jwt:
 toss:
   secret:
     key: ${TOSS_SECRET_KEY}
-
-api:
-  key: ${API_KEY}

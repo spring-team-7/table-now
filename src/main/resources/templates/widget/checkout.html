@@ -19,14 +19,6 @@
         <div id="payment-method"></div>
         <!-- 이용약관 UI -->
         <div id="agreement"></div>
-        <!-- 쿠폰 체크박스 -->
-        <div style="padding-left: 30px">
-            <div class="checkable typography--p">
-                <label for="coupon-box" class="checkable__label typography--regular"
-                ><input id="coupon-box" class="checkable__input" type="checkbox" aria-checked="true" /><span class="checkable__label-text">5,000원 쿠폰 적용</span></label
-                >
-            </div>
-        </div>
 
         <!-- 금액 표시 -->
         <div class="p-grid typography--p" style="margin-top: 20px">
@@ -47,7 +39,6 @@
 <script th:inline="javascript">
     async function main() {
         const button = document.getElementById("payment-button");
-        const coupon = document.getElementById("coupon-box");
 
         // URL 경로에서 reservationId 추출
         const pathParts = window.location.pathname.split("/");
@@ -63,9 +54,9 @@
         let finalAmount = originalAmount;
 
         // 서버에서 받은 값으로 고객 정보 및 상품명 설정
-        const itemName = [[${#strings.escapeJavaScript(payRequest.itemName)}]];
-        const customerEmail = [[${#strings.escapeJavaScript(payRequest.customerEmail)}]];
-        const customerName = [[${#strings.escapeJavaScript(payRequest.customerName)}]];
+        const storeName = [[${#strings.escapeJavaScript(payRequest.storeName)}]];
+        const userEmail = [[${#strings.escapeJavaScript(payRequest.userEmail)}]];
+        const userName = [[${#strings.escapeJavaScript(payRequest.userName)}]];
 
         // 결제 금액 표시
         const amountDisplay = document.getElementById("amount-display");
@@ -110,14 +101,6 @@
             }),
         ]);
 
-        // ------  주문서의 결제 금액이 변경되었을 경우 결제 금액 업데이트 ------
-        // @docs https://docs.tosspayments.com/sdk/v2/js#widgetssetamount
-        coupon.addEventListener("change", async function () {
-            finalAmount = coupon.checked ? originalAmount - 5000 : originalAmount;
-            await widgets.setAmount({ currency: "KRW", value: finalAmount });
-            amountDisplay.textContent = finalAmount.toLocaleString("ko-KR") + "원";
-        });
-
         // ------ '결제하기' 버튼 누르면 결제창 띄우기 ------
         // @docs https://docs.tosspayments.com/sdk/v2/js#widgetsrequestpayment
         button.addEventListener("click", async function () {
@@ -125,11 +108,11 @@
             // 결제 과정에서 악의적으로 결제 금액이 바뀌는 것을 확인하는 용도입니다.
             await widgets.requestPayment({
                 orderId: `reservation-${reservationId}`, // 기존에 Toss에 넘길 안전한 orderId였지만, reservation-{reservationId}와 같은 형식으로 Toss에 전달
-                orderName: itemName,
+                orderName: storeName,
                 successUrl: window.location.origin + "/widget/success.html",
                 failUrl: window.location.origin + "/widget/fail.html",
-                customerEmail: customerEmail,
-                customerName: customerName,
+                customerEmail: userEmail,
+                customerName: userName,
                 // 가상계좌 안내, 퀵계좌이체 휴대폰 번호 자동 완성에 사용되는 값입니다. 필요하다면 주석을 해제해 주세요.
                 // customerMobilePhone: "01012341234",
             });

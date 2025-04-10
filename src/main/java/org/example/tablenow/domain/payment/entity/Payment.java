@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.payment.enums.PaymentStatus;
 import org.example.tablenow.domain.reservation.entity.Reservation;
@@ -43,6 +44,17 @@ public class Payment extends TimeStamped {
 
     public Payment() {}
 
+    @Builder
+    public Payment(Long id, String paymentKey, String method, Integer price, PaymentStatus status, User user, Reservation reservation) {
+        this.id = id;
+        this.paymentKey = paymentKey;
+        this.method = method;
+        this.price = price;
+        this.status = status;
+        this.user = user;
+        this.reservation = reservation;
+    }
+
     public Payment(String paymentKey, String method, Integer price, PaymentStatus status, User user, Reservation reservation) {
         this.paymentKey = paymentKey;
         this.method = method;
@@ -52,13 +64,15 @@ public class Payment extends TimeStamped {
         this.reservation = reservation;
     }
 
-    public void changePaymentMethod(String mothod) {
-        this.method = mothod;
-        super.update();
+    public void changePaymentMethod(String method) {
+        this.method = method;
     }
 
     public void changePaymentStatus(PaymentStatus status) {
         this.status = status;
-        super.update();
+    }
+
+    public boolean isCanceled(PaymentStatus status) {
+        return status == PaymentStatus.CANCELED;
     }
 }

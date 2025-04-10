@@ -59,7 +59,7 @@
 
         // Postman에서 signin 했을 때 발급 받은 jwt access_token 입력(만료되지 않게 주의)
         // 직접 붙여넣은 jwt 토큰
-        const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhQGEuY29tIiwidXNlclJvbGUiOiJST0xFX1VTRVIiLCJuaWNrbmFtZSI6Im5pY2tuYW1lIiwiZXhwIjoxNzQ0MTgyOTM1LCJpYXQiOjE3NDQxODExMzUsImp0aSI6IjU4OGQ5ZjAyLTJkYjYtNDNhNC05OThkLWYwMDJlMDAyY2I3NyJ9.fL34j95T3EO1fLpGLwidfxnUNmJ7xVzO1HNwr2rgcxo";
+        const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhQGEuY29tIiwidXNlclJvbGUiOiJST0xFX1VTRVIiLCJuaWNrbmFtZSI6Im5pY2tuYW1lIiwiZXhwIjoxNzQ0MjY2Mzg0LCJpYXQiOjE3NDQyNjQ1ODQsImp0aSI6ImRjYjc0MTZhLWI4MGEtNDhhNC04NWVmLTMyZTFmNWZkNDNlOSJ9.YeSg8VtnqkvKAWuk_htNwp8Y0oWjwMJKJ64G6snBy2I";
 
         // PaymentController의 confirmPayment 호출
         const response = await fetch(`/api/v1/reservations/${reservationId}/payments`, {

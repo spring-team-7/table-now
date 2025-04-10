@@ -55,4 +55,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-// feat(payment): Tosspayment 연동 기능 추가 #52

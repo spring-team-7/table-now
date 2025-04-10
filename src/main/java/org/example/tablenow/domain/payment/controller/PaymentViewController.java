@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.payment.dto.request.CheckoutRequestDto;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.repository.ReservationRepository;
+import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Controller;
@@ -17,16 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/api")
 public class PaymentViewController {
 
-    private final ReservationRepository reservationRepository;
+    private final ReservationService reservationService;
 
     @GetMapping("/v1/view/reservations/{reservationId}/payments/checkout")
     public String widget(
             Model model,
             @PathVariable Long reservationId
             ) {
-        Reservation reservation = reservationRepository.findByIdWithUserAndStore(reservationId)
-                .orElseThrow(() -> new HandledException(ErrorCode.NOT_FOUND, "Reservation not found"));
-
+        Reservation reservation = reservationService.getReservation(reservationId);
         CheckoutRequestDto checkoutRequestDto = CheckoutRequestDto.fromReservation(reservation);
 
         model.addAttribute("payRequest", checkoutRequestDto);
