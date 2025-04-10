@@ -37,6 +37,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     """)
     Page<Reservation> findByStoreIdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
 
+
     @Query("""
 SELECT r FROM Reservation r
 WHERE r.status = 'RESERVED'

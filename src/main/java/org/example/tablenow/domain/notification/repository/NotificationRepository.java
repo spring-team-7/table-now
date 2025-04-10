@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-  Page<Notification> findAllByUserAndIsRead(User user, Boolean isRead, Pageable pageable);
+    Page<Notification> findAllByUserAndIsRead(User user, Boolean isRead, Pageable pageable);
 
-  List<Notification> findAllByUserAndIsReadFalse(User user);
+    List<Notification> findAllByUserAndIsReadFalse(User user);
 
-  Page<Notification> findAllByUser(User user, Pageable pageable);
+    Page<Notification> findAllByUser(User user, Pageable pageable);
 }

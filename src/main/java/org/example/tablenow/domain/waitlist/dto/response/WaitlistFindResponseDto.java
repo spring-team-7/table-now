@@ -8,25 +8,25 @@ import java.time.LocalDateTime;
 
 @Getter
 public class WaitlistFindResponseDto {
-  private final Long waitlistId;
-  private final Long storeId;
-  private final String storeName;
-  private final LocalDateTime createdAt;
+    private final Long waitlistId;
+    private final Long storeId;
+    private final String storeName;
+    private final LocalDateTime createdAt;
 
-  @Builder
-  public WaitlistFindResponseDto(Long waitlistId, Long storeId, String storeName, LocalDateTime createdAt) {
-    this.waitlistId = waitlistId;
-    this.storeId = storeId;
-    this.storeName = storeName;
-    this.createdAt = createdAt;
-  }
+    @Builder
+    public WaitlistFindResponseDto(Long waitlistId, Long storeId, String storeName, LocalDateTime createdAt) {
+        this.waitlistId = waitlistId;
+        this.storeId = storeId;
+        this.storeName = storeName;
+        this.createdAt = createdAt;
+    }
 
-  public static WaitlistFindResponseDto fromWaitlist(Waitlist waitlist) {
-    return WaitlistFindResponseDto.builder()
-        .waitlistId(waitlist.getId())
-        .storeId(waitlist.getStore().getId())
-        .storeName(waitlist.getStore().getName())
-        .createdAt(waitlist.getCreatedAt())
-        .build();
-  }
+    public static WaitlistFindResponseDto fromWaitlist(Waitlist waitlist) {
+        return WaitlistFindResponseDto.builder()
+            .waitlistId(waitlist.getId())
+            .storeId(waitlist.getStore().getId())
+            .storeName(waitlist.getStore().getName())
+            .createdAt(waitlist.getCreatedAt())
+            .build();
+    }
 }
