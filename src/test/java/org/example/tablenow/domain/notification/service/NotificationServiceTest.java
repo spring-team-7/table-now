@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -153,31 +155,40 @@ class NotificationServiceTest {
   @Nested
   class 알림_조회 {
 
+    PageRequest pageRequest;
+
     @BeforeEach
     void setUp() {
-      ReflectionTestUtils.setField(user, "id", 1L);
+      pageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     @Test
     void 알림_정상_조회() {
+      // given
       given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
       Notification noti1 = new Notification(user, NotificationType.REMIND, "알림1");
       Notification noti2 = new Notification(user, NotificationType.VACANCY, "알림2");
-      given(notificationRepository.findAllByUserOrderByCreatedAtDesc(user)).willReturn(List.of(noti1, noti2));
+      Page<Notification> page = new PageImpl<>(List.of(noti1, noti2));
 
-      List<NotificationResponseDto> result = notificationService.findNotifications(1L);
+      given(notificationRepository.findAllByUser(eq(user), any(Pageable.class)))
+          .willReturn(page);
 
-      assertEquals("알림1", result.get(0).getContent());
-      assertEquals("알림2", result.get(1).getContent());
+      // when
+      Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5,null); // 👈 여기 page=0 확인!
+
+      // then
+      assertEquals("알림1", result.getContent().get(0).getContent());
+      assertEquals("알림2", result.getContent().get(1).getContent());
     }
+
 
     @Test
     void 유저를_찾지_못해_알림_조회_실패() {
       given(userRepository.findById(1L)).willReturn(Optional.empty());
 
       HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.findNotifications(1L);
+        notificationService.findNotifications(1L,1, 5,null);
       });
 
       assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());

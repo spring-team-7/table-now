@@ -16,6 +16,10 @@ import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,14 +57,18 @@ public class NotificationService {
 
   // 알림 조회
   @Transactional(readOnly = true)
-  public List<NotificationResponseDto> findNotifications(Long userId) {
-    User findUser = userRepository.findById(userId)
+  public Page<NotificationResponseDto> findNotifications(Long userId, int page, int size, Boolean isRead) {
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
-    List<Notification> notificationList = notificationRepository.findAllByUserOrderByCreatedAtDesc(findUser);
-    return notificationList.stream()
-        .map(NotificationResponseDto::fromNotification)
-        .toList();
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
+
+    if(isRead != null) {
+      return notificationRepository.findAllByUserAndIsRead(user, isRead, pageable)
+          .map(NotificationResponseDto::fromNotification);
+    }
+    return notificationRepository.findAllByUser(user, pageable)
+        .map(NotificationResponseDto::fromNotification);
   }
 
   // 알림 읽음 처리
