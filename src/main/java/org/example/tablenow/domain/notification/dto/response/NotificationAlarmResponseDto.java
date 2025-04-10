@@ -17,7 +17,7 @@ public class NotificationAlarmResponseDto {
     this.updatedAt = updatedAt;
   }
 
-  public static NotificationAlarmResponseDto from(User user) {
+  public static NotificationAlarmResponseDto fromNotification(User user) {
     return NotificationAlarmResponseDto.builder()
         .isAlarmEnabled(user.getIsAlarmEnabled())
         .updatedAt(user.getUpdatedAt())
