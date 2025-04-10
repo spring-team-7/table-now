@@ -29,7 +29,7 @@ public class NotificationScheduler {
   private final ReservationService reservationService;
 
   // 예약 24시간전 리마인더 알림전송
-  @Scheduled(cron = "0 0 * * * * ")
+  @Scheduled(cron = "0 0,30 * * * *")
   @Transactional
   public void sendReminderNotifications() {
     LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
