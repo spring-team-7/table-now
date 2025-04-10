@@ -57,12 +57,16 @@ public class NotificationService {
 
   // 알림 조회
   @Transactional(readOnly = true)
-  public Page<NotificationResponseDto> findNotifications(Long userId, int page, int size) {
+  public Page<NotificationResponseDto> findNotifications(Long userId, int page, int size, Boolean isRead) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
     Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
 
+    if(isRead != null) {
+      return notificationRepository.findAllByUserAndIsRead(user, isRead, pageable)
+          .map(NotificationResponseDto::fromNotification);
+    }
     return notificationRepository.findAllByUser(user, pageable)
         .map(NotificationResponseDto::fromNotification);
   }

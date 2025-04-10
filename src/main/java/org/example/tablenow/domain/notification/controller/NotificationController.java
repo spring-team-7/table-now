@@ -36,9 +36,10 @@ public class NotificationController {
   public ResponseEntity<Page<NotificationResponseDto>> getNotifications(
       @AuthenticationPrincipal AuthUser authUser,
       @Positive @RequestParam(defaultValue = "1") int page,
-      @Positive @RequestParam(defaultValue = "10") int size
+      @Positive @RequestParam(defaultValue = "10") int size,
+      @RequestParam(required = false) Boolean isRead
   ) {
-    return ResponseEntity.ok(notificationService.findNotifications(authUser.getId(), page, size));
+    return ResponseEntity.ok(notificationService.findNotifications(authUser.getId(), page, size, isRead));
   }
 
   // 알림 읽음 처리

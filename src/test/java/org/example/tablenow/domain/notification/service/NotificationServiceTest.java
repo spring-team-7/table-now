@@ -175,7 +175,7 @@ class NotificationServiceTest {
           .willReturn(page);
 
       // when
-      Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5); // 👈 여기 page=0 확인!
+      Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5,null); // 👈 여기 page=0 확인!
 
       // then
       assertEquals("알림1", result.getContent().get(0).getContent());
@@ -188,7 +188,7 @@ class NotificationServiceTest {
       given(userRepository.findById(1L)).willReturn(Optional.empty());
 
       HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.findNotifications(1L,1, 5);
+        notificationService.findNotifications(1L,1, 5,null);
       });
 
       assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
