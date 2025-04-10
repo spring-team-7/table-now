@@ -25,4 +25,12 @@ public class EventJoinController {
     ) {
         return ResponseEntity.ok(eventJoinService.joinEvent(eventId, authUser));
     }
+
+    @PostMapping("/v2/events/{eventId}/join")
+    public ResponseEntity<EventJoinResponseDto> joinEventV2(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long eventId
+    ) {
+        return ResponseEntity.ok(eventJoinService.joinEventV2(eventId, authUser));
+    }
 }
