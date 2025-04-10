@@ -25,10 +25,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,6 +47,8 @@ public class StoreServiceTest {
     private CategoryService categoryService;
     @Mock
     private RedisTemplate<String, String> redisTemplate;
+    @Mock
+    private ValueOperations<String, String> valueOperations;
     @Mock
     private ZSetOperations<String, String> zSetOperations;
 
@@ -350,7 +355,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.findAllStores(1, 10, sortField, sortOrder, null, null)
+                    storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
             );
             assertEquals(exception.getMessage(), ErrorCode.INVALID_ORDER_VALUE.getDefaultMessage());
         }
@@ -363,7 +368,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.findAllStores(1, 10, sortField, sortOrder, null, null)
+                    storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
             );
             assertEquals(exception.getMessage(), ErrorCode.INVALID_SORT_FIELD.getDefaultMessage());
         }
@@ -380,7 +385,7 @@ public class StoreServiceTest {
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.findAllStores(page, size, sortField, sortOrder, categoryId, "");
+            Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, "");
 
             // then
             assertNotNull(response);
@@ -388,23 +393,47 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 조회_성공() {
+        void 동일_검색어_조회_성공() {
             // given
             int page = 1;
             int size = 10;
             String sortField = "createdAt";
             String sortOrder = "desc";
             String search = "맛있는";
-            Set<ZSetOperations.TypedTuple<String>> mockResult = new HashSet<>();
-
-            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.incrementScore(StoreRedisKey.STORE_RANK_KEY, search, 1L)).willReturn(1.0);
+            given(redisTemplate.hasKey(anyString())).willReturn(true);
 
             Page<StoreSearchResponseDto> result = new PageImpl<>(List.of(StoreSearchResponseDto.fromStore(store)));
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.findAllStores(page, size, sortField, sortOrder, categoryId, search);
+            Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, search);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getTotalElements(), 1);
+        }
+
+        @Test
+        void 검색어_캐시_등록_및_조회_성공() {
+            // given
+            int page = 1;
+            int size = 10;
+            String sortField = "createdAt";
+            String sortOrder = "desc";
+            String search = "맛있는";
+            String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
+
+            given(redisTemplate.hasKey(anyString())).willReturn(false);
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.incrementScore(rankKey, search, 1L)).willReturn(1.0);
+
+            Page<StoreSearchResponseDto> result = new PageImpl<>(List.of(StoreSearchResponseDto.fromStore(store)));
+            given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
+
+            // when
+            Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, search);
 
             // then
             assertNotNull(response);
@@ -445,19 +474,35 @@ public class StoreServiceTest {
     @Nested
     class 가게_인기_검색_랭킹_조회 {
         int limit = 10;
+        String timeKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+
         Set<ZSetOperations.TypedTuple<String>> mockResult = new HashSet<>();
         ZSetOperations.TypedTuple<String> tuple1 = new DefaultTypedTuple<>("김치찌개", 100.0);
         ZSetOperations.TypedTuple<String> tuple2 = new DefaultTypedTuple<>("제육볶음", 90.0);
 
         @Test
+        void 시간_집계_키_형식이_yyyyMMddHH_또는_yyyyMMdd_가_아닌_경우_예외_발생() {
+            // given
+            String timeKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    storeService.getStoreRanking(limit, timeKey)
+            );
+            assertEquals(exception.getMessage(), ErrorCode.STORE_RANKING_TIME_KEY_ERROR.getDefaultMessage());
+
+        }
+
+        @Test
         void 캐시_키_초기화_후_조회_성공() {
             // given
+            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1))
+            given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(null);
 
             // when
-            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit);
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, timeKey);
 
             // then
             assertNotNull(response);
@@ -467,12 +512,13 @@ public class StoreServiceTest {
         @Test
         void 캐시_빈_내부_데이터_조회_성공() {
             // given
+            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1))
+            given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(Collections.emptySet());
 
             // when
-            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit);
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, timeKey);
 
             // then
             assertNotNull(response);
@@ -480,16 +526,54 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 조회_성공() {
+        void 시간_집계_키를_입력하지_않은_경우_현재_시간_기준_조회_성공() {
             // given
+            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
+                    .willReturn(null);
+
+            // when
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, "");
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.size(), 0);
+        }
+
+        @Test
+        void 시간별_단위_집계_인기_검색어_조회_성공() {
+            // given
+            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             mockResult.add(tuple1);
             mockResult.add(tuple2);
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.reverseRangeWithScores(StoreRedisKey.STORE_RANK_KEY, 0L, limit - 1))
+            given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(mockResult);
 
             // when
-            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit);
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, timeKey);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.size(), 2);
+        }
+
+        @Test
+        void 일자별_단위_집계_인기_검색어_조회_성공() {
+            // given
+            String dayKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + dayKey + "00";
+            mockResult.add(tuple1);
+            mockResult.add(tuple2);
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.reverseRangeWithScores(anyString(), anyLong(), anyLong()))
+                    .willReturn(mockResult);
+            given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
+                    .willReturn(null);
+
+            // when
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, dayKey);
 
             // then
             assertNotNull(response);
