@@ -79,7 +79,7 @@ public class UserService {
         String userImageUrl = user.getImageUrl();
         String requestImageUrl = request.getImageUrl();
         if (StringUtils.hasText(requestImageUrl)) {
-            if(!Objects.equals(userImageUrl, requestImageUrl) && StringUtils.hasText(userImageUrl)) {
+            if (!Objects.equals(userImageUrl, requestImageUrl) && StringUtils.hasText(userImageUrl)) {
                 imageService.delete(userImageUrl);
             }
             user.updateImageUrl(requestImageUrl);
