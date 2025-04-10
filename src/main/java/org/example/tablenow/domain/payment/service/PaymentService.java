@@ -64,9 +64,9 @@ public class PaymentService {
 
         payment.changePaymentMethod(tossResponse.getMethod());
         payment.changePaymentStatus(PaymentStatus.valueOf(tossResponse.getStatus()));
-        paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.save(payment);
 
-        return PaymentResponseDto.fromPayment(payment);
+        return PaymentResponseDto.fromPayment(savedPayment);
     }
 
     @Transactional(readOnly = true)
@@ -98,9 +98,9 @@ public class PaymentService {
         }
 
         payment.changePaymentStatus(PaymentStatus.CANCELED);
-        paymentRepository.saveAndFlush(payment);
+        Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
-        return PaymentResponseDto.fromPayment(payment);
+        return PaymentResponseDto.fromPayment(savedPayment);
     }
 
     private Payment getVerifiedPayment(AuthUser authUser, Long reservationId, Long paymentId) {
