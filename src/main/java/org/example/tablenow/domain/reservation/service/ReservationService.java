@@ -112,7 +112,7 @@ public class ReservationService {
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
 
-    private Reservation getReservation(Long id) {
+    public Reservation getReservation(Long id) {
         return reservationRepository.findById(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
     }

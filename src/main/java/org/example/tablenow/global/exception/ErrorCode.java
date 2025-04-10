@@ -33,6 +33,7 @@ public enum ErrorCode {
     STORE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 가게의 요청 권한이 없습니다."),
     STORE_BAD_REQUEST_TIME(HttpStatus.BAD_REQUEST, "시작시간은 종료시간보다 이전이어야 합니다."),
     STORE_CLOSED_TIME(HttpStatus.BAD_REQUEST,"가게 영업시간이 아닙니다."),
+    STORE_RANKING_TIME_KEY_ERROR(HttpStatus.BAD_REQUEST, "시간 집계 키는 yyyyMMdd 또는 yyyyMMddHH 형식이어야 합니다."),
 
     // RESERVATION
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "예약이 존재하지 않습니다."),
@@ -62,10 +63,24 @@ public enum ErrorCode {
     WAITLIST_NOT_FOUNND(HttpStatus.NOT_FOUND, "대기 정보가 존재하지 않습니다."),
     WAITLIST_NOT_ALLOWED(HttpStatus.CONFLICT, "빈자리가 있어 대기 등록이 불가능합니다."),
 
+    // IMAGE
+    INVALID_IMAGE_DOMAIN(HttpStatus.BAD_REQUEST, "잘못된 이미지 도메인입니다."),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
+
     // COMMON
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),
     INVALID_ORDER_VALUE(HttpStatus.BAD_REQUEST, "정렬 옵션이 잘못되었습니다. 오름차순(asc) 또는 내림차순(desc)을 선택해주세요."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
+
+    // PAYMENT
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "결제가 존재하지 않습니다."),
+    ALREADY_PAID(HttpStatus.BAD_REQUEST, "이미 결제가 완료된 예약입니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "결제 금액이 예약 보증금과 일치하지 않습니다."),
+    TOSS_PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "Tosspayment에서 결제가 실패했습니다."),
+    TOSS_PAYMENT_CANCEL_FAILED(HttpStatus.BAD_REQUEST, "Tosspayment에서 결제 취소가 실패했습니다."),
+    PAYMENT_RESERVATION_MISMATCH(HttpStatus.BAD_REQUEST, "예약이 결제와 일치하지 않습니다."),
+    ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 결제가 취소된 예약입니다."),
+    UNAUTHORIZED_RESERVATION_ACCESS(HttpStatus.UNAUTHORIZED, "본인 예약이 아닙니다.");
 
 
     private final HttpStatus status;
