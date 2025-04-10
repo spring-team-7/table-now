@@ -4,7 +4,7 @@ import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.repository.RefreshTokenRepository;
-import org.example.tablenow.domain.user.dto.response.UserResponse;
+import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
@@ -69,10 +69,10 @@ class AuthServiceTest {
         @Test
         void 성공() {
             // given
-            UserResponse userResponse = authService.signup(request);
+            SignupResponse signupResponse = authService.signup(request);
 
             // when
-            User findUser = userRepository.findById(userResponse.getId())
+            User findUser = userRepository.findById(signupResponse.getId())
                     .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
             // then

@@ -11,6 +11,9 @@ public class NotificationRequestDto {
   @NotNull(message = "userId를 입력해주세요.")
   private Long userId;
 
+  // 스토아이디는 널일수도 있음.
+  private Long storeId;
+
   @NotNull(message = "알림 타입을 입력해주세요.")
   private NotificationType type;
 

@@ -5,7 +5,7 @@ import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.entity.RefreshToken;
-import org.example.tablenow.domain.user.dto.response.UserResponse;
+import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.exception.ErrorCode;
@@ -23,7 +23,7 @@ public class AuthService {
     private final TokenService tokenService;
 
     @Transactional
-    public UserResponse signup(SignupRequest request) {
+    public SignupResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new HandledException(ErrorCode.DUPLICATE_EMAIL);
         }
@@ -41,7 +41,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(newUser);
 
-        return UserResponse.builder()
+        return SignupResponse.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
                 .name(savedUser.getName())

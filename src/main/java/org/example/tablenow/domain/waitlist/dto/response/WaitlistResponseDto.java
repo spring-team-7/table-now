@@ -23,7 +23,7 @@ public class WaitlistResponseDto {
     this.createdAt = createdAt;
   }
 
-  public static WaitlistResponseDto from(Waitlist waitlist) {
+  public static WaitlistResponseDto fromWaitlist(Waitlist waitlist) {
     return WaitlistResponseDto.builder()
         .waitlistId(waitlist.getId())
         .storeId(waitlist.getStore().getId())

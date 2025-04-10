@@ -7,12 +7,15 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.waitlist.dto.request.WaitlistRequestDto;
 import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
+import org.example.tablenow.domain.waitlist.dto.response.WaitlistFindResponseDto;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +46,18 @@ public class WaitlistService {
     Waitlist waitlist = new Waitlist(findUser, findStore);
     waitlistRepository.save(waitlist);
 
-    return WaitlistResponseDto.from(waitlist);
+    return WaitlistResponseDto.fromWaitlist(waitlist);
+  }
+
+  // 내 대기 목록 조회
+  @Transactional(readOnly = true)
+  public List<WaitlistFindResponseDto> findMyWaitlist(Long userId) {
+    User findUser = userRepository.findById(userId)
+        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+
+    List<Waitlist> waitlists = waitlistRepository.findAllByUserAndIsNotifiedFalse(findUser);
+    return waitlists.stream()
+        .map(WaitlistFindResponseDto::fromWaitlist)
+        .toList();
   }
 }
