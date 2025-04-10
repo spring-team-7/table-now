@@ -21,4 +21,11 @@ public class NotificationRequestDto {
 
     @NotBlank(message = "알림 내용을 입력해주세요.")
     private String content;
+
+    public NotificationRequestDto(Long userId, Long storeId, NotificationType type, String content) {
+        this.userId = userId;
+        this.storeId = storeId;
+        this.type = type;
+        this.content = content;
+    }
 }
