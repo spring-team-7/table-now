@@ -25,7 +25,6 @@ public class Payment extends TimeStamped {
     @NotBlank
     private String method;
 
-    @NotNull
     @Min(0)
     private int price;
 
@@ -55,15 +54,6 @@ public class Payment extends TimeStamped {
         this.reservation = reservation;
     }
 
-    public Payment(String paymentKey, String method, Integer price, PaymentStatus status, User user, Reservation reservation) {
-        this.paymentKey = paymentKey;
-        this.method = method;
-        this.price = price;
-        this.status = status;
-        this.user = user;
-        this.reservation = reservation;
-    }
-
     public void changePaymentMethod(String method) {
         this.method = method;
     }
@@ -72,7 +62,7 @@ public class Payment extends TimeStamped {
         this.status = status;
     }
 
-    public boolean isCanceled(PaymentStatus status) {
-        return status == PaymentStatus.CANCELED;
+    public boolean isCanceled() {
+        return this.status == PaymentStatus.CANCELED;
     }
 }

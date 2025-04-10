@@ -84,7 +84,7 @@ public class PaymentService {
 
         Payment payment = getVerifiedPayment(authUser, reservationId, paymentId);
 
-        if (payment.isCanceled(payment.getStatus())) {
+        if (payment.isCanceled()) {
             throw new HandledException(ErrorCode.ALREADY_CANCELED);
         }
 
