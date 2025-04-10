@@ -15,6 +15,7 @@ import org.example.tablenow.global.exception.HandledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +27,7 @@ public class UserService {
 
     @Transactional
     public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request) {
-        User user = findUserById(authUser.getId());
-        validatePassword(user, request.getPassword());
+        User user = validatePasswordAndGetUser(authUser, request.getPassword());
 
         user.deleteUser();
         tokenService.deleteRefreshTokenByUserId(user.getId());
@@ -40,8 +40,7 @@ public class UserService {
 
     @Transactional
     public SimpleUserResponse updatePassword(AuthUser authUser, UpdatePasswordRequest request) {
-        User user = findUserById(authUser.getId());
-        validatePassword(user, request.getPassword());
+        User user = validatePasswordAndGetUser(authUser, request.getPassword());
 
         user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
         tokenService.deleteRefreshTokenByUserId(user.getId());
@@ -62,11 +61,11 @@ public class UserService {
     public UserProfileResponse updateUserProfile(AuthUser authUser, UpdateProfileRequest request) {
         User user = findUserById(authUser.getId());
 
-        if (request.getNickname() != null) {
+        if (StringUtils.hasText(request.getNickname())) {
             user.updateNickname(request.getNickname());
         }
 
-        if (request.getPhoneNumber() != null) {
+        if (StringUtils.hasText(request.getPhoneNumber())) {
             user.updatePhoneNumber(request.getPhoneNumber());
         }
 
@@ -82,5 +81,11 @@ public class UserService {
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new HandledException(ErrorCode.INCORRECT_PASSWORD);
         }
+    }
+
+    private User validatePasswordAndGetUser(AuthUser authUser, String rawPassword) {
+        User user = findUserById(authUser.getId());
+        validatePassword(user, rawPassword);
+        return user;
     }
 }

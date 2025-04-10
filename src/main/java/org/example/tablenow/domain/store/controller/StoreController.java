@@ -57,14 +57,15 @@ public class StoreController {
 
     // 가게 목록 조회
     @GetMapping("/v1/stores")
-    public ResponseEntity<Page<StoreSearchResponseDto>> getStores(@RequestParam(defaultValue = "1") int page,
+    public ResponseEntity<Page<StoreSearchResponseDto>> getStores(@AuthenticationPrincipal AuthUser authUser,
+                                                                  @RequestParam(defaultValue = "1") int page,
                                                                   @RequestParam(defaultValue = "10") int size,
                                                                   @RequestParam(defaultValue = "name") String sort,
                                                                   @RequestParam(defaultValue = "asc") String direction,
                                                                   @RequestParam(required = false) Long categoryId,
                                                                   @RequestParam(required = false) String search
     ) {
-        return ResponseEntity.ok(storeService.findAllStores(page, size, sort, direction, categoryId, search));
+        return ResponseEntity.ok(storeService.findAllStores(authUser, page, size, sort, direction, categoryId, search));
     }
 
     // 가게 정보 조회
@@ -75,7 +76,8 @@ public class StoreController {
 
     // 가게 인기 검색 랭킹 조회
     @GetMapping("/v1/stores/ranking")
-    public ResponseEntity<List<StoreRankingResponseDto>> getStoreRanking(@RequestParam(defaultValue = "10") int limit) {
-        return ResponseEntity.ok(storeService.getStoreRanking(limit));
+    public ResponseEntity<List<StoreRankingResponseDto>> getStoreRanking(@RequestParam(defaultValue = "10") int limit,
+                                                                         @RequestParam(required = false) String timeKey) {
+        return ResponseEntity.ok(storeService.getStoreRanking(limit, timeKey));
     }
 }

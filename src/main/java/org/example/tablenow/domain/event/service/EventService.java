@@ -95,8 +95,13 @@ public class EventService {
         }
     }
 
-    protected Event getEvent(Long id) {
+    public Event getEvent(Long id) {
         return eventRepository.findById(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
+    }
+
+    public Event getEventForUpdate(Long id) {
+        return eventRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
     }
 }

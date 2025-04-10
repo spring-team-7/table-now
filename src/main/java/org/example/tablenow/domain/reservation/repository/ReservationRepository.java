@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @Query("""
@@ -45,4 +46,10 @@ AND r.reservedAt BETWEEN :start AND :end
 
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.store.id = :storeId AND r.status = 'RESERVED'")
     long countReservedTables(@Param("storeId") Long storeId);
+
+    @Query("SELECT r FROM Reservation r " +
+            "JOIN FETCH r.user " +
+            "JOIN FETCH r.store " +
+            "WHERE r.id = :id")
+    Optional<Reservation> findByIdWithUserAndStore(@Param("id") Long id);
 }
