@@ -5,6 +5,7 @@ import org.example.tablenow.global.filter.JwtAuthenticationFilter;
 import org.example.tablenow.global.security.handler.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -38,6 +39,9 @@ public class SecurityConfig {
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/oauth2/**").permitAll()
+                        .requestMatchers("/api/v1/view/reservations/*/payments/checkout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reservations/*/payments").permitAll()
+                        .requestMatchers("/widget/**", "/success/**", "/fail/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

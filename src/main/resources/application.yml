@@ -1,6 +1,10 @@
 spring:
   application:
     name: table-now
+  profiles:
+    active: local
+  thymeleaf:
+    cache: false
 
   config:
     import: optional:file:.env[.properties]
@@ -54,6 +58,11 @@ jwt:
   secret:
     key: ${JWT_SECRET_KEY}
 
+
+toss:
+  secret:
+    key: ${TOSS_SECRET_KEY}
+
 cloud:
   aws:
     credentials:
@@ -64,3 +73,4 @@ cloud:
     s3:
       bucket: ${AWS_S3_BUCKET}
       presigned-url-expiration: ${AWS_S3_PRESIGNED_EXPIRATION}
+

@@ -1,8 +1,7 @@
-package org.example.tablenow.domain.store.validation.annotation;
+package org.example.tablenow.domain.store.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import org.example.tablenow.domain.store.validation.HalfHourValidator;
 
 import java.lang.annotation.*;
 

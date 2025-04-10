@@ -23,11 +23,12 @@ public class GlobalExceptionHandler {
         HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
         FieldError firstError = ex.getBindingResult().getFieldError();
         String message = "유효성 검사에 실패했습니다.";
-
         if (firstError != null) {
-            message = firstError.getDefaultMessage();
+            StringBuilder errorMessage = new StringBuilder();
+            ex.getBindingResult().getAllErrors().forEach(e ->
+                    errorMessage.append(e.getDefaultMessage()).append(System.lineSeparator()));
+            message = errorMessage.toString();
         }
-
         return new ResponseEntity<>(ErrorResponse.of(httpStatus, message), httpStatus);
     }
 

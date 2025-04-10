@@ -6,8 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @Query("""
@@ -33,4 +35,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       AND (:status IS NULL OR r.status = :status)
     """)
     Page<Reservation> findByStoreIdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
+
+    @Query("SELECT r FROM Reservation r " +
+            "JOIN FETCH r.user " +
+            "JOIN FETCH r.store " +
+            "WHERE r.id = :id")
+    Optional<Reservation> findByIdWithUserAndStore(@Param("id") Long id);
 }
