@@ -29,8 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -49,10 +48,12 @@ public class PaymentServiceTest {
 
     Long userId = 1L;
     Long ownerId = 2L;
+    Long otherUserId = 99L;
     AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
     User user = User.fromAuthUser(authUser);
     AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "사장");
     User owner = User.fromAuthUser(authOwner);
+    AuthUser authOtherUser = new AuthUser(otherUserId, "other@user.com", UserRole.ROLE_USER, "다른회원");
 
     Long categoryId = 1L;
     Category category = Category.builder().id(categoryId).name("한식").build();
@@ -83,9 +84,9 @@ public class PaymentServiceTest {
     Long paymentId = 1L;
     Payment payment = Payment.builder()
             .id(paymentId)
-            .paymentKey("1234qwerasdfzxcv")
-            .method("Card")
-            .price(20000)
+            .paymentKey("tgen_20250410150357N34V7")
+            .method("CARD")
+            .price(30000)
             .status(PaymentStatus.READY)
             .user(user)
             .reservation(reservation)
@@ -106,12 +107,11 @@ public class PaymentServiceTest {
         @Test
         void 로그인_한_유저와_예약한_유저가_다른_경우_예외_발생() {
             // given
-            AuthUser otherUser = new AuthUser(99L, "other@user.com", UserRole.ROLE_USER, "다른회원");
             given(reservationService.getReservation(anyLong())).willReturn(reservation);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    paymentService.confirmPayment(otherUser, reservationId, dto)
+                    paymentService.confirmPayment(authOtherUser, reservationId, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS.getDefaultMessage());
         }
@@ -136,7 +136,8 @@ public class PaymentServiceTest {
             given(reservationService.getReservation(anyLong())).willReturn(reservation);
             given(paymentRepository.existsByReservationId(reservationId)).willReturn(false);
 
-            ReflectionTestUtils.setField(dto, "amount", 25000);
+            int forgedAmount = 25000;
+            ReflectionTestUtils.setField(dto, "amount", forgedAmount);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -197,12 +198,14 @@ public class PaymentServiceTest {
             PaymentResponseDto response = paymentService.confirmPayment(authUser, reservationId, dto);
 
             // then
-            assertEquals(paymentId, response.getPaymentId());
-            assertEquals(reservationId, response.getReservationId());
-            assertEquals(authUser.getId(), response.getUserId());
-            assertEquals("CARD", response.getMethod());
-            assertEquals(dto.getAmount(), response.getPrice());
-            assertEquals(PaymentStatus.DONE, response.getStatus());
+            assertAll("결제 완료 검증",
+                    () -> assertEquals(paymentId, response.getPaymentId()),
+                    () -> assertEquals(reservationId, response.getReservationId()),
+                    () -> assertEquals(authUser.getId(), response.getUserId()),
+                    () -> assertEquals(tossResponse.getMethod(), response.getMethod()),
+                    () -> assertEquals(tossResponse.getTotalAmount(), response.getPrice()),
+                    () -> assertEquals(PaymentStatus.DONE, response.getStatus())
+            );
         }
     }
 
@@ -225,56 +228,19 @@ public class PaymentServiceTest {
         @Test
         void 다른_유저가_내_결제에_접근하려는_경우_예외_발생() {
             // given
-            AuthUser otherAuthUser = new AuthUser(99L, "other@a.com", UserRole.ROLE_USER, "다른회원");
-
-            Reservation myReservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment myPayment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(myReservation)
-                    .build();
-
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(myPayment));
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    paymentService.getPayment(otherAuthUser, reservationId, paymentId)
+                    paymentService.getPayment(authOtherUser, reservationId, paymentId)
             );
 
             assertEquals(ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS.getDefaultMessage(), exception.getMessage());
         }
 
-
         @Test
         void 결제_내역의_예약ID와_입력받은_예약ID가_다른_경우_예외_발생() {
             // given
-            Reservation validReservation = Reservation.builder()
-                    .id(reservationId) // reservationId = 1L
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment payment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(validReservation)
-                    .build();
-
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             Long wrongReservationId = 999L;
@@ -291,40 +257,31 @@ public class PaymentServiceTest {
         @Test
         void 결제_조회_완료() {
             // given
-            Reservation reservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment payment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(reservation)
-                    .build();
-
+            ReflectionTestUtils.setField(payment, "status", PaymentStatus.DONE);
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             // when
             PaymentResponseDto response = paymentService.getPayment(authUser, reservationId, paymentId);
 
             // then
-            assertEquals(paymentId, response.getPaymentId());
-            assertEquals(reservationId, response.getReservationId());
-            assertEquals(authUser.getId(), response.getUserId());
-            assertEquals("CARD", response.getMethod());
-            assertEquals(30000, response.getPrice());
-            assertEquals(PaymentStatus.DONE, response.getStatus());
+            assertAll("결제 조회 검증",
+                    () -> assertEquals(paymentId, response.getPaymentId()),
+                    () -> assertEquals(reservationId, response.getReservationId()),
+                    () -> assertEquals(authUser.getId(), response.getUserId()),
+                    () -> assertEquals(payment.getMethod(), response.getMethod()),
+                    () -> assertEquals(payment.getPrice(), response.getPrice()),
+                    () -> assertEquals(payment.getStatus(), response.getStatus())
+            );
         }
     }
 
     @Nested
     class 결제_취소 {
+
+        @BeforeEach
+        void setUp() {
+            ReflectionTestUtils.setField(payment, "status", PaymentStatus.DONE);
+        }
 
         @Test
         void 결제_내역이_없는_경우_예외_발생() {
@@ -342,30 +299,11 @@ public class PaymentServiceTest {
         @Test
         void 다른_유저가_내_결제를_취소하려는_경우_예외_발생() {
             // given
-            AuthUser otherAuthUser = new AuthUser(99L, "other@a.com", UserRole.ROLE_USER, "다른회원");
-
-            Reservation myReservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment myPayment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(myReservation)
-                    .build();
-
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(myPayment));
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    paymentService.cancelPayment(otherAuthUser, reservationId, paymentId)
+                    paymentService.cancelPayment(authOtherUser, reservationId, paymentId)
             );
 
             assertEquals(ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS.getDefaultMessage(), exception.getMessage());
@@ -374,23 +312,6 @@ public class PaymentServiceTest {
         @Test
         void 결제_내역의_예약ID와_입력받은_예약ID가_다른_경우_예외_발생() {
             // given
-            Reservation validReservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment payment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(validReservation)
-                    .build();
-
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             Long wrongReservationId = 999L;
@@ -406,24 +327,9 @@ public class PaymentServiceTest {
         @Test
         void 이미_취소된_결제인_경우_예외_발생() {
             // given
-            Reservation validReservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
+            ReflectionTestUtils.setField(payment, "status", PaymentStatus.CANCELED);
 
-            Payment canceledPayment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.CANCELED)
-                    .user(user)
-                    .reservation(validReservation)
-                    .build();
-
-            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(canceledPayment));
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -436,30 +342,13 @@ public class PaymentServiceTest {
         @Test
         void tosspayment에서_결제_취소가_실패한_경우_예외_발생() {
             // given
-            Reservation validReservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment payment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(validReservation)
-                    .build();
-
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             TossPaymentCancelResponseDto failedCancelResponse = TossPaymentCancelResponseDto.builder()
                     .paymentKey("tgen_20250410150357N34V7")
                     .orderId("reservation-" + reservationId)
                     .status("FAILED")
-                    .canceledAt("2025-04-11T12:00:00Z")
+                    .canceledAt("2025-04-11T12:00:00")
                     .build();
 
             given(tossPaymentClient.cancelPayment(payment.getPaymentKey(), "고객 요청으로 결제 취소"))
@@ -476,30 +365,13 @@ public class PaymentServiceTest {
         @Test
         void 결제_취소_완료() {
             // given
-            Reservation validReservation = Reservation.builder()
-                    .id(reservationId)
-                    .user(user)
-                    .store(store)
-                    .reservedAt(LocalDateTime.of(2025, 4, 13, 12, 0))
-                    .build();
-
-            Payment payment = Payment.builder()
-                    .id(paymentId)
-                    .paymentKey("tgen_20250410150357N34V7")
-                    .method("CARD")
-                    .price(30000)
-                    .status(PaymentStatus.DONE)
-                    .user(user)
-                    .reservation(validReservation)
-                    .build();
-
             given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
 
             TossPaymentCancelResponseDto successResponse = TossPaymentCancelResponseDto.builder()
                     .paymentKey("tgen_20250410150357N34V7")
                     .orderId("reservation-" + reservationId)
                     .status("CANCELED")
-                    .canceledAt("2025-04-11T12:00:00Z")
+                    .canceledAt("2025-04-11T12:00:00")
                     .build();
 
             given(tossPaymentClient.cancelPayment(payment.getPaymentKey(), "고객 요청으로 결제 취소"))
@@ -516,12 +388,14 @@ public class PaymentServiceTest {
             PaymentResponseDto response = paymentService.cancelPayment(authUser, reservationId, paymentId);
 
             // then
-            assertEquals(paymentId, response.getPaymentId());
-            assertEquals(reservationId, response.getReservationId());
-            assertEquals(authUser.getId(), response.getUserId());
-            assertEquals("CARD", response.getMethod());
-            assertEquals(30000, response.getPrice());
-            assertEquals(PaymentStatus.CANCELED, response.getStatus());
+            assertAll("결제 취소 검증",
+                    () -> assertEquals(paymentId, response.getPaymentId()),
+                    () -> assertEquals(reservationId, response.getReservationId()),
+                    () -> assertEquals(authUser.getId(), response.getUserId()),
+                    () -> assertEquals(payment.getMethod(), response.getMethod()),
+                    () -> assertEquals(payment.getPrice(), response.getPrice()),
+                    () -> assertEquals(PaymentStatus.CANCELED, response.getStatus())
+            );
         }
     }
 }
