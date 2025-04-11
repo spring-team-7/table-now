@@ -33,15 +33,24 @@ public class ImageService {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
-
     @Value("${cloud.aws.s3.presigned-url-expiration}")
     private int expirationMinutes;
+
+    private static final String S3_URL_PREFIX = "https://";
+    private static final String S3_URL_SUFFIX = ".s3.amazonaws.com/";
+
+    private String generateKey(ImageDomain imageDomain, Long userId, String fileExtension) {
+        return imageDomain.name().toLowerCase() + "/" + userId + "/" + UUID.randomUUID() + fileExtension;
+    }
+
+    private String getFileUrl(String key) {
+        return S3_URL_PREFIX + bucketName + S3_URL_SUFFIX + key;
+    }
 
     public PresignedUrlResponse generatePresignedUrl(AuthUser authUser, ImageDomain imageDomain, PresignedUrlRequest request) {
         Long userId = authUser.getId();
         String fileExtension = extractExtension(request.getFileName());
-        String uuid = UUID.randomUUID().toString();
-        String key = imageDomain.name().toLowerCase() + "/" + userId + "/" + uuid + fileExtension;
+        String key = generateKey(imageDomain, userId, fileExtension);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -57,7 +66,7 @@ public class ImageService {
         );
 
         String uploadUrl = presignedRequest.url().toString();
-        String fileUrl = "https://" + bucketName + ".s3.amazonaws.com/" + key;
+        String fileUrl = getFileUrl(key);
 
         return PresignedUrlResponse.builder()
                 .uploadUrl(uploadUrl)

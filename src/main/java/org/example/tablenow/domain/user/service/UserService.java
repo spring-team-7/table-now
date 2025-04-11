@@ -2,6 +2,7 @@ package org.example.tablenow.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.service.TokenService;
+import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
 import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
 import org.example.tablenow.domain.user.dto.request.UserDeleteRequest;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -24,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final ImageService imageService;
 
     @Transactional
     public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request) {
@@ -31,6 +35,9 @@ public class UserService {
 
         user.deleteUser();
         tokenService.deleteRefreshTokenByUserId(user.getId());
+        if (StringUtils.hasText(user.getImageUrl())) {
+            imageService.delete(user.getImageUrl());
+        }
 
         return SimpleUserResponse.builder()
                 .id(user.getId())
@@ -67,6 +74,15 @@ public class UserService {
 
         if (StringUtils.hasText(request.getPhoneNumber())) {
             user.updatePhoneNumber(request.getPhoneNumber());
+        }
+
+        String userImageUrl = user.getImageUrl();
+        String requestImageUrl = request.getImageUrl();
+        if (StringUtils.hasText(requestImageUrl)) {
+            if (!Objects.equals(userImageUrl, requestImageUrl) && StringUtils.hasText(userImageUrl)) {
+                imageService.delete(userImageUrl);
+            }
+            user.updateImageUrl(requestImageUrl);
         }
 
         return UserProfileResponse.fromUser(user);
