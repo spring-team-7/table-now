@@ -46,6 +46,7 @@ public class StoreService {
     private static final Long MAX_STORES_COUNT = 3L;
     private static final Integer TARGET_HOUR_LENGTH = 10;
     private static final Integer TARGET_DAY_LENGTH = 8;
+    private static final DateTimeFormatter TIME_KEY_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHH");
 
     @Transactional
     public StoreCreateResponseDto saveStore(AuthUser authUser, StoreCreateRequestDto request) {
@@ -117,9 +118,8 @@ public class StoreService {
 
         String storeImageUrl = store.getImageUrl();
         String requestImageUrl = request.getImageUrl();
-
         if (StringUtils.hasText(requestImageUrl)) {
-            if (!requestImageUrl.equals(storeImageUrl) && StringUtils.hasText(storeImageUrl)) {
+            if (!Objects.equals(requestImageUrl, storeImageUrl) && StringUtils.hasText(storeImageUrl)) {
                 imageService.delete(storeImageUrl);
             }
             store.updateImageUrl(requestImageUrl);
@@ -169,7 +169,7 @@ public class StoreService {
                     redisTemplate.opsForValue().set(userKey, "1", 12, TimeUnit.HOURS);
 
                     // 시간 단위 랭킹 키 생성
-                    String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+                    String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
                     String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
 
                     // 키워드 랭킹 score 증가
@@ -236,7 +236,7 @@ public class StoreService {
     }
 
     private String validateTimeKey(String timeKey) {
-        return StringUtils.hasText(timeKey) ? timeKey : LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+        return StringUtils.hasText(timeKey) ? timeKey : LocalDateTime.now().format(TIME_KEY_FORMATTER);
     }
 
     private Map<String, Integer> getRankMapByTimeKey(String timeKey) {
