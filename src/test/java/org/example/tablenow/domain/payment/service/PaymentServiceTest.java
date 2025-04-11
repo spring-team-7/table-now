@@ -42,10 +42,6 @@ public class PaymentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
     @Mock
-    private ReservationRepository reservationRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
     private TossPaymentClient tossPaymentClient;
     @Mock
     private ReservationService reservationService;
