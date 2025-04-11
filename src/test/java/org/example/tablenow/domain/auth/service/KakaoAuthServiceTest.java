@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
+import static org.example.tablenow.testutil.OAuthTestUtil.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -115,15 +116,6 @@ class KakaoAuthServiceTest {
                 .build();
     }
 
-    private void stubJsonParsing(String json) throws Exception {
-        when(objectMapper.readTree(json)).thenReturn(new ObjectMapper().readTree(json));
-    }
-
-    private String createAccessTokenJson(String token) {
-        return "{\"access_token\":\"" + token + "\"}";
-    }
-
-    // 카카오 인가 코드로 access_token을 요청하는 WebClient mocking
     private void mockWebClientTokenRequest(String responseJson) {
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
@@ -134,7 +126,7 @@ class KakaoAuthServiceTest {
         when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just(responseJson));
     }
 
-    // 발급받은 access_token으로 사용자 정보 요청하는 WebClient mocking
+    // 발급받은 access_token으로 Kakao 사용자 정보 요청하는 WebClient mocking
     private void mockWebClientUserInfoRequest(KakaoUserInfoResponse response) {
         when(webClient.get()).thenAnswer(invocation -> requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri(anyString()))
@@ -153,7 +145,7 @@ class KakaoAuthServiceTest {
         void 액세스토큰_JSON파싱_실패_예외_발생() throws Exception {
             // given
             String invalidAccessTokenJson = "invalid json";
-            mockWebClientTokenRequest(invalidAccessTokenJson); // 응답은 왔지만 JSON 파싱이 불가능한 경우
+            mockWebClientTokenRequest(invalidAccessTokenJson);
             when(objectMapper.readTree(invalidAccessTokenJson))
                     .thenThrow(new RuntimeException("JSON 파싱 실패"));
 
@@ -175,7 +167,7 @@ class KakaoAuthServiceTest {
 
             mockWebClientTokenRequest(accessTokenJson);
             mockWebClientUserInfoRequest(response);
-            stubJsonParsing(accessTokenJson);
+            stubJsonParsing(objectMapper, accessTokenJson);
 
             when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
             when(tokenService.createAccessToken(user)).thenReturn("access_token");
@@ -201,7 +193,7 @@ class KakaoAuthServiceTest {
 
             mockWebClientTokenRequest(accessTokenJson);
             mockWebClientUserInfoRequest(response);
-            stubJsonParsing(accessTokenJson);
+            stubJsonParsing(objectMapper, accessTokenJson);
 
             when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(newUser);
