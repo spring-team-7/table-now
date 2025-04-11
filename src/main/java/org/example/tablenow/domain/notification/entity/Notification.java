@@ -41,7 +41,8 @@ public class Notification {
         this.isRead = false;
         this.createdAt = LocalDateTime.now();
     }
-    public void updateRead(){
+
+    public void updateRead() {
         this.isRead = true;
     }
 }

@@ -7,20 +7,20 @@ import org.example.tablenow.domain.notification.entity.Notification;
 @Getter
 public class NotificationUpdateReadResponseDto {
 
-  private final Long notificationId;
-  private final Boolean isRead;
+    private final Long notificationId;
+    private final Boolean isRead;
 
-  @Builder
-  public NotificationUpdateReadResponseDto(Long notificationId, Boolean isRead) {
-    this.notificationId = notificationId;
-    this.isRead = isRead;
-  }
+    @Builder
+    public NotificationUpdateReadResponseDto(Long notificationId, Boolean isRead) {
+        this.notificationId = notificationId;
+        this.isRead = isRead;
+    }
 
-  public static NotificationUpdateReadResponseDto fromNotification(Notification notification) {
-    return NotificationUpdateReadResponseDto.builder()
-        .notificationId(notification.getId())
-        .isRead(notification.getIsRead())
-        .build();
-  }
+    public static NotificationUpdateReadResponseDto fromNotification(Notification notification) {
+        return NotificationUpdateReadResponseDto.builder()
+            .notificationId(notification.getId())
+            .isRead(notification.getIsRead())
+            .build();
+    }
 }
 

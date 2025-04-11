@@ -2,6 +2,7 @@ package org.example.tablenow.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.service.TokenService;
+import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
 import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
 import org.example.tablenow.domain.user.dto.request.UserDeleteRequest;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -24,6 +27,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final ImageService imageService;
+
+    public User getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+    }
 
     @Transactional
     public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request) {
@@ -31,6 +45,9 @@ public class UserService {
 
         user.deleteUser();
         tokenService.deleteRefreshTokenByUserId(user.getId());
+        if (StringUtils.hasText(user.getImageUrl())) {
+            imageService.delete(user.getImageUrl());
+        }
 
         return SimpleUserResponse.builder()
                 .id(user.getId())
@@ -53,13 +70,13 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(AuthUser authUser) {
-        User user = findUserById(authUser.getId());
+        User user = getUser(authUser.getId());
         return UserProfileResponse.fromUser(user);
     }
 
     @Transactional
     public UserProfileResponse updateUserProfile(AuthUser authUser, UpdateProfileRequest request) {
-        User user = findUserById(authUser.getId());
+        User user = getUser(authUser.getId());
 
         if (StringUtils.hasText(request.getNickname())) {
             user.updateNickname(request.getNickname());
@@ -69,12 +86,16 @@ public class UserService {
             user.updatePhoneNumber(request.getPhoneNumber());
         }
 
-        return UserProfileResponse.fromUser(user);
-    }
+        String userImageUrl = user.getImageUrl();
+        String requestImageUrl = request.getImageUrl();
+        if (StringUtils.hasText(requestImageUrl)) {
+            if (!Objects.equals(userImageUrl, requestImageUrl) && StringUtils.hasText(userImageUrl)) {
+                imageService.delete(userImageUrl);
+            }
+            user.updateImageUrl(requestImageUrl);
+        }
 
-    private User findUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+        return UserProfileResponse.fromUser(user);
     }
 
     private void validatePassword(User user, String rawPassword) {
@@ -84,7 +105,7 @@ public class UserService {
     }
 
     private User validatePasswordAndGetUser(AuthUser authUser, String rawPassword) {
-        User user = findUserById(authUser.getId());
+        User user = getUser(authUser.getId());
         validatePassword(user, rawPassword);
         return user;
     }

@@ -58,7 +58,6 @@ jwt:
   secret:
     key: ${JWT_SECRET_KEY}
 
-
 toss:
   secret:
     key: ${TOSS_SECRET_KEY}
@@ -73,4 +72,3 @@ cloud:
     s3:
       bucket: ${AWS_S3_BUCKET}
       presigned-url-expiration: ${AWS_S3_PRESIGNED_EXPIRATION}
-

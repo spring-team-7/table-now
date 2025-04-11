@@ -6,6 +6,6 @@ import lombok.Getter;
 
 @Getter
 public class WaitlistRequestDto {
-  @NotNull(message = "가게 ID를 입력하세요.")
-  private Long storeId;
+    @NotNull(message = "가게 ID를 입력하세요.")
+    private Long storeId;
 }

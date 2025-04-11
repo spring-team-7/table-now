@@ -17,21 +17,22 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class WaitlistController {
-  private final WaitlistService waitlistService;
-  // 빈자리 대기 등록
-  @PostMapping("/v1/waitlist")
-  public ResponseEntity<WaitlistResponseDto> registerWaitlist(
-      @Valid @RequestBody WaitlistRequestDto requestDto,
-      @AuthenticationPrincipal AuthUser authUser){
+    private final WaitlistService waitlistService;
 
-    WaitlistResponseDto waitlistResponseDto = waitlistService.registerWaitlist(authUser.getId(), requestDto);
-    return ResponseEntity.ok(waitlistResponseDto);
-  }
+    // 빈자리 대기 등록
+    @PostMapping("/v1/waitlist")
+    public ResponseEntity<WaitlistResponseDto> registerWaitlist(
+        @Valid @RequestBody WaitlistRequestDto requestDto,
+        @AuthenticationPrincipal AuthUser authUser) {
 
-  // 내 대기 목록 조회
-  @GetMapping("/v1/waitlist/my")
-  public ResponseEntity<List<WaitlistFindResponseDto>> getMyWaitlist(@AuthenticationPrincipal AuthUser authUser) {
-    List<WaitlistFindResponseDto> myWaitlist = waitlistService.findMyWaitlist(authUser.getId());
-    return ResponseEntity.ok(myWaitlist);
-  }
+        WaitlistResponseDto waitlistResponseDto = waitlistService.registerWaitlist(authUser.getId(), requestDto);
+        return ResponseEntity.ok(waitlistResponseDto);
+    }
+
+    // 내 대기 목록 조회
+    @GetMapping("/v1/waitlist/my")
+    public ResponseEntity<List<WaitlistFindResponseDto>> getMyWaitlist(@AuthenticationPrincipal AuthUser authUser) {
+        List<WaitlistFindResponseDto> myWaitlist = waitlistService.findMyWaitlist(authUser.getId());
+        return ResponseEntity.ok(myWaitlist);
+    }
 }

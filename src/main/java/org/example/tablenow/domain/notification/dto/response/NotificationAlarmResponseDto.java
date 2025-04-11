@@ -8,20 +8,20 @@ import java.time.LocalDateTime;
 
 @Getter
 public class NotificationAlarmResponseDto {
-  private final boolean isAlarmEnabled;
-  private final LocalDateTime updatedAt;
+    private final boolean isAlarmEnabled;
+    private final LocalDateTime updatedAt;
 
-  @Builder
-  public NotificationAlarmResponseDto(boolean isAlarmEnabled, LocalDateTime updatedAt) {
-    this.isAlarmEnabled = isAlarmEnabled;
-    this.updatedAt = updatedAt;
-  }
+    @Builder
+    public NotificationAlarmResponseDto(boolean isAlarmEnabled, LocalDateTime updatedAt) {
+        this.isAlarmEnabled = isAlarmEnabled;
+        this.updatedAt = updatedAt;
+    }
 
-  public static NotificationAlarmResponseDto fromNotification(User user) {
-    return NotificationAlarmResponseDto.builder()
-        .isAlarmEnabled(user.getIsAlarmEnabled())
-        .updatedAt(user.getUpdatedAt())
-        .build();
-  }
+    public static NotificationAlarmResponseDto fromNotification(User user) {
+        return NotificationAlarmResponseDto.builder()
+            .isAlarmEnabled(user.getIsAlarmEnabled())
+            .updatedAt(user.getUpdatedAt())
+            .build();
+    }
 }
 
