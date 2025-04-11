@@ -2,9 +2,11 @@ package org.example.tablenow.domain.user.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.global.util.RegexConstants;
 
+@Builder
 @Getter
 public class UpdatePasswordRequest {
 

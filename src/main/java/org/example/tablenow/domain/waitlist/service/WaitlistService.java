@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.waitlist.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
@@ -20,44 +21,50 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class WaitlistService {
-  private final WaitlistRepository waitlistRepository;
-  private final UserRepository userRepository;
-  private final StoreService storeService;
+    private final WaitlistRepository waitlistRepository;
+    private final UserRepository userRepository;
+    private final StoreService storeService;
+    private final ReservationService reservationService;
 
-  private static final int MAX_WAITING = 100;
+    private static final int MAX_WAITING = 100;
 
-  @Transactional
-  public WaitlistResponseDto registerWaitlist(Long userId, WaitlistRequestDto requestDto) {
-    User findUser = userRepository.findById(userId)
-        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
-    Store findStore = storeService.getStore(requestDto.getStoreId());
+    @Transactional
+    public WaitlistResponseDto registerWaitlist(Long userId, WaitlistRequestDto requestDto) {
+        User findUser = userRepository.findById(userId)
+            .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+        Store findStore = storeService.getStore(requestDto.getStoreId());
 
-    // 해당 가게에 유저가 이미 대기 중인지 확인
-    if(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(findUser,findStore)){
-      throw new HandledException(ErrorCode.WAITLIST_ALREADY_REGISTERED);
+        // 빈자리 있는 경우 대기 등록 안됨
+        if (reservationService.hasVacancy(findStore.getId())) {
+            throw new HandledException(ErrorCode.WAITLIST_NOT_ALLOWED);
+        }
+
+        // 해당 가게에 유저가 이미 대기 중인지 확인
+        if (waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(findUser, findStore)) {
+            throw new HandledException(ErrorCode.WAITLIST_ALREADY_REGISTERED);
+        }
+
+        // 대기 등록 인원 제한(100명)
+        long waitingCount = waitlistRepository.countByStoreAndIsNotifiedFalse(findStore);
+        if (waitingCount >= MAX_WAITING) {
+            throw new HandledException(ErrorCode.WAITLIST_FULL);
+        }
+
+        Waitlist waitlist = new Waitlist(findUser, findStore);
+        Waitlist savedWaitlist = waitlistRepository.save(waitlist);
+
+        return WaitlistResponseDto.fromWaitlist(savedWaitlist);
     }
 
-    // 대기 등록 인원 제한(100명)
-    long waitingCount = waitlistRepository.countByStoreAndIsNotifiedFalse(findStore);
-    if(waitingCount >= MAX_WAITING){
-      throw new HandledException(ErrorCode.WAITLIST_FULL);
+    // 내 대기 목록 조회
+    @Transactional(readOnly = true)
+    public List<WaitlistFindResponseDto> findMyWaitlist(Long userId) {
+        User findUser = userRepository.findById(userId)
+            .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+
+        List<Waitlist> waitlists = waitlistRepository.findAllByUserAndIsNotifiedFalse(findUser);
+        return waitlists.stream()
+            .map(WaitlistFindResponseDto::fromWaitlist)
+            .toList();
     }
-
-    Waitlist waitlist = new Waitlist(findUser, findStore);
-    waitlistRepository.save(waitlist);
-
-    return WaitlistResponseDto.fromWaitlist(waitlist);
-  }
-
-  // 내 대기 목록 조회
-  @Transactional(readOnly = true)
-  public List<WaitlistFindResponseDto> findMyWaitlist(Long userId) {
-    User findUser = userRepository.findById(userId)
-        .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
-
-    List<Waitlist> waitlists = waitlistRepository.findAllByUserAndIsNotifiedFalse(findUser);
-    return waitlists.stream()
-        .map(WaitlistFindResponseDto::fromWaitlist)
-        .toList();
-  }
 }

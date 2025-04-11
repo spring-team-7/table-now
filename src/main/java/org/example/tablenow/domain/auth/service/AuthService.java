@@ -3,11 +3,12 @@ package org.example.tablenow.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
+import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.entity.RefreshToken;
-import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final UserService userService;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -53,8 +55,7 @@ public class AuthService {
 
     @Transactional
     public TokenResponse signin(SigninRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+        User user = userService.getUserByEmail(request.getEmail());
 
         if (user.getDeletedAt() != null) {
             throw new HandledException(ErrorCode.ALREADY_DELETED_USER);
@@ -70,9 +71,7 @@ public class AuthService {
     @Transactional
     public TokenResponse refreshToken(String token) {
         RefreshToken refreshToken = tokenService.validateRefreshToken(token);
-
-        User user = userRepository.findById(refreshToken.getUserId())
-                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+        User user = userService.getUser(refreshToken.getUserId());
         return generateTokenResponse(user);
     }
 

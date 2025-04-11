@@ -60,11 +60,13 @@ public enum ErrorCode {
     // WAITLIST
     WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT,"이미 대기중인 사용자 입니다."),
     WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다."),
-    WAITLIST_NOT_FOUNND(HttpStatus.NOT_FOUND, "대기 정보가 존재하지 않습니다."),
+    WAITLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "대기 정보가 존재하지 않습니다."),
+    WAITLIST_NOT_ALLOWED(HttpStatus.CONFLICT, "빈자리가 있어 대기 등록이 불가능합니다."),
 
     // IMAGE
     INVALID_IMAGE_DOMAIN(HttpStatus.BAD_REQUEST, "잘못된 이미지 도메인입니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
+    INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "잘못된 이미지 URL 입니다."),
 
     // COMMON
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),

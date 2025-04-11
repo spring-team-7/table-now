@@ -12,7 +12,7 @@ public class EventDeleteResponseDto {
     private final String message;
 
     @Builder
-    private EventDeleteResponseDto(Long eventId, Long storeId, String storeName, String message) {
+    public EventDeleteResponseDto(Long eventId, Long storeId, String storeName, String message) {
         this.eventId = eventId;
         this.storeId = storeId;
         this.storeName = storeName;

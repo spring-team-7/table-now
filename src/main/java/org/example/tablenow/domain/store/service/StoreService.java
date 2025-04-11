@@ -3,6 +3,7 @@ package org.example.tablenow.domain.store.service;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.category.service.CategoryService;
+import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
@@ -40,6 +41,7 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final CategoryService categoryService;
+    private final ImageService imageService;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final Long MAX_STORES_COUNT = 3L;
@@ -102,7 +104,15 @@ public class StoreService {
         String name = StringUtils.hasText(requestDto.getName()) ? requestDto.getName() : store.getName();
         String description = StringUtils.hasText(requestDto.getDescription()) ? requestDto.getDescription() : store.getDescription();
         String address = StringUtils.hasText(requestDto.getAddress()) ? requestDto.getAddress() : store.getAddress();
-        String imageUrl = StringUtils.hasText(requestDto.getImageUrl()) ? requestDto.getImageUrl() : store.getImageUrl();
+
+        String storeImageUrl = Optional.ofNullable(store.getImageUrl()).orElse(null);
+        String requestImageUrl = Optional.ofNullable(requestDto.getImageUrl()).orElse(null);
+
+        String imageUrl = Objects.equals(storeImageUrl, requestImageUrl) ? storeImageUrl : requestImageUrl;
+
+        if (!Objects.equals(imageUrl, storeImageUrl) && StringUtils.hasText(storeImageUrl)) {
+            imageService.delete(storeImageUrl);
+        }
 
         int capacity = Objects.isNull(requestDto.getCapacity()) ? store.getCapacity() : requestDto.getCapacity();
         int deposit = Objects.isNull(requestDto.getDeposit()) ? store.getDeposit() : requestDto.getDeposit();
@@ -118,6 +128,11 @@ public class StoreService {
         Store store = getStore(id);
 
         validStoreOwnerId(store, user);
+
+        // 가게 이미지 리소스 확인
+        if (StringUtils.hasText(store.getImageUrl())) {
+            imageService.delete(store.getImageUrl());
+        }
 
         store.delete();
         return StoreDeleteResponseDto.fromStore(store.getId());

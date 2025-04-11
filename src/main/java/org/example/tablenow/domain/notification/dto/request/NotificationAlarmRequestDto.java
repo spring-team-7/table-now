@@ -4,6 +4,6 @@ import lombok.Getter;
 
 @Getter
 public class NotificationAlarmRequestDto {
-  private boolean alarmEnabled;
+    private boolean alarmEnabled;
 
 }
