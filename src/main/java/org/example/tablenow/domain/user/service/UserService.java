@@ -29,6 +29,16 @@ public class UserService {
     private final TokenService tokenService;
     private final ImageService imageService;
 
+    public User getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+    }
+
     @Transactional
     public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request) {
         User user = validatePasswordAndGetUser(authUser, request.getPassword());
@@ -60,13 +70,13 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(AuthUser authUser) {
-        User user = findUserById(authUser.getId());
+        User user = getUser(authUser.getId());
         return UserProfileResponse.fromUser(user);
     }
 
     @Transactional
     public UserProfileResponse updateUserProfile(AuthUser authUser, UpdateProfileRequest request) {
-        User user = findUserById(authUser.getId());
+        User user = getUser(authUser.getId());
 
         if (StringUtils.hasText(request.getNickname())) {
             user.updateNickname(request.getNickname());
@@ -88,11 +98,6 @@ public class UserService {
         return UserProfileResponse.fromUser(user);
     }
 
-    private User findUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
-    }
-
     private void validatePassword(User user, String rawPassword) {
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new HandledException(ErrorCode.INCORRECT_PASSWORD);
@@ -100,7 +105,7 @@ public class UserService {
     }
 
     private User validatePasswordAndGetUser(AuthUser authUser, String rawPassword) {
-        User user = findUserById(authUser.getId());
+        User user = getUser(authUser.getId());
         validatePassword(user, rawPassword);
         return user;
     }
