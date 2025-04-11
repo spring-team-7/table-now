@@ -14,11 +14,11 @@ public enum PaymentStatus {
         this.description = description;
     }
 
-    public static PaymentStatus from(String status) {
+    public static PaymentStatus from(String status, ErrorCode errorCode) {
         try {
             return PaymentStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new HandledException(ErrorCode.TOSS_PAYMENT_FAILED);
+            throw new HandledException(errorCode);
         }
     }
 }
