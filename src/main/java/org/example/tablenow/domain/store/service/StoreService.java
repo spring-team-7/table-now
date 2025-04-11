@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class StoreService {
 
     private final StoreRepository storeRepository;
@@ -47,14 +46,15 @@ public class StoreService {
     private static final Long MAX_STORES_COUNT = 3L;
     private static final Integer TARGET_HOUR_LENGTH = 10;
     private static final Integer TARGET_DAY_LENGTH = 8;
+    private static final DateTimeFormatter TIME_KEY_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHH");
 
     @Transactional
-    public StoreCreateResponseDto saveStore(AuthUser authUser, StoreCreateRequestDto requestDto) {
+    public StoreCreateResponseDto saveStore(AuthUser authUser, StoreCreateRequestDto request) {
         User user = User.fromAuthUser(authUser);
 
-        Category category = categoryService.findCategory(requestDto.getCategoryId());
+        Category category = categoryService.findCategory(request.getCategoryId());
 
-        validStoreTimes(requestDto.getStartTime(), requestDto.getEndTime());
+        validateStartTimeIsBeforeEndTime(request.getStartTime(), request.getEndTime());
 
         Long count = storeRepository.countActiveStoresByUser(user.getId());
         if (count >= MAX_STORES_COUNT) {
@@ -62,14 +62,14 @@ public class StoreService {
         }
 
         Store store = Store.builder()
-                .name(requestDto.getName())
-                .description(requestDto.getDescription())
-                .address(requestDto.getAddress())
-                .imageUrl(requestDto.getImageUrl())
-                .capacity(requestDto.getCapacity())
-                .deposit(requestDto.getDeposit())
-                .startTime(requestDto.getStartTime())
-                .endTime(requestDto.getEndTime())
+                .name(request.getName())
+                .description(request.getDescription())
+                .address(request.getAddress())
+                .imageUrl(request.getImageUrl())
+                .capacity(request.getCapacity())
+                .deposit(request.getDeposit())
+                .startTime(request.getStartTime())
+                .endTime(request.getEndTime())
                 .user(user)
                 .category(category)
                 .build();
@@ -78,46 +78,61 @@ public class StoreService {
         return StoreCreateResponseDto.fromStore(savedStore);
     }
 
+    @Transactional(readOnly = true)
     public List<StoreResponseDto> findMyStores(AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
         return storeRepository.findAllByUserId(user.getId());
     }
 
     @Transactional
-    public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, StoreUpdateRequestDto requestDto) {
+    public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, StoreUpdateRequestDto request) {
         User user = User.fromAuthUser(authUser);
-
         Store store = getStore(id);
-
         validStoreOwnerId(store, user);
+        validateUpdateStoreTime(request, store);
 
-        Category category = store.getCategory();
-        if (requestDto.getCategoryId() != null) {
-            category = categoryService.findCategory(requestDto.getCategoryId());
+        if (request.getCategoryId() != null) {
+            Category category = categoryService.findCategory(request.getCategoryId());
+            store.updateCategory(category);
         }
 
-        // 업데이트 필드 구분
-        LocalTime startTime = Objects.isNull(requestDto.getStartTime()) ? store.getStartTime() : requestDto.getStartTime();
-        LocalTime endTime = Objects.isNull(requestDto.getEndTime()) ? store.getEndTime() : requestDto.getEndTime();
-        validStoreTimes(startTime, endTime);
-
-        String name = StringUtils.hasText(requestDto.getName()) ? requestDto.getName() : store.getName();
-        String description = StringUtils.hasText(requestDto.getDescription()) ? requestDto.getDescription() : store.getDescription();
-        String address = StringUtils.hasText(requestDto.getAddress()) ? requestDto.getAddress() : store.getAddress();
-
-        String storeImageUrl = Optional.ofNullable(store.getImageUrl()).orElse(null);
-        String requestImageUrl = Optional.ofNullable(requestDto.getImageUrl()).orElse(null);
-
-        String imageUrl = Objects.equals(storeImageUrl, requestImageUrl) ? storeImageUrl : requestImageUrl;
-
-        if (!Objects.equals(imageUrl, storeImageUrl) && StringUtils.hasText(storeImageUrl)) {
-            imageService.delete(storeImageUrl);
+        if (request.getStartTime() != null) {
+            store.updateStartTime(request.getStartTime());
         }
 
-        int capacity = Objects.isNull(requestDto.getCapacity()) ? store.getCapacity() : requestDto.getCapacity();
-        int deposit = Objects.isNull(requestDto.getDeposit()) ? store.getDeposit() : requestDto.getDeposit();
+        if (request.getEndTime() != null) {
+            store.updateEndTime(request.getEndTime());
+        }
 
-        store.update(name, description, address, imageUrl, capacity, deposit, startTime, endTime, category);
+        if (StringUtils.hasText(request.getName())) {
+            store.updateName(request.getName());
+        }
+
+        if (StringUtils.hasText(request.getDescription())) {
+            store.updateDescription(request.getDescription());
+        }
+
+        if (StringUtils.hasText(request.getAddress())) {
+            store.updateAddress(request.getAddress());
+        }
+
+        String storeImageUrl = store.getImageUrl();
+        String requestImageUrl = request.getImageUrl();
+        if (StringUtils.hasText(requestImageUrl)) {
+            if (!Objects.equals(requestImageUrl, storeImageUrl) && StringUtils.hasText(storeImageUrl)) {
+                imageService.delete(storeImageUrl);
+            }
+            store.updateImageUrl(requestImageUrl);
+        }
+
+        if (request.getCapacity() != null) {
+            store.updateCapacity(request.getCapacity());
+        }
+
+        if (request.getDeposit() != null) {
+            store.updateDeposit(request.getDeposit());
+        }
+
         return StoreUpdateResponseDto.fromStore(store);
     }
 
@@ -129,15 +144,15 @@ public class StoreService {
 
         validStoreOwnerId(store, user);
 
-        // 가게 이미지 리소스 확인
         if (StringUtils.hasText(store.getImageUrl())) {
             imageService.delete(store.getImageUrl());
         }
 
-        store.delete();
+        store.deleteStore();
         return StoreDeleteResponseDto.fromStore(store.getId());
     }
 
+    @Transactional(readOnly = true)
     public Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String search) {
         try {
             Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
@@ -154,7 +169,7 @@ public class StoreService {
                     redisTemplate.opsForValue().set(userKey, "1", 12, TimeUnit.HOURS);
 
                     // 시간 단위 랭킹 키 생성
-                    String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+                    String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
                     String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
 
                     // 키워드 랭킹 score 증가
@@ -167,27 +182,21 @@ public class StoreService {
         }
     }
 
+    @Transactional(readOnly = true)
     public StoreResponseDto findStore(Long id) {
         return StoreResponseDto.fromStore(getStore(id));
     }
 
+    @Transactional(readOnly = true)
     public List<StoreRankingResponseDto> getStoreRanking(int limit, String timeKey) {
-        List<StoreRankingResponseDto> result = new ArrayList<>();
-
         Map<String, Integer> rankMap;
 
-        String target = StringUtils.hasText(timeKey) ? timeKey : LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+        String target = validateTimeKey(timeKey);
 
-        if (TARGET_HOUR_LENGTH == target.length()) {
-            rankMap = getKeywordRankingByHour(target);
-        } else if (TARGET_DAY_LENGTH == target.length()) {
-            rankMap = getKeywordRankingByDay(target);
-        } else {
-            throw new HandledException(ErrorCode.STORE_RANKING_TIME_KEY_ERROR);
-        }
+        rankMap = getRankMapByTimeKey(target);
 
         if (rankMap.isEmpty()) {
-            return result;
+            return Collections.emptyList();
         }
 
         AtomicInteger rank = new AtomicInteger(1);
@@ -202,6 +211,44 @@ public class StoreService {
                 .toList();
     }
 
+    public Store getStore(Long id) {
+        return storeRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
+    }
+
+    public void validStoreOwnerId(Store store, User user) {
+        // 요청한 유저 ID가 가게 주인인지 확인
+        if (!store.getUser().getId().equals(user.getId())) {
+            throw new HandledException(ErrorCode.STORE_FORBIDDEN);
+        }
+    }
+
+    private void validateUpdateStoreTime(StoreUpdateRequestDto request, Store store) {
+        LocalTime startTime = request.getStartTime() != null ? request.getStartTime() : store.getStartTime();
+        LocalTime endTime = request.getEndTime() != null ? request.getEndTime() : store.getEndTime();
+        validateStartTimeIsBeforeEndTime(startTime, endTime);
+    }
+
+    private void validateStartTimeIsBeforeEndTime(LocalTime startTime, LocalTime endTime) {
+        if (!startTime.isBefore(endTime)) {
+            throw new HandledException(ErrorCode.STORE_BAD_REQUEST_TIME);
+        }
+    }
+
+    private String validateTimeKey(String timeKey) {
+        return StringUtils.hasText(timeKey) ? timeKey : LocalDateTime.now().format(TIME_KEY_FORMATTER);
+    }
+
+    private Map<String, Integer> getRankMapByTimeKey(String timeKey) {
+        if (TARGET_HOUR_LENGTH == timeKey.length()) {
+            return getKeywordRankingByHour(timeKey);
+        } else if (TARGET_DAY_LENGTH == timeKey.length()) {
+            return getKeywordRankingByDay(timeKey);
+        } else {
+            throw new HandledException(ErrorCode.STORE_RANKING_TIME_KEY_ERROR);
+        }
+    }
+
     private Map<String, Integer> getKeywordRankingByHour(String timeKey) {
         Map<String, Integer> rankMap = new LinkedHashMap<>();
 
@@ -209,7 +256,7 @@ public class StoreService {
         Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet()
                 .reverseRangeWithScores(rankKey, 0L, -1);
 
-        if (tuples == null || tuples.isEmpty()) {
+        if (tuples.isEmpty()) {
             return rankMap;
         }
 
@@ -230,7 +277,7 @@ public class StoreService {
             Set<ZSetOperations.TypedTuple<String>> tuples =
                     redisTemplate.opsForZSet().reverseRangeWithScores(rankKey, 0, -1);
 
-            if (tuples == null) {
+            if (tuples.isEmpty()) {
                 continue;
             }
 
@@ -241,23 +288,5 @@ public class StoreService {
             }
         }
         return result;
-    }
-
-    public Store getStore(Long id) {
-        return storeRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
-    }
-
-    public void validStoreOwnerId(Store store, User user) {
-        // 요청한 유저 ID가 가게 주인인지 확인
-        if (!store.getUser().getId().equals(user.getId())) {
-            throw new HandledException(ErrorCode.STORE_FORBIDDEN);
-        }
-    }
-
-    private void validStoreTimes(LocalTime startTime, LocalTime endTime) {
-        if (!startTime.isBefore(endTime)) {
-            throw new HandledException(ErrorCode.STORE_BAD_REQUEST_TIME);
-        }
     }
 }

@@ -39,7 +39,7 @@ public class Store extends TimeStamped {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    private User user; // UserRole: ROLE_OWNER
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
@@ -60,19 +60,43 @@ public class Store extends TimeStamped {
         this.category = category;
     }
 
-    public void update(String name, String description, String address, String imageUrl, int capacity, int deposit, LocalTime startTime, LocalTime endTime, Category category) {
+    public void updateName(String name) {
         this.name = name;
+    }
+
+    public void updateDescription(String description) {
         this.description = description;
+    }
+
+    public void updateAddress(String address) {
         this.address = address;
+    }
+
+    public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void updateCapacity(int capacity) {
         this.capacity = capacity;
+    }
+
+    public void updateDeposit(int deposit) {
         this.deposit = deposit;
+    }
+
+    public void updateStartTime(LocalTime startTime) {
         this.startTime = startTime;
+    }
+
+    public void updateEndTime(LocalTime endTime) {
         this.endTime = endTime;
+    }
+
+    public void updateCategory(Category category) {
         this.category = category;
     }
 
-    public void delete() {
+    public void deleteStore() {
         this.deletedAt = LocalDateTime.now();
     }
 
@@ -92,8 +116,7 @@ public class Store extends TimeStamped {
         return timeSlots;
     }
 
-    public boolean hasVacancy(long reservedCount){
+    public boolean hasVacancy(long reservedCount) {
         return reservedCount < this.capacity;
-
     }
 }
