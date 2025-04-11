@@ -21,6 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
@@ -33,13 +36,9 @@ public class ReservationService {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(request.getStoreId());
 
-        if (reservationRepository.isReservedStatusInUse(request.getStoreId(), request.getReservedAt())) {
-            throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
-        }
-
-        if (!store.isOpenAt(request.getReservedAt())) {
-            throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
-        }
+        validateStoreCapacity(store, request.getReservedAt());
+        validateReservationDuplication(request.getStoreId(), request.getReservedAt());
+        validateStoreOpening(store, request.getReservedAt());
 
         Reservation reservation = Reservation.builder()
                 .user(user)
@@ -132,6 +131,26 @@ public class ReservationService {
 
         if (isDuplicated) {
             throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
+        }
+    }
+
+    private void validateStoreCapacity(Store store, LocalDateTime reservedAt) {
+        LocalDate date = reservedAt.toLocalDate();
+        long reservedCount = reservationRepository.countReservedTablesByDate(store, date);
+        if (reservedCount >= store.getCapacity()) {
+            throw new HandledException(ErrorCode.STORE_TABLE_CAPACITY_EXCEEDED);
+        }
+    }
+
+    private void validateReservationDuplication(Long storeId, LocalDateTime reservedAt) {
+        if (reservationRepository.isReservedStatusInUse(storeId, reservedAt)) {
+            throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
+        }
+    }
+
+    private void validateStoreOpening(Store store, LocalDateTime reservedAt) {
+        if (!store.isOpenAt(reservedAt)) {
+            throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
         }
     }
 

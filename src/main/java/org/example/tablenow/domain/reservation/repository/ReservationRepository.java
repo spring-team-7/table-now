@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +53,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
               AND r.status = 'RESERVED'
         """)
     long countReservedTables(@Param("store") Store store);
+
+    @Query("""
+    SELECT COUNT(r)
+    FROM Reservation r
+    WHERE r.store = :store
+      AND r.status = 'RESERVED'
+      AND DATE(r.reservedAt) = :date
+    """)
+    long countReservedTablesByDate(@Param("store") Store store, @Param("date") LocalDate date);
+
 
     @Query("""
             SELECT r
