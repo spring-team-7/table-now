@@ -3,6 +3,7 @@ package org.example.tablenow.domain.store.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.image.annotation.ImageUrlPattern;
@@ -33,4 +34,17 @@ public class StoreCreateRequestDto {
     private Integer deposit;
     @NotNull(message = "카테고리는 필수값입니다.")
     private Long categoryId;
+
+    @Builder
+    public StoreCreateRequestDto(String name, String description, String address, String imageUrl, Integer capacity, LocalTime startTime, LocalTime endTime, Integer deposit, Long categoryId) {
+        this.name = name;
+        this.description = description;
+        this.address = address;
+        this.imageUrl = imageUrl;
+        this.capacity = capacity;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.deposit = deposit;
+        this.categoryId = categoryId;
+    }
 }
