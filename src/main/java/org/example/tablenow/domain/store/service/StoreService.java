@@ -88,7 +88,7 @@ public class StoreService {
     public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, StoreUpdateRequestDto request) {
         User user = User.fromAuthUser(authUser);
         Store store = getStore(id);
-        validStoreOwnerId(store, user);
+        validateStoreOwnerId(store, user);
         validateUpdateStoreTime(request, store);
 
         if (request.getCategoryId() != null) {
@@ -142,7 +142,7 @@ public class StoreService {
 
         Store store = getStore(id);
 
-        validStoreOwnerId(store, user);
+        validateStoreOwnerId(store, user);
 
         if (StringUtils.hasText(store.getImageUrl())) {
             imageService.delete(store.getImageUrl());
@@ -216,7 +216,7 @@ public class StoreService {
                 .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
     }
 
-    public void validStoreOwnerId(Store store, User user) {
+    public void validateStoreOwnerId(Store store, User user) {
         // 요청한 유저 ID가 가게 주인인지 확인
         if (!store.getUser().getId().equals(user.getId())) {
             throw new HandledException(ErrorCode.STORE_FORBIDDEN);
