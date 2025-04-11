@@ -37,6 +37,8 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class StoreServiceTest {
@@ -256,6 +258,78 @@ public class StoreServiceTest {
             assertEquals(exception.getMessage(), ErrorCode.STORE_BAD_REQUEST_TIME.getDefaultMessage());
         }
 
+        @Nested
+        class 가게_이미지_수정 {
+            String origin = "https://url.com/store/1/origin.jpg";
+            String request = "https://url.com/store/1/update.jpg";
+
+            @Test
+            void 기존_이미지가_없으면_삭제_없이_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(dto, "imageUrl", request);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), dto.getImageUrl());
+                verify(imageService, never()).delete(anyString());
+            }
+
+            @Test
+            void 요청_이미지가_없으면_삭제_없이_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(store, "imageUrl", origin);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), store.getImageUrl());
+                verify(imageService, never()).delete(anyString());
+            }
+
+            @Test
+            void 동일한_이미지_요청_시_삭제_없이_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(store, "imageUrl", origin);
+                ReflectionTestUtils.setField(dto, "imageUrl", origin);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), dto.getImageUrl());
+                verify(imageService, never()).delete(anyString());
+            }
+
+            @Test
+            void 기존_이미지_변경_시_이미지_삭제_및_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(store, "imageUrl", origin);
+                ReflectionTestUtils.setField(dto, "imageUrl", request);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), dto.getImageUrl());
+                verify(imageService).delete(anyString());
+            }
+        }
+
         @Test
         void 요청_데이터가_비어있을_경우_수정_성공() {
             StoreUpdateRequestDto emptyDto = new StoreUpdateRequestDto();
@@ -274,61 +348,6 @@ public class StoreServiceTest {
                     () -> assertEquals(response.getEndTime(), store.getEndTime()),
                     () -> assertEquals(response.getCategoryId(), store.getCategory().getId())
             );
-        }
-
-        @Nested
-        class 가게_이미지_수정 {
-            String origin = "https://url.com/store/1/origin.jpg";
-            String request = "https://url.com/store/1/update.jpg";
-
-            @Test
-            void 기존_이미지가_존재하지_않는_경우_수정_성공() {
-                // given
-                ReflectionTestUtils.setField(dto, "imageUrl", request);
-                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
-                given(categoryService.findCategory(anyLong())).willReturn(category2);
-
-                // when
-                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
-
-                // then
-                assertNotNull(response);
-                assertEquals(response.getImageUrl(), dto.getImageUrl());
-            }
-
-            @Test
-            void 기존_이미지가_존재할_경우_이미지_삭제_및_수정_성공() {
-                // given
-                ReflectionTestUtils.setField(store, "imageUrl", origin);
-                ReflectionTestUtils.setField(dto, "imageUrl", request);
-                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
-                given(categoryService.findCategory(anyLong())).willReturn(category2);
-
-                // when
-                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
-
-                // then
-                assertNotNull(response);
-                assertEquals(response.getImageUrl(), dto.getImageUrl());
-
-            }
-
-            @Test
-            void 기존_이미지와_동일한_이미지_URL_요청_시_수정_성공() {
-                // given
-                ReflectionTestUtils.setField(store, "imageUrl", origin);
-                ReflectionTestUtils.setField(dto, "imageUrl", origin);
-                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
-                given(categoryService.findCategory(anyLong())).willReturn(category2);
-
-                // when
-                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
-
-                // then
-                assertNotNull(response);
-                assertEquals(response.getImageUrl(), dto.getImageUrl());
-
-            }
         }
 
         @Test
@@ -380,7 +399,21 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 이미지_삭제_처리_후_삭제_성공() {
+        void 가게_이미지가_없는_경우_삭제_처리_없이_성공() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreDeleteResponseDto response = storeService.deleteStore(storeId, authOwner);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getStoreId(), storeId);
+            verify(imageService, never()).delete(anyString());
+        }
+
+        @Test
+        void 가게_이미지_삭제_처리_후_삭제_성공() {
             // given
             ReflectionTestUtils.setField(store, "imageUrl", "https://url.com/store/1/origin.jpg");
             given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
@@ -391,19 +424,7 @@ public class StoreServiceTest {
             // then
             assertNotNull(response);
             assertEquals(response.getStoreId(), storeId);
-        }
-
-        @Test
-        void 삭제_성공() {
-            // given
-            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
-
-            // when
-            StoreDeleteResponseDto response = storeService.deleteStore(storeId, authOwner);
-
-            // then
-            assertNotNull(response);
-            assertEquals(response.getStoreId(), storeId);
+            verify(imageService).delete(anyString());
         }
     }
 
