@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.tablenow.domain.reservation.annotation.HalfHourOnly;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ReservationUpdateRequestDto {
     @NotNull
+    @HalfHourOnly
     private LocalDateTime reservedAt;
 
     @Builder

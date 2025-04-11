@@ -55,7 +55,7 @@ public class NotificationScheduler {
         List<Store> stores = storeRepository.findAll();
 
         for (Store store : stores) {
-            if (reservationService.hasVacancy(store.getId())) {
+            if (reservationService.hasVacancy(store)) {
                 List<Waitlist> waitlists = waitlistRepository.findAllByStoreAndIsNotifiedFalse(store);
 
                 for (Waitlist waitlist : waitlists) {
