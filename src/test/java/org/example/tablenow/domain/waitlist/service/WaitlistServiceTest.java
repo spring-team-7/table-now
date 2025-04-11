@@ -32,155 +32,155 @@ import static org.mockito.BDDMockito.given;
 @ExtendWith(MockitoExtension.class)
 class WaitlistServiceTest {
 
-  @InjectMocks
-  private WaitlistService waitlistService;
+    @InjectMocks
+    private WaitlistService waitlistService;
 
-  @Mock
-  private WaitlistRepository waitlistRepository;
+    @Mock
+    private WaitlistRepository waitlistRepository;
 
-  @Mock
-  private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-  @Mock
-  private StoreService storeService;
+    @Mock
+    private StoreService storeService;
 
-  @Mock
-  private User user;
+    @Mock
+    private User user;
 
-  @Mock
-  private Store store;
+    @Mock
+    private Store store;
 
-  @Nested
-  class 대기등록 {
+    @Nested
+    class 대기등록 {
 
-    private WaitlistRequestDto requestDto;
+        private WaitlistRequestDto requestDto;
 
-    @BeforeEach
-    void setUp() {
-      requestDto = new WaitlistRequestDto();
-      ReflectionTestUtils.setField(requestDto, "storeId", 10L);
+        @BeforeEach
+        void setUp() {
+            requestDto = new WaitlistRequestDto();
+            ReflectionTestUtils.setField(requestDto, "storeId", 10L);
+        }
+
+        @Test
+        void 대기등록_성공() {
+            // given
+            given(store.getId()).willReturn(10L);
+            given(store.getName()).willReturn("테스트 가게");
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(storeService.getStore(10L)).willReturn(store);
+            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
+            given(waitlistRepository.countByStoreAndIsNotifiedFalse(store)).willReturn(3L);
+            given(waitlistRepository.save(any(Waitlist.class)))
+                .willAnswer(invocation -> {
+                    Waitlist saved = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(saved, "id", 1L);
+                    ReflectionTestUtils.setField(saved, "createdAt", LocalDateTime.of(2024, 1, 1, 12, 0));
+                    return saved;
+                });
+
+            // when
+            WaitlistResponseDto result = waitlistService.registerWaitlist(1L, requestDto);
+
+            // then
+            assertEquals(Long.valueOf(1L), result.getWaitlistId());
+            assertEquals(Long.valueOf(10L), result.getStoreId());
+        }
+
+        @Test
+        void 유저를_찾지_못해_대기등록_실패() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.registerWaitlist(1L, requestDto)
+            );
+
+            assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        }
+
+        @Test
+        void 가게를_찾지_못해_대기등록_실패() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(storeService.getStore(10L)).willThrow(new HandledException(ErrorCode.STORE_NOT_FOUND));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.registerWaitlist(1L, requestDto)
+            );
+
+            assertEquals(ErrorCode.STORE_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        }
+
+        @Test
+        void 이미_대기중이라_중복대기로_실패() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(storeService.getStore(10L)).willReturn(store);
+            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(true);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.registerWaitlist(1L, requestDto)
+            );
+
+            assertEquals(ErrorCode.WAITLIST_ALREADY_REGISTERED.getStatus(), exception.getHttpStatus());
+        }
+
+        @Test
+        void 대기인원_초과로_실패() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(storeService.getStore(10L)).willReturn(store);
+            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
+            given(waitlistRepository.countByStoreAndIsNotifiedFalse(store)).willReturn(100L);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.registerWaitlist(1L, requestDto)
+            );
+
+            assertEquals(ErrorCode.WAITLIST_FULL.getStatus(), exception.getHttpStatus());
+        }
     }
 
-    @Test
-    void 대기등록_성공() {
-      // given
-      given(store.getId()).willReturn(10L);
-      given(store.getName()).willReturn("테스트 가게");
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(storeService.getStore(10L)).willReturn(store);
-      given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
-      given(waitlistRepository.countByStoreAndIsNotifiedFalse(store)).willReturn(3L);
-      given(waitlistRepository.save(any(Waitlist.class)))
-          .willAnswer(invocation -> {
-            Waitlist saved = invocation.getArgument(0);
-            ReflectionTestUtils.setField(saved, "id", 1L);
-            ReflectionTestUtils.setField(saved, "createdAt", LocalDateTime.of(2024, 1, 1, 12, 0));
-            return saved;
-          });
+    @Nested
+    class 내대기목록조회 {
 
-      // when
-      WaitlistResponseDto result = waitlistService.registerWaitlist(1L, requestDto);
+        @Test
+        void 내대기목록_정상조회() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
-      // then
-      assertEquals(Long.valueOf(1L), result.getWaitlistId());
-      assertEquals(Long.valueOf(10L), result.getStoreId());
+            Waitlist waitlist1 = new Waitlist(user, store);
+            Waitlist waitlist2 = new Waitlist(user, store);
+            ReflectionTestUtils.setField(waitlist1, "id", 1L);
+            ReflectionTestUtils.setField(waitlist2, "id", 2L);
+
+            given(waitlistRepository.findAllByUserAndIsNotifiedFalse(user))
+                .willReturn(List.of(waitlist1, waitlist2));
+
+            // when
+            List<WaitlistFindResponseDto> result = waitlistService.findMyWaitlist(1L);
+
+            // then
+            assertEquals(2, result.size());
+            assertEquals(1L, result.get(0).getWaitlistId());
+            assertEquals(2L, result.get(1).getWaitlistId());
+        }
+
+        @Test
+        void 유저없음으로_조회실패() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.findMyWaitlist(1L)
+            );
+
+            assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        }
     }
-
-    @Test
-    void 유저를_찾지_못해_대기등록_실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.empty());
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          waitlistService.registerWaitlist(1L, requestDto)
-      );
-
-      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
-    }
-
-    @Test
-    void 가게를_찾지_못해_대기등록_실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(storeService.getStore(10L)).willThrow(new HandledException(ErrorCode.STORE_NOT_FOUND));
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          waitlistService.registerWaitlist(1L, requestDto)
-      );
-
-      assertEquals(ErrorCode.STORE_NOT_FOUND.getStatus(), exception.getHttpStatus());
-    }
-
-    @Test
-    void 이미_대기중이라_중복대기로_실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(storeService.getStore(10L)).willReturn(store);
-      given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(true);
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          waitlistService.registerWaitlist(1L, requestDto)
-      );
-
-      assertEquals(ErrorCode.WAITLIST_ALREADY_REGISTERED.getStatus(), exception.getHttpStatus());
-    }
-
-    @Test
-    void 대기인원_초과로_실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(storeService.getStore(10L)).willReturn(store);
-      given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
-      given(waitlistRepository.countByStoreAndIsNotifiedFalse(store)).willReturn(100L);
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          waitlistService.registerWaitlist(1L, requestDto)
-      );
-
-      assertEquals(ErrorCode.WAITLIST_FULL.getStatus(), exception.getHttpStatus());
-    }
-  }
-
-  @Nested
-  class 내대기목록조회 {
-
-    @Test
-    void 내대기목록_정상조회() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-
-      Waitlist waitlist1 = new Waitlist(user, store);
-      Waitlist waitlist2 = new Waitlist(user, store);
-      ReflectionTestUtils.setField(waitlist1, "id", 1L);
-      ReflectionTestUtils.setField(waitlist2, "id", 2L);
-
-      given(waitlistRepository.findAllByUserAndIsNotifiedFalse(user))
-          .willReturn(List.of(waitlist1, waitlist2));
-
-      // when
-      List<WaitlistFindResponseDto> result = waitlistService.findMyWaitlist(1L);
-
-      // then
-      assertEquals(2, result.size());
-      assertEquals(1L, result.get(0).getWaitlistId());
-      assertEquals(2L, result.get(1).getWaitlistId());
-    }
-
-    @Test
-    void 유저없음으로_조회실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.empty());
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          waitlistService.findMyWaitlist(1L)
-      );
-
-      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
-    }
-  }
 }
