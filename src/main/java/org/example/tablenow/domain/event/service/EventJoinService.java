@@ -6,6 +6,7 @@ import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.entity.EventJoin;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventJoinRepository;
+import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
@@ -22,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class EventJoinService {
 
     private final EventJoinRepository eventJoinRepository;
-    private final EventService eventService;
+    private final EventRepository eventRepository;
 
     @Transactional
     public EventJoinResponseDto joinEvent(Long eventId, AuthUser authUser) {
@@ -31,7 +32,8 @@ public class EventJoinService {
             authUser = new AuthUser(randomId, "user" + randomId + "@test.com", UserRole.ROLE_USER, "닉네임" + randomId);
         }
         User user = User.fromAuthUser(authUser);
-        Event event = eventService.getEvent(eventId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
 
         if (event.getStatus() != EventStatus.OPENED) {
             throw new HandledException(ErrorCode.EVENT_NOT_OPENED);
@@ -61,7 +63,8 @@ public class EventJoinService {
             authUser = new AuthUser(randomId, "user" + randomId + "@test.com", UserRole.ROLE_USER, "닉네임" + randomId);
         }
         User user = User.fromAuthUser(authUser);
-        Event event = eventService.getEventForUpdate(eventId);
+        Event event = eventRepository.findByIdForUpdate(eventId)
+                .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
 
         if (event.getStatus() != EventStatus.OPENED) {
             throw new HandledException(ErrorCode.EVENT_NOT_OPENED);

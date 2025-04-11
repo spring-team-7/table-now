@@ -9,6 +9,8 @@ import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventRepository;
+import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
+import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
@@ -95,28 +97,23 @@ public class EventService {
 
             List<User> usersToNotify = eventJoinService.getUsersByEventId(event.getId());
 
-//            for (User user : usersToNotify) {
-//                if (user.getIsAlarmEnabled()) {
-//                    notificationService.createNotification(
-//                            NotificationRequestDto.builder()
-//                                    .userId(user.getId())
-//                                    .storeId(event.getStore().getId())
-//                                    .type(NotificationType.REMIND)
-//                                    .content(event.getStore().getName() + "의 이벤트가 열렸어요!")
-//                                    .build()
-//                    );
-//                }
-//            }
+            for (User user : usersToNotify) {
+                if (user.getIsAlarmEnabled()) {
+                    notificationService.createNotification(
+                            NotificationRequestDto.builder()
+                                    .userId(user.getId())
+                                    .storeId(event.getStore().getId())
+                                    .type(NotificationType.REMIND)
+                                    .content(event.getStore().getName() + "의 이벤트가 오픈되었습니다!")
+                                    .build()
+                    );
+                }
+            }
         }
     }
 
     public Event getEvent(Long id) {
         return eventRepository.findById(id)
-                .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
-    }
-
-    public Event getEventForUpdate(Long id) {
-        return eventRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
     }
 
