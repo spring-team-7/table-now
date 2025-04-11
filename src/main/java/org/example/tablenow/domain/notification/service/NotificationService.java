@@ -101,7 +101,7 @@ public class NotificationService {
         return NotificationAlarmResponseDto.fromNotification(findUser);
     }
 
-    private void handleVacancyNotification(User user, Long storeId) {
+    public void handleVacancyNotification(User user, Long storeId) {
         if (storeId == null) {
             throw new HandledException(ErrorCode.NOTIFICATION_BAD_REQUEST);
         }
@@ -110,7 +110,7 @@ public class NotificationService {
 
         Waitlist waitlist = waitlistRepository
             .findByUserAndStoreAndIsNotifiedFalse(user, store)
-            .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUNND));
+            .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUND));
 
         waitlist.updateNotified();
     }

@@ -138,7 +138,7 @@ class NotificationServiceTest {
           notificationService.createNotification(dto)
       );
 
-      assertEquals(ErrorCode.WAITLIST_NOT_FOUNND.getStatus(), exception.getHttpStatus());
+      assertEquals(ErrorCode.WAITLIST_NOT_FOUND.getStatus(), exception.getHttpStatus());
     }
   }
 

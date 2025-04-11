@@ -33,32 +33,22 @@ public class NotificationScheduler {
     @Transactional
     public void sendReminderNotifications() {
         LocalDateTime now = LocalDateTime.now().withSecond(0).withNano(0);
-        LocalDateTime reservationDatetime = now.plusDays(1);
+        LocalDateTime targetTime = now.plusDays(1);
 
         List<Reservation> reservations = reservationRepository.findAllByReservedAtBetween(
-            reservationDatetime.minusMinutes(1),
-            reservationDatetime.plusMinutes(1)
+            targetTime.minusMinutes(1),
+            targetTime.plusMinutes(1)
         );
 
         for (Reservation reservation : reservations) {
             User user = reservation.getUser();
-
-
             if (Boolean.TRUE.equals(user.getIsAlarmEnabled())) {
-                NotificationRequestDto notificationRequestDto = NotificationRequestDto.builder()
-                    .userId(reservation.getUser().getId())
-                    .storeId(reservation.getStore().getId())
-                    .type(NotificationType.REMIND)
-                    .content(String.format("내일 %s 가게 방문예정일 입니다.", reservation.getStore().getName()))
-                    .build();
-
-                notificationService.createNotification(notificationRequestDto);
-
+                notifyReminder(reservation);
             }
         }
     }
 
-    // 빈자리 체크 알림 전송
+    //  빈자리 체크 알림 전송
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void sendVacancyNotifications() {
@@ -71,19 +61,35 @@ public class NotificationScheduler {
                 for (Waitlist waitlist : waitlists) {
                     User user = waitlist.getUser();
                     if (Boolean.TRUE.equals(user.getIsAlarmEnabled())) {
-                        NotificationRequestDto dto = NotificationRequestDto.builder()
-                            .userId(waitlist.getUser().getId())
-                            .storeId(store.getId())
-                            .type(NotificationType.VACANCY)
-                            .content(String.format(" %s 가게 빈자리가 생겼습니다.", store.getName()))
-                            .build();
-
-                        notificationService.createNotification(dto);
-
+                        notifyVacancy(store, waitlist);
                     }
-
                 }
             }
         }
+    }
+
+    //  예약 리마인더 알림 생성
+    private void notifyReminder(Reservation reservation) {
+        NotificationRequestDto dto = NotificationRequestDto.builder()
+            .userId(reservation.getUser().getId())
+            .storeId(reservation.getStore().getId())
+            .type(NotificationType.REMIND)
+            .content(String.format("내일 %s 가게 방문예정일 입니다.", reservation.getStore().getName()))
+            .build();
+
+        notificationService.createNotification(dto);
+    }
+
+    //  빈자리 알림 생성
+    private void notifyVacancy(Store store, Waitlist waitlist) {
+        NotificationRequestDto dto = NotificationRequestDto.builder()
+            .userId(waitlist.getUser().getId())
+            .storeId(store.getId())
+            .type(NotificationType.VACANCY)
+            .content(String.format("%s 가게 빈자리가 생겼습니다.", store.getName()))
+            .build();
+
+        notificationService.createNotification(dto);
+
     }
 }

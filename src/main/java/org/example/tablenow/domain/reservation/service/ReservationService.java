@@ -154,7 +154,7 @@ public class ReservationService {
 
         long reservedCount = reservationRepository.countReservedTables(storeId);
 
-        return reservedCount < store.getCapacity();
+        return store.hasVacancy(reservedCount);
     }
 
 }
