@@ -21,7 +21,7 @@ public class EventResponseDto {
     private final EventStatus status;
 
     @Builder
-    private  EventResponseDto(Long eventId, Long storeId, String storeName, String content, LocalDateTime openAt,
+    public  EventResponseDto(Long eventId, Long storeId, String storeName, String content, LocalDateTime openAt,
                               LocalDateTime eventTime, int limitPeople, LocalDateTime createdAt, LocalDateTime updatedAt, EventStatus status) {
         this.eventId = eventId;
         this.storeId = storeId;

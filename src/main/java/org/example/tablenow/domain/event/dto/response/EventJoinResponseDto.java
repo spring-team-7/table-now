@@ -17,7 +17,7 @@ public class EventJoinResponseDto {
     private final String message;
 
     @Builder
-    private EventJoinResponseDto(Long eventJoinId, Long eventId, Long storeId,
+    public EventJoinResponseDto(Long eventJoinId, Long eventId, Long storeId,
                                 String storeName, LocalDateTime eventTime, LocalDateTime joinedAt, String message) {
         this.eventJoinId = eventJoinId;
         this.eventId = eventId;

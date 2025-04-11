@@ -41,7 +41,7 @@ public class Event extends TimeStamped {
     private EventStatus status;
 
     @Builder
-    public Event(Store store, String content, LocalDateTime openAt, LocalDateTime eventTime, int limitPeople) {
+    private Event(Store store, String content, LocalDateTime openAt, LocalDateTime eventTime, int limitPeople) {
         this.store = store;
         this.content = content;
         this.openAt = openAt;
@@ -56,7 +56,15 @@ public class Event extends TimeStamped {
         if (limitPeople != null) this.limitPeople = limitPeople;
     }
 
-    public void changeStatus(EventStatus status) {
+    public boolean isReady() {
+        return this.status == EventStatus.READY;
+    }
+
+    public void open() {
+        changeStatus(EventStatus.OPENED);
+    }
+
+    private void changeStatus(EventStatus status) {
         this.status = status;
     }
 
