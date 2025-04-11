@@ -14,6 +14,7 @@ import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -81,5 +82,9 @@ public class EventJoinService {
         eventJoinRepository.save(eventJoin);
 
         return EventJoinResponseDto.fromEventJoin(eventJoin);
+    }
+
+    public List<User> getUsersByEventId(Long id) {
+        return eventJoinRepository.findUsersByEventId(id);
     }
 }

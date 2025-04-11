@@ -9,8 +9,10 @@ import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventRepository;
+import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
+import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,8 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final StoreService storeService;
+    private final EventJoinService eventJoinService;
+    private final NotificationService notificationService;
 
     @Transactional
     public EventResponseDto createEvent(EventRequestDto request) {
@@ -39,18 +43,16 @@ public class EventService {
         }
 
         Event event = Event.create(store, request);
-        eventRepository.save(event);
+        Event savedEvent = eventRepository.save(event);
 
-        return EventResponseDto.fromEvent(event);
+        return EventResponseDto.fromEvent(savedEvent);
     }
 
     @Transactional
     public EventResponseDto updateEvent(Long id, EventUpdateRequestDto request) {
         Event event = getEvent(id);
 
-        if (event.getStatus() != EventStatus.READY) {
-            throw new HandledException(ErrorCode.INVALID_EVENT_STATUS);
-        }
+        validateReadyStatus(event);
 
         event.update(
                 request.getOpenAt(),
@@ -76,9 +78,7 @@ public class EventService {
     public EventDeleteResponseDto deleteEvent(Long id) {
         Event event = getEvent(id);
 
-        if (event.getStatus() != EventStatus.READY) {
-            throw new HandledException(ErrorCode.INVALID_EVENT_STATUS);
-        }
+        validateReadyStatus(event);
 
         eventRepository.delete(event);
         return EventDeleteResponseDto.fromEvent(event);
@@ -90,8 +90,23 @@ public class EventService {
         List<Event> eventsToOpen = eventRepository.findAllByStatusAndOpenAtLessThanEqual(EventStatus.READY, now);
 
         for (Event event : eventsToOpen) {
-            event.changeStatus(EventStatus.OPENED);
-            log.info("이벤트 오픈됨: id={}, store={}, openAt={}", event.getId(), event.getStore().getName(), event.getOpenAt());
+            event.open();
+            log.info("이벤트 오픈됨: eventId={}, storeName={}, openAt={}", event.getId(), event.getStore().getName(), event.getOpenAt());
+
+            List<User> usersToNotify = eventJoinService.getUsersByEventId(event.getId());
+
+//            for (User user : usersToNotify) {
+//                if (user.getIsAlarmEnabled()) {
+//                    notificationService.createNotification(
+//                            NotificationRequestDto.builder()
+//                                    .userId(user.getId())
+//                                    .storeId(event.getStore().getId())
+//                                    .type(NotificationType.REMIND)
+//                                    .content(event.getStore().getName() + "의 이벤트가 열렸어요!")
+//                                    .build()
+//                    );
+//                }
+//            }
         }
     }
 
@@ -103,5 +118,11 @@ public class EventService {
     public Event getEventForUpdate(Long id) {
         return eventRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
+    }
+
+    private static void validateReadyStatus(Event event) {
+        if (!event.isReady()) {
+            throw new HandledException(ErrorCode.INVALID_EVENT_STATUS);
+        }
     }
 }
