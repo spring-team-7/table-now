@@ -2,6 +2,7 @@ package org.example.tablenow.domain.store.service;
 
 import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.category.service.CategoryService;
+import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
@@ -13,7 +14,6 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +45,8 @@ public class StoreServiceTest {
     private StoreRepository storeRepository;
     @Mock
     private CategoryService categoryService;
+    @Mock
+    private ImageService imageService;
     @Mock
     private RedisTemplate<String, String> redisTemplate;
     @Mock
@@ -82,21 +84,16 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_등록 {
-        StoreCreateRequestDto dto = new StoreCreateRequestDto();
-
-        @BeforeEach
-        void setUp() {
-            ReflectionTestUtils.setField(dto, "name", "맛있는 가게");
-            ReflectionTestUtils.setField(dto, "description", "가게 설명입니다.");
-            ReflectionTestUtils.setField(dto, "address", "서울특별시 강남구 테헤란로11길 1 1층");
-            ReflectionTestUtils.setField(dto, "imageUrl", "대표이미지");
-            ReflectionTestUtils.setField(dto, "capacity", 100);
-            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(9, 00));
-            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(21, 00));
-            ReflectionTestUtils.setField(dto, "deposit", 10000);
-            ReflectionTestUtils.setField(dto, "categoryId", categoryId);
-        }
-
+        StoreCreateRequestDto dto = StoreCreateRequestDto.builder()
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .categoryId(categoryId)
+                .build();
 
         @Test
         void 존재하지_않는_카테고리_조회_시_예외_발생() {
@@ -196,20 +193,16 @@ public class StoreServiceTest {
     class 가게_수정 {
         Long categoryId2 = 2L;
         Category category2 = Category.builder().id(categoryId2).name("분식").build();
-        StoreUpdateRequestDto dto = new StoreUpdateRequestDto();
-
-        @BeforeEach
-        void setUp() {
-            ReflectionTestUtils.setField(dto, "name", "더 맛있는 가게");
-            ReflectionTestUtils.setField(dto, "description", "더 맛있는 가게 설명입니다.");
-            ReflectionTestUtils.setField(dto, "address", "서울특별시 강남구 테헤란로22길 2 2층");
-            ReflectionTestUtils.setField(dto, "imageUrl", "수정이미지");
-            ReflectionTestUtils.setField(dto, "capacity", 200);
-            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(8, 00));
-            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(22, 00));
-            ReflectionTestUtils.setField(dto, "deposit", 20000);
-            ReflectionTestUtils.setField(dto, "categoryId", categoryId2);
-        }
+        StoreUpdateRequestDto dto = StoreUpdateRequestDto.builder()
+                .name("더 맛있는 가게")
+                .description("더 맛있는 가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로22길 2 2층")
+                .capacity(200)
+                .startTime(LocalTime.of(8, 00))
+                .endTime(LocalTime.of(22, 00))
+                .deposit(20000)
+                .categoryId(categoryId2)
+                .build();
 
         @Test
         void 존재하지_않는_가게_조회_시_예외_발생() {
@@ -283,6 +276,61 @@ public class StoreServiceTest {
             );
         }
 
+        @Nested
+        class 가게_이미지_수정 {
+            String origin = "https://url.com/store/1/origin.jpg";
+            String request = "https://url.com/store/1/update.jpg";
+
+            @Test
+            void 기존_이미지가_존재하지_않는_경우_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(dto, "imageUrl", request);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), dto.getImageUrl());
+            }
+
+            @Test
+            void 기존_이미지가_존재할_경우_이미지_삭제_및_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(store, "imageUrl", origin);
+                ReflectionTestUtils.setField(dto, "imageUrl", request);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), dto.getImageUrl());
+
+            }
+
+            @Test
+            void 기존_이미지와_동일한_이미지_URL_요청_시_수정_성공() {
+                // given
+                ReflectionTestUtils.setField(store, "imageUrl", origin);
+                ReflectionTestUtils.setField(dto, "imageUrl", origin);
+                given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+                given(categoryService.findCategory(anyLong())).willReturn(category2);
+
+                // when
+                StoreUpdateResponseDto response = storeService.updateStore(storeId, authOwner, dto);
+
+                // then
+                assertNotNull(response);
+                assertEquals(response.getImageUrl(), dto.getImageUrl());
+
+            }
+        }
+
         @Test
         void 수정_성공() {
             // given
@@ -329,6 +377,20 @@ public class StoreServiceTest {
                     storeService.deleteStore(storeId, authOwner)
             );
             assertEquals(exception.getMessage(), ErrorCode.STORE_FORBIDDEN.getDefaultMessage());
+        }
+
+        @Test
+        void 이미지_삭제_처리_후_삭제_성공() {
+            // given
+            ReflectionTestUtils.setField(store, "imageUrl", "https://url.com/store/1/origin.jpg");
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreDeleteResponseDto response = storeService.deleteStore(storeId, authOwner);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getStoreId(), storeId);
         }
 
         @Test
@@ -494,23 +556,7 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 캐시_키_초기화_후_조회_성공() {
-            // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
-            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
-                    .willReturn(null);
-
-            // when
-            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, timeKey);
-
-            // then
-            assertNotNull(response);
-            assertEquals(response.size(), 0);
-        }
-
-        @Test
-        void 캐시_빈_내부_데이터_조회_성공() {
+        void 인기_검색어_캐시가_없을_경우_빈_배열_조회_성공() {
             // given
             String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
@@ -526,15 +572,15 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 시간_집계_키를_입력하지_않은_경우_현재_시간_기준_조회_성공() {
+        void 시간_집계_키가_없을_경우_현재_시간_기준_조회_성공() {
             // given
             String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
             given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
-                    .willReturn(null);
+                    .willReturn(Collections.emptySet());
 
             // when
-            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, "");
+            List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, null);
 
             // then
             assertNotNull(response);
@@ -570,7 +616,7 @@ public class StoreServiceTest {
             given(zSetOperations.reverseRangeWithScores(anyString(), anyLong(), anyLong()))
                     .willReturn(mockResult);
             given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
-                    .willReturn(null);
+                    .willReturn(Collections.emptySet());
 
             // when
             List<StoreRankingResponseDto> response = storeService.getStoreRanking(limit, dayKey);
