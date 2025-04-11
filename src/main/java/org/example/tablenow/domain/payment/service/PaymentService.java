@@ -58,15 +58,17 @@ public class PaymentService {
         // tosspayment 결제 승인
         TossPaymentConfirmResponseDto tossResponse = tossPaymentClient.confirmPayment(paymentCreateRequestDto);
 
-        if (!"DONE".equalsIgnoreCase(tossResponse.getStatus())) {
+        PaymentStatus status = PaymentStatus.from(tossResponse.getStatus());
+
+        if (status != PaymentStatus.DONE) {
             throw new HandledException(ErrorCode.TOSS_PAYMENT_FAILED);
         }
 
         payment.changePaymentMethod(tossResponse.getMethod());
         payment.changePaymentStatus(PaymentStatus.valueOf(tossResponse.getStatus()));
-        paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.save(payment);
 
-        return PaymentResponseDto.fromPayment(payment);
+        return PaymentResponseDto.fromPayment(savedPayment);
     }
 
     @Transactional(readOnly = true)
@@ -84,7 +86,7 @@ public class PaymentService {
 
         Payment payment = getVerifiedPayment(authUser, reservationId, paymentId);
 
-        if (payment.isCanceled(payment.getStatus())) {
+        if (payment.isCanceled()) {
             throw new HandledException(ErrorCode.ALREADY_CANCELED);
         }
 
@@ -93,14 +95,16 @@ public class PaymentService {
                 payment.getPaymentKey(), "고객 요청으로 결제 취소"
         );
 
-        if (!"CANCELED".equalsIgnoreCase(tossResponse.getStatus())) {
+        PaymentStatus status = PaymentStatus.from(tossResponse.getStatus());
+
+        if (status != PaymentStatus.CANCELED) {
             throw new HandledException(ErrorCode.TOSS_PAYMENT_CANCEL_FAILED);
         }
 
         payment.changePaymentStatus(PaymentStatus.CANCELED);
-        paymentRepository.saveAndFlush(payment);
+        Payment savedPayment = paymentRepository.saveAndFlush(payment);
 
-        return PaymentResponseDto.fromPayment(payment);
+        return PaymentResponseDto.fromPayment(savedPayment);
     }
 
     private Payment getVerifiedPayment(AuthUser authUser, Long reservationId, Long paymentId) {
