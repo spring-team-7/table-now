@@ -13,28 +13,28 @@ import org.example.tablenow.global.entity.TimeStamped;
 @Table(name = "waitlist")
 public class Waitlist extends TimeStamped {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "store_id", nullable = false)
-  private Store store;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
 
-  @Column(name = "is_notified")
-  private Boolean isNotified = false;
+    @Column(name = "is_notified")
+    private Boolean isNotified = false;
 
-  public Waitlist(User user, Store store){
-    this.user = user;
-    this.store = store;
-    this.isNotified = false;
-  }
+    public Waitlist(User user, Store store) {
+        this.user = user;
+        this.store = store;
+        this.isNotified = false;
+    }
 
-  public void updateNotified(){
-    this.isNotified = true;
-  }
+    public void updateNotified() {
+        this.isNotified = true;
+    }
 }

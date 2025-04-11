@@ -91,4 +91,9 @@ public class Store extends TimeStamped {
         }
         return timeSlots;
     }
+
+    public boolean hasVacancy(long reservedCount){
+        return reservedCount < this.capacity;
+
+    }
 }

@@ -38,276 +38,266 @@ import static org.mockito.Mockito.mock;
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
-  @Mock
-  private NotificationRepository notificationRepository;
+    @Mock
+    private NotificationRepository notificationRepository;
 
-  @Mock
-  private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-  @Mock
-  private StoreService storeService;
+    @Mock
+    private StoreService storeService;
 
-  @Mock
-  private WaitlistRepository waitlistRepository;
+    @Mock
+    private WaitlistRepository waitlistRepository;
 
-  @Mock
-  private User user;
+    @Mock
+    private User user;
 
-  @InjectMocks
-  private NotificationService notificationService;
+    @InjectMocks
+    private NotificationService notificationService;
 
-  @Nested
-  class 알림_생성 {
+    @Nested
+    class 알림_생성 {
 
-    NotificationRequestDto dto;
+        NotificationRequestDto dto;
 
-    @BeforeEach
-    void setUp() {
-      dto = new NotificationRequestDto();
-      ReflectionTestUtils.setField(dto, "userId", 1L);
-      ReflectionTestUtils.setField(dto, "type", NotificationType.REMIND);
-      ReflectionTestUtils.setField(dto, "content", "예약 알림");
+        @BeforeEach
+        void setUp() {
+            dto = NotificationRequestDto.builder()
+                .userId(1L)
+                .type(NotificationType.REMIND)
+                .content("예약 알림")
+                .build();
+        }
 
-      ReflectionTestUtils.setField(user, "id", 1L);
+        @Test
+        void 알림_정상_생성() {
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(notificationRepository.save(any(Notification.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+            NotificationResponseDto result = notificationService.createNotification(dto);
+
+            assertEquals("예약 알림", result.getContent());
+        }
+
+        @Test
+        void 유저를_찾지_못해_알림_생성_실패() {
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            HandledException exception = assertThrows(HandledException.class, () -> {
+                notificationService.createNotification(dto);
+            });
+
+            assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        }
+
+    }
+
+    @Nested
+    class 빈자리_알림_예외 {
+
+        NotificationRequestDto dto;
+
+        @BeforeEach
+        void setUp() {
+            dto = NotificationRequestDto.builder()
+                .userId(1L)
+                .type(NotificationType.VACANCY)
+                .content("빈자리 알림")
+                .build();
+
+        }
+
+        @Test
+        void StoreId_없어서_예외() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(user.getIsAlarmEnabled()).willReturn(true);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                notificationService.createNotification(dto)
+            );
+
+            assertEquals(ErrorCode.NOTIFICATION_BAD_REQUEST.getStatus(), exception.getHttpStatus());
+        }
+
+        @Test
+        void 대기정보_없어서_예외() {
+            // given
+            ReflectionTestUtils.setField(dto, "storeId", 10L);
+            Store store = mock(Store.class);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(user.getIsAlarmEnabled()).willReturn(true);
+            given(storeService.getStore(10L)).willReturn(store);
+            given(waitlistRepository.findByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(Optional.empty());
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                notificationService.createNotification(dto)
+            );
+
+            assertEquals(ErrorCode.WAITLIST_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        }
+    }
+
+    @Nested
+    class 알림_조회 {
+
+        PageRequest pageRequest;
+
+        @BeforeEach
+        void setUp() {
+            pageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+
+        @Test
+        void 알림_정상_조회() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+            Notification noti1 = new Notification(user, NotificationType.REMIND, "알림1");
+            Notification noti2 = new Notification(user, NotificationType.VACANCY, "알림2");
+            Page<Notification> page = new PageImpl<>(List.of(noti1, noti2));
+
+            given(notificationRepository.findAllByUser(eq(user), any(Pageable.class)))
+                .willReturn(page);
+
+            // when
+            Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5, false); // 👈 여기 page=0 확인!
+
+            // then
+            assertEquals("알림1", result.getContent().get(0).getContent());
+            assertEquals("알림2", result.getContent().get(1).getContent());
+        }
+
+
+        @Test
+        void 유저를_찾지_못해_알림_조회_실패() {
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            HandledException exception = assertThrows(HandledException.class, () -> {
+                notificationService.findNotifications(1L, 1, 5, false);
+            });
+
+            assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        }
     }
 
     @Test
-    void 알림_정상_생성() {
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(user.getIsAlarmEnabled()).willReturn(true);
-      given(notificationRepository.save(any(Notification.class))).willAnswer(invocation -> invocation.getArgument(0));
+    void 알림_정상_읽음처리() {
+        // given
+        Notification notification = new Notification(user, NotificationType.REMIND, "예약 알림");
+        ReflectionTestUtils.setField(notification, "id", 10L);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
-      NotificationResponseDto result = notificationService.createNotification(dto);
+        given(user.getId()).willReturn(1L);
+        given(notificationRepository.findById(10L)).willReturn(Optional.of(notification));
 
-      assertEquals("예약 알림", result.getContent());
+        // when
+        NotificationUpdateReadResponseDto result = notificationService.updateNotificationRead(10L, 1L);
+
+        // then
+        assertEquals(10L, result.getNotificationId());
+        assertTrue(result.getIsRead());
     }
 
     @Test
-    void 유저를_찾지_못해_알림_생성_실패() {
-      given(userRepository.findById(1L)).willReturn(Optional.empty());
+    void 알림을_찾지_못해_읽음처리_실패() {
+        // given
+        given(notificationRepository.findById(10L)).willReturn(Optional.empty());
 
-      HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.createNotification(dto);
-      });
+        // when & then
+        HandledException exception = assertThrows(HandledException.class, () -> {
+            notificationService.updateNotificationRead(10L, 1L);
+        });
 
-      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        assertEquals(ErrorCode.NOTIFICATION_NOT_FOUND.getStatus(), exception.getHttpStatus());
     }
 
     @Test
-    void 알람수신_거부한_유저에게_알림_생성_실패() {
-      given(user.getIsAlarmEnabled()).willReturn(false);
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
+    void 알림_유저가_달라서_읽음처리_실패() {
+        // given
+        User otherUser = mock(User.class);
+        ReflectionTestUtils.setField(otherUser, "id", 2L);
+        given(otherUser.getId()).willReturn(2L);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
-      HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.createNotification(dto);
-      });
+        Notification notification = new Notification(otherUser, NotificationType.REMIND, "예약 알림");
+        ReflectionTestUtils.setField(notification, "id", 10L);
+        given(notificationRepository.findById(10L)).willReturn(Optional.of(notification));
 
-      assertEquals(ErrorCode.NOTIFICATION_DISABLED.getStatus(), exception.getHttpStatus());
+        // when & then
+        HandledException exception = assertThrows(HandledException.class, () -> {
+            notificationService.updateNotificationRead(10L, 1L);
+        });
+
+        assertEquals(ErrorCode.NOTIFICATION_MISMATCH.getStatus(), exception.getHttpStatus());
     }
-  }
-  @Nested
-  class 빈자리_알림_예외 {
-
-    NotificationRequestDto dto;
-
-    @BeforeEach
-    void setUp() {
-      dto = new NotificationRequestDto();
-      ReflectionTestUtils.setField(dto, "userId", 1L);
-      ReflectionTestUtils.setField(dto, "type", NotificationType.VACANCY);
-      ReflectionTestUtils.setField(dto, "content", "빈자리 알림");
-    }
-
-    @Test
-    void StoreId_없어서_예외() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(user.getIsAlarmEnabled()).willReturn(true);
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          notificationService.createNotification(dto)
-      );
-
-      assertEquals(ErrorCode.NOTIFICATION_BAD_REQUEST.getStatus(), exception.getHttpStatus());
-    }
-
-    @Test
-    void 대기정보_없어서_예외() {
-      // given
-      ReflectionTestUtils.setField(dto, "storeId", 10L);
-      Store store = mock(Store.class);
-
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(user.getIsAlarmEnabled()).willReturn(true);
-      given(storeService.getStore(10L)).willReturn(store);
-      given(waitlistRepository.findByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(Optional.empty());
-
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () ->
-          notificationService.createNotification(dto)
-      );
-
-      assertEquals(ErrorCode.WAITLIST_NOT_FOUNND.getStatus(), exception.getHttpStatus());
-    }
-  }
-
-  @Nested
-  class 알림_조회 {
-
-    PageRequest pageRequest;
-
-    @BeforeEach
-    void setUp() {
-      pageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"));
-    }
-
-    @Test
-    void 알림_정상_조회() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-
-      Notification noti1 = new Notification(user, NotificationType.REMIND, "알림1");
-      Notification noti2 = new Notification(user, NotificationType.VACANCY, "알림2");
-      Page<Notification> page = new PageImpl<>(List.of(noti1, noti2));
-
-      given(notificationRepository.findAllByUser(eq(user), any(Pageable.class)))
-          .willReturn(page);
-
-      // when
-      Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5,null); // 👈 여기 page=0 확인!
-
-      // then
-      assertEquals("알림1", result.getContent().get(0).getContent());
-      assertEquals("알림2", result.getContent().get(1).getContent());
-    }
-
-
-    @Test
-    void 유저를_찾지_못해_알림_조회_실패() {
-      given(userRepository.findById(1L)).willReturn(Optional.empty());
-
-      HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.findNotifications(1L,1, 5,null);
-      });
-
-      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
-    }
-  }
-
-  @Test
-  void 알림_정상_읽음처리() {
-    // given
-    Notification notification = new Notification(user, NotificationType.REMIND, "예약 알림");
-    ReflectionTestUtils.setField(notification, "id", 10L);
-    ReflectionTestUtils.setField(user, "id", 1L);
-
-    given(user.getId()).willReturn(1L);
-    given(notificationRepository.findById(10L)).willReturn(Optional.of(notification));
-
-    // when
-    NotificationUpdateReadResponseDto result = notificationService.updateNotificationRead(10L, 1L);
-
-    // then
-    assertEquals(10L, result.getNotificationId());
-    assertTrue(result.getIsRead());
-  }
-
-  @Test
-  void 알림을_찾지_못해_읽음처리_실패() {
-    // given
-    given(notificationRepository.findById(10L)).willReturn(Optional.empty());
-
-    // when & then
-    HandledException exception = assertThrows(HandledException.class, () -> {
-      notificationService.updateNotificationRead(10L, 1L);
-    });
-
-    assertEquals(ErrorCode.NOTIFICATION_NOT_FOUND.getStatus(), exception.getHttpStatus());
-  }
-
-  @Test
-  void 알림_유저가_달라서_읽음처리_실패() {
-    // given
-    User otherUser = mock(User.class);
-    ReflectionTestUtils.setField(otherUser, "id", 2L);
-    given(otherUser.getId()).willReturn(2L);
-    ReflectionTestUtils.setField(user, "id", 1L);
-
-    Notification notification = new Notification(otherUser, NotificationType.REMIND, "예약 알림");
-    ReflectionTestUtils.setField(notification, "id", 10L);
-    given(notificationRepository.findById(10L)).willReturn(Optional.of(notification));
-
-    // when & then
-    HandledException exception = assertThrows(HandledException.class, () -> {
-      notificationService.updateNotificationRead(10L, 1L);
-    });
-
-    assertEquals(ErrorCode.NOTIFICATION_MISMATCH.getStatus(), exception.getHttpStatus());
-  }
 
     @Test
     void 전체_읽음처리_성공() {
-      // given
-      Notification n1 = new Notification(user, NotificationType.REMIND, "알림1");
-      Notification n2 = new Notification(user, NotificationType.VACANCY, "알림2");
+        // given
+        Notification n1 = new Notification(user, NotificationType.REMIND, "알림1");
+        Notification n2 = new Notification(user, NotificationType.VACANCY, "알림2");
 
-      ReflectionTestUtils.setField(n1, "id", 10L);
-      ReflectionTestUtils.setField(n2, "id", 11L);
-      ReflectionTestUtils.setField(user, "id", 1L);
+        ReflectionTestUtils.setField(n1, "id", 10L);
+        ReflectionTestUtils.setField(n2, "id", 11L);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
-      given(userRepository.findById(1L)).willReturn(Optional.of(user));
-      given(notificationRepository.findAllByUserAndIsReadFalse(user)).willReturn(List.of(n1, n2));
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(notificationRepository.findAllByUserAndIsReadFalse(user)).willReturn(List.of(n1, n2));
 
-      // when
-      List<NotificationUpdateReadResponseDto> result =
-          notificationService.updateAllNotificationRead(1L);
+        // when
+        List<NotificationUpdateReadResponseDto> result =
+            notificationService.updateAllNotificationRead(1L);
 
-      // then
-      assertTrue(result.get(0).getIsRead());
-      assertTrue(n1.getIsRead());
-      assertTrue(n2.getIsRead());
+        // then
+        assertTrue(result.get(0).getIsRead());
+        assertTrue(n1.getIsRead());
+        assertTrue(n2.getIsRead());
     }
 
     @Test
     void 유저를_찾지_못해서_전체읽음_실패() {
-      // given
-      given(userRepository.findById(1L)).willReturn(Optional.empty());
+        // given
+        given(userRepository.findById(1L)).willReturn(Optional.empty());
 
-      // when & then
-      HandledException exception = assertThrows(HandledException.class, () -> {
-        notificationService.updateAllNotificationRead(1L);
-      });
+        // when & then
+        HandledException exception = assertThrows(HandledException.class, () -> {
+            notificationService.updateAllNotificationRead(1L);
+        });
 
-      assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+        assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
     }
 
 
-  @Test
-  void 알람_수신_설정_변경_성공() {
-    // given
-    ReflectionTestUtils.setField(user, "id", 1L);
-    given(userRepository.findById(1L)).willReturn(Optional.of(user));
-    given(user.getUpdatedAt()).willReturn(LocalDateTime.now());
-    given(user.getIsAlarmEnabled()).willReturn(true);
+    @Test
+    void 알람_수신_설정_변경_성공() {
+        // given
+        ReflectionTestUtils.setField(user, "id", 1L);
+        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(user.getUpdatedAt()).willReturn(LocalDateTime.now());
+        given(user.getIsAlarmEnabled()).willReturn(true);
 
-    // when
-    NotificationAlarmResponseDto response = notificationService.updateNotificationAlarm(1L, true);
+        // when
+        NotificationAlarmResponseDto response = notificationService.updateNotificationAlarm(1L, true);
 
-    // then
-    assertTrue(response.isAlarmEnabled());
-  }
+        // then
+        assertTrue(response.isAlarmEnabled());
+    }
 
-  @Test
-  void 유저를_찾지_못해_수신_설정_실패() {
-    // given
-    given(userRepository.findById(1L)).willReturn(Optional.empty());
+    @Test
+    void 유저를_찾지_못해_수신_설정_실패() {
+        // given
+        given(userRepository.findById(1L)).willReturn(Optional.empty());
 
-    // when & then
-    HandledException exception = assertThrows(HandledException.class, () -> {
-      notificationService.updateNotificationAlarm(1L, true);
-    });
+        // when & then
+        HandledException exception = assertThrows(HandledException.class, () -> {
+            notificationService.updateNotificationAlarm(1L, true);
+        });
 
-    assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
-  }
+        assertEquals(ErrorCode.USER_NOT_FOUND.getStatus(), exception.getHttpStatus());
+    }
 }
