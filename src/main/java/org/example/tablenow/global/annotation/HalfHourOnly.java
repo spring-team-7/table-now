@@ -1,11 +1,15 @@
-package org.example.tablenow.domain.store.annotation;
+package org.example.tablenow.global.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Constraint(validatedBy = HalfHourValidator.class)
+@Documented
+@Constraint(validatedBy = {
+        HalfHourValidatorForLocalTime.class,
+        HalfHourValidatorForLocalDateTime.class
+})
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HalfHourOnly {
