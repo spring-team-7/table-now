@@ -79,8 +79,6 @@ public class PaymentService {
         return PaymentResponseDto.fromPayment(payment);
     }
 
-
-
     @Transactional
     public PaymentResponseDto cancelPayment(AuthUser authUser, Long reservationId, Long paymentId) {
 
