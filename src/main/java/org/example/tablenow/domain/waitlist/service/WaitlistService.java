@@ -35,7 +35,7 @@ public class WaitlistService {
         Store findStore = storeService.getStore(requestDto.getStoreId());
 
         // 빈자리 있는 경우 대기 등록 안됨
-        if (reservationService.hasVacancy(findStore.getId())) {
+        if (reservationService.hasVacancy(findStore)) {
             throw new HandledException(ErrorCode.WAITLIST_NOT_ALLOWED);
         }
 

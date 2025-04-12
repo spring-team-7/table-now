@@ -1,11 +1,11 @@
-package org.example.tablenow.domain.store.annotation;
+package org.example.tablenow.global.annotation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 import java.time.LocalTime;
 
-public class HalfHourValidator implements ConstraintValidator<HalfHourOnly, LocalTime> {
+public class HalfHourValidatorForLocalTime implements ConstraintValidator<HalfHourOnly, LocalTime> {
 
     @Override
     public boolean isValid(LocalTime time, ConstraintValidatorContext context) {

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.image.annotation.ImageUrlPattern;
-import org.example.tablenow.domain.store.annotation.HalfHourOnly;
+import org.example.tablenow.global.annotation.HalfHourOnly;
 
 import java.time.LocalTime;
 

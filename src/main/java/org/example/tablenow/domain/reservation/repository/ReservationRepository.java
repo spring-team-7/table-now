@@ -2,12 +2,14 @@ package org.example.tablenow.domain.reservation.repository;
 
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
+import org.example.tablenow.domain.store.entity.Store;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +39,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         """)
     Page<Reservation> findByStoreIdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
 
-
     @Query("""
         SELECT r FROM Reservation r
         WHERE r.status = 'RESERVED'
@@ -48,10 +49,20 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("""
             SELECT COUNT(r)
             FROM Reservation r
-            WHERE r.store.id = :storeId
+            WHERE r.store = :store
               AND r.status = 'RESERVED'
         """)
-    long countReservedTables(@Param("storeId") Long storeId);
+    long countReservedTables(@Param("store") Store store);
+
+    @Query("""
+    SELECT COUNT(r)
+    FROM Reservation r
+    WHERE r.store = :store
+      AND r.status = 'RESERVED'
+      AND DATE(r.reservedAt) = :date
+    """)
+    long countReservedTablesByDate(@Param("store") Store store, @Param("date") LocalDate date);
+
 
     @Query("""
             SELECT r
