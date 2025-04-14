@@ -11,8 +11,6 @@ import org.example.tablenow.global.entity.TimeStamped;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Entity
@@ -32,6 +30,8 @@ public class Store extends TimeStamped {
     private int capacity;
     @Min(0)
     private int deposit;
+    private Double averageRating = 0.0;
+    private Integer ratingCount = 0;
     @Column(nullable = false)
     private LocalTime startTime;
     @Column(nullable = false)
@@ -46,7 +46,7 @@ public class Store extends TimeStamped {
     private LocalDateTime deletedAt;
 
     @Builder
-    private Store(Long id, String name, String description, String address, String imageUrl, int capacity, int deposit, LocalTime startTime, LocalTime endTime, User user, Category category) {
+    private Store(Long id, String name, String description, String address, String imageUrl, int capacity, int deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -54,6 +54,8 @@ public class Store extends TimeStamped {
         this.imageUrl = imageUrl;
         this.capacity = capacity;
         this.deposit = deposit;
+        this.averageRating = averageRating;
+        this.ratingCount = ratingCount;
         this.startTime = startTime;
         this.endTime = endTime;
         this.user = user;
@@ -105,18 +107,38 @@ public class Store extends TimeStamped {
         return !time.isBefore(this.startTime) && !time.isAfter(this.endTime);
     }
 
-    public List<LocalTime> getStoreTimeSlots() {
-        List<LocalTime> timeSlots = new ArrayList<>();
-
-        LocalTime currentTime = this.startTime;
-        while (currentTime.isBefore(endTime)) {
-            timeSlots.add(currentTime);
-            currentTime = currentTime.plusHours(1);
-        }
-        return timeSlots;
-    }
-
     public boolean hasVacancy(long reservedCount) {
         return reservedCount < this.capacity;
+    }
+
+    public void applyRating(int rating) {
+        int newRatingCount = this.ratingCount + 1;
+        Double newAverageRating = ((this.averageRating * this.ratingCount) + rating) / newRatingCount;
+
+        this.ratingCount = newRatingCount;
+        this.averageRating = newAverageRating;
+    }
+
+    public void removeRating(int rating) {
+        int newRatingCount = this.ratingCount - 1;
+
+        if (newRatingCount <= 0) {
+            this.ratingCount = 0;
+            this.averageRating = 0.0;
+            return;
+        }
+        Double newAverageRating = ((this.averageRating * this.ratingCount) - rating) / newRatingCount;
+
+        this.ratingCount = newRatingCount;
+        this.averageRating = newAverageRating;
+    }
+
+    public void updateRating(int oldRating, int newRating) {
+        if (this.ratingCount == 0) {
+            return;
+        }
+
+        Double newAverageRating = ((this.averageRating * this.ratingCount) - oldRating + newRating) / this.ratingCount;
+        this.averageRating = newAverageRating;
     }
 }
