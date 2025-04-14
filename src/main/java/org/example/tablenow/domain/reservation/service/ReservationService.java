@@ -10,7 +10,6 @@ import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.repository.ReservationRepository;
 import org.example.tablenow.domain.store.entity.Store;
-import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
@@ -22,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -30,21 +30,15 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StoreService storeService;
-    private final StoreRepository storeRepository;
 
     @Transactional
     public ReservationResponseDto makeReservation(AuthUser authUser, ReservationRequestDto request) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(request.getStoreId());
 
-        if (reservationRepository.isReservedStatusInUse(request.getStoreId(), request.getReservedAt())) {
-            throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
-        }
-
-        validateReservedAtHalfHour(request.getReservedAt());
-        if (!store.isOpenAt(request.getReservedAt())) {
-            throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
-        }
+        validateStoreCapacity(store, request.getReservedAt());
+        validateReservationDuplication(request.getStoreId(), request.getReservedAt());
+        validateStoreOpening(store, request.getReservedAt());
 
         Reservation reservation = Reservation.builder()
                 .user(user)
@@ -53,9 +47,9 @@ public class ReservationService {
                 .build();
         validateReservationOwner(reservation, user);
 
-        reservationRepository.save(reservation);
+        Reservation savedReservation = reservationRepository.save(reservation);
 
-        return ReservationResponseDto.fromReservation(reservation);
+        return ReservationResponseDto.fromReservation(savedReservation);
     }
 
     @Transactional
@@ -120,7 +114,6 @@ public class ReservationService {
     private void validateUpdatableReservation(User user, Long id, ReservationUpdateRequestDto request, Reservation reservation) {
         validateReservationOwner(reservation, user);
         validateReservationTimeDuplicated(id, request, reservation);
-        validateReservedAtHalfHour(request.getReservedAt());
     }
 
     private void validateReservationOwner(Reservation reservation, User user) {
@@ -141,19 +134,29 @@ public class ReservationService {
         }
     }
 
-    private void validateReservedAtHalfHour(LocalDateTime reservedAt) {
-        int minute = reservedAt.getMinute();
-        if (minute != 0 && minute != 30) {
-            throw new HandledException(ErrorCode.RESERVATION_TIME_INVALID);
+    private void validateStoreCapacity(Store store, LocalDateTime reservedAt) {
+        LocalDate date = reservedAt.toLocalDate();
+        long reservedCount = reservationRepository.countReservedTablesByDate(store, date);
+        if (reservedCount >= store.getCapacity()) {
+            throw new HandledException(ErrorCode.STORE_TABLE_CAPACITY_EXCEEDED);
         }
     }
 
-    public boolean hasVacancy(Long storeId) {
-        Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
+    private void validateReservationDuplication(Long storeId, LocalDateTime reservedAt) {
+        if (reservationRepository.isReservedStatusInUse(storeId, reservedAt)) {
+            throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
+        }
+    }
 
-        long reservedCount = reservationRepository.countReservedTables(storeId);
+    private void validateStoreOpening(Store store, LocalDateTime reservedAt) {
+        if (!store.isOpenAt(reservedAt)) {
+            throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
+        }
+    }
 
+    // TODO: 예약 취소 시 빈자리 이벤트 발생 시킬 예정 (추후 RabbitMQ 발행으로 구조 전환)
+    public boolean hasVacancy(Store store) {
+        long reservedCount = reservationRepository.countReservedTables(store);
         return store.hasVacancy(reservedCount);
     }
 

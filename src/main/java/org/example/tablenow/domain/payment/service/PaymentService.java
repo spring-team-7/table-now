@@ -58,7 +58,7 @@ public class PaymentService {
         // tosspayment 결제 승인
         TossPaymentConfirmResponseDto tossResponse = tossPaymentClient.confirmPayment(paymentCreateRequestDto);
 
-        PaymentStatus status = PaymentStatus.from(tossResponse.getStatus());
+        PaymentStatus status = PaymentStatus.from(tossResponse.getStatus(), ErrorCode.TOSS_PAYMENT_FAILED);
 
         if (status != PaymentStatus.DONE) {
             throw new HandledException(ErrorCode.TOSS_PAYMENT_FAILED);
@@ -79,8 +79,6 @@ public class PaymentService {
         return PaymentResponseDto.fromPayment(payment);
     }
 
-
-
     @Transactional
     public PaymentResponseDto cancelPayment(AuthUser authUser, Long reservationId, Long paymentId) {
 
@@ -95,7 +93,7 @@ public class PaymentService {
                 payment.getPaymentKey(), "고객 요청으로 결제 취소"
         );
 
-        PaymentStatus status = PaymentStatus.from(tossResponse.getStatus());
+        PaymentStatus status = PaymentStatus.from(tossResponse.getStatus(), ErrorCode.TOSS_PAYMENT_CANCEL_FAILED);
 
         if (status != PaymentStatus.CANCELED) {
             throw new HandledException(ErrorCode.TOSS_PAYMENT_CANCEL_FAILED);

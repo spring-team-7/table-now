@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.tablenow.global.annotation.HalfHourOnly;
 
 import java.time.LocalDateTime;
 
@@ -13,10 +14,11 @@ public class ReservationRequestDto {
     @NotNull
     private Long storeId;
     @NotNull
+    @HalfHourOnly
     private LocalDateTime reservedAt;
 
     @Builder
-    private ReservationRequestDto(Long storeId, LocalDateTime reservedAt) {
+    public ReservationRequestDto(Long storeId, LocalDateTime reservedAt) {
         this.storeId = storeId;
         this.reservedAt = reservedAt;
     }
