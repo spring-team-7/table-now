@@ -76,7 +76,7 @@ public class ReservationService {
     public Page<ReservationResponseDto> getStoreReservations(AuthUser authUser, Long storeId, ReservationStatus status, int page, int size) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(storeId);
-        storeService.validStoreOwnerId(store, user);
+        storeService.validateStoreOwnerId(store, user);
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
@@ -88,7 +88,7 @@ public class ReservationService {
     public ReservationStatusResponseDto completeReservation(AuthUser authUser, Long id, ReservationStatusChangeRequestDto request) {
         User user = User.fromAuthUser(authUser);
         Reservation reservation = getReservation(id);
-        storeService.validStoreOwnerId(reservation.getStore(), user);
+        storeService.validateStoreOwnerId(reservation.getStore(), user);
 
         reservation.updateStatus(request.getStatus());
 

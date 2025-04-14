@@ -281,7 +281,7 @@ public class ReservationServiceTest {
             // given
             given(storeService.getStore(eq(storeId))).willReturn(store);
             willThrow(new HandledException(ErrorCode.STORE_FORBIDDEN))
-                    .given(storeService).validStoreOwnerId(any(Store.class), any(User.class));
+                    .given(storeService).validateStoreOwnerId(any(Store.class), any(User.class));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -298,7 +298,7 @@ public class ReservationServiceTest {
             Page<Reservation> result = new PageImpl<>(List.of(reserved1, reserved2));
 
             given(storeService.getStore(eq(storeId))).willReturn(store);
-            willDoNothing().given(storeService).validStoreOwnerId(any(Store.class), any(User.class));
+            willDoNothing().given(storeService).validateStoreOwnerId(any(Store.class), any(User.class));
             given(reservationRepository.findByStoreIdAndStatus(eq(storeId), eq(status), any(Pageable.class)))
                     .willReturn(result);
 
@@ -361,7 +361,7 @@ public class ReservationServiceTest {
 
             given(reservationRepository.findById(eq(1L))).willReturn(Optional.of(reserved1));
             willThrow(new HandledException(ErrorCode.STORE_FORBIDDEN))
-                    .given(storeService).validStoreOwnerId(eq(store), any(User.class));
+                    .given(storeService).validateStoreOwnerId(eq(store), any(User.class));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -381,7 +381,7 @@ public class ReservationServiceTest {
         void 예약_완료_처리_성공() {
             // given
             given(reservationRepository.findById(eq(1L))).willReturn(Optional.of(reserved1));
-            willDoNothing().given(storeService).validStoreOwnerId(eq(store), any(User.class));
+            willDoNothing().given(storeService).validateStoreOwnerId(eq(store), any(User.class));
 
             // when
             ReservationStatusResponseDto response = reservationService.completeReservation(
