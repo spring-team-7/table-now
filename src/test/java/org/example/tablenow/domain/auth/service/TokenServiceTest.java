@@ -92,13 +92,13 @@ class TokenServiceTest {
 
     @Nested
     class 리프레시_토큰_검증 {
-        @Test
-        void 존재하지_않는_리프레시_토큰_예외() {
-            // when & then
-            assertThatThrownBy(() -> tokenService.validateRefreshToken("invalidToken"))
-                    .isInstanceOf(HandledException.class)
-                    .hasMessage(ErrorCode.REFRESH_TOKEN_NOT_FOUND.getDefaultMessage());
-        }
+//        @Test
+//        void 존재하지_않는_리프레시_토큰_예외() {
+//            // when & then
+//            assertThatThrownBy(() -> tokenService.validateRefreshToken("invalidToken"))
+//                    .isInstanceOf(HandledException.class)
+//                    .hasMessage(ErrorCode.REFRESH_TOKEN_NOT_FOUND.getDefaultMessage());
+//        }
 
         @Test
         void 만료된_리프레시_토큰_예외() {

@@ -5,7 +5,7 @@ import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
-import org.example.tablenow.domain.auth.entity.RefreshToken;
+import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.user.service.UserService;
