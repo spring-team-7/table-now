@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.category.entity.Category;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -134,6 +137,10 @@ public class Store extends TimeStamped {
     }
 
     public void updateRating(int oldRating, int newRating) {
+        if (this.ratingCount == 0) {
+            throw new HandledException(ErrorCode.CONFLICT);
+        }
+
         Double newAverageRating = ((this.averageRating * this.ratingCount) - oldRating + newRating) / this.ratingCount;
         this.averageRating = newAverageRating;
     }
