@@ -13,7 +13,7 @@ public class ReservationStatusChangeRequestDto {
     private ReservationStatus status;
 
     @Builder
-    private ReservationStatusChangeRequestDto(ReservationStatus status) {
+    public ReservationStatusChangeRequestDto(ReservationStatus status) {
         this.status = status;
     }
 }

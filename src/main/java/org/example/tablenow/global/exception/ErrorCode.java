@@ -34,6 +34,7 @@ public enum ErrorCode {
     STORE_BAD_REQUEST_TIME(HttpStatus.BAD_REQUEST, "시작시간은 종료시간보다 이전이어야 합니다."),
     STORE_CLOSED_TIME(HttpStatus.BAD_REQUEST,"가게 영업시간이 아닙니다."),
     STORE_RANKING_TIME_KEY_ERROR(HttpStatus.BAD_REQUEST, "시간 집계 키는 yyyyMMdd 또는 yyyyMMddHH 형식이어야 합니다."),
+    STORE_TABLE_CAPACITY_EXCEEDED(HttpStatus.BAD_REQUEST,"해당 가게의 하루 수용 가능한 테이블 수를 초과했습니다."),
 
     // RESERVATION
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "예약이 존재하지 않습니다."),
