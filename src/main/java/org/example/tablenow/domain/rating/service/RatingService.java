@@ -27,7 +27,7 @@ public class RatingService {
     private final ReservationService reservationService;
 
     @Transactional
-    public RatingCreateResponseDto createRating(AuthUser authUser, Long storeId, @Valid RatingRequestDto requestDto) {
+    public RatingCreateResponseDto createRating(AuthUser authUser, Long storeId, RatingRequestDto requestDto) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(storeId);
         int newRating = requestDto.getRating();
