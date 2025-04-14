@@ -39,14 +39,6 @@ public class ImageService {
     private static final String S3_URL_PREFIX = "https://";
     private static final String S3_URL_SUFFIX = ".s3.amazonaws.com/";
 
-    private String generateKey(ImageDomain imageDomain, Long userId, String fileExtension) {
-        return imageDomain.name().toLowerCase() + "/" + userId + "/" + UUID.randomUUID() + fileExtension;
-    }
-
-    private String getFileUrl(String key) {
-        return S3_URL_PREFIX + bucketName + S3_URL_SUFFIX + key;
-    }
-
     public PresignedUrlResponse generatePresignedUrl(AuthUser authUser, ImageDomain imageDomain, PresignedUrlRequest request) {
         Long userId = authUser.getId();
         String fileExtension = extractExtension(request.getFileName());
@@ -74,10 +66,6 @@ public class ImageService {
                 .build();
     }
 
-    private String extractExtension(String fileName) {
-        return fileName.substring(fileName.lastIndexOf('.')); // 예: ".png"
-    }
-
     public void delete(String objectPath) {
         try {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
@@ -88,6 +76,18 @@ public class ImageService {
         } catch (SdkServiceException e) {
             log.error(String.valueOf(e.getCause()));
         }
+    }
+
+    private String generateKey(ImageDomain imageDomain, Long userId, String fileExtension) {
+        return imageDomain.name().toLowerCase() + "/" + userId + "/" + UUID.randomUUID() + fileExtension;
+    }
+
+    private String getFileUrl(String key) {
+        return S3_URL_PREFIX + bucketName + S3_URL_SUFFIX + key;
+    }
+
+    private String extractExtension(String fileName) {
+        return fileName.substring(fileName.lastIndexOf('.')); // 예: ".png"
     }
 
     private String getImageKey(String objectPath) {
