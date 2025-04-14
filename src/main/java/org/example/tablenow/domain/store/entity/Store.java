@@ -134,10 +134,6 @@ public class Store extends TimeStamped {
     }
 
     public void updateRating(int oldRating, int newRating) {
-        if (this.ratingCount == 0) {
-            return;
-        }
-
         Double newAverageRating = ((this.averageRating * this.ratingCount) - oldRating + newRating) / this.ratingCount;
         this.averageRating = newAverageRating;
     }
