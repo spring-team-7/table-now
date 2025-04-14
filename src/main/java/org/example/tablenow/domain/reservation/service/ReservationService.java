@@ -160,4 +160,9 @@ public class ReservationService {
         return store.hasVacancy(reservedCount);
     }
 
+    public void validateCreateRating(Long userId, Long storeId) {
+        if (!reservationRepository.existsReviewableReservation(userId, storeId)) {
+            throw new HandledException(ErrorCode.RATING_RESERVATION_NOT_FOUND);
+        }
+    }
 }
