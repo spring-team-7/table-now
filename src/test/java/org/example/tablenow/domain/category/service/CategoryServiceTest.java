@@ -143,7 +143,7 @@ public class CategoryServiceTest {
 
             // then
             assertNotNull(response);
-            assertEquals(response.getId(), categoryId);
+            assertEquals(response.getCategoryId(), categoryId);
         }
     }
 
