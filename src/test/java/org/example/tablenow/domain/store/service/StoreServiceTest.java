@@ -105,7 +105,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.saveStore(authOwner, dto)
+                    storeService.createStore(authOwner, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.CATEGORY_NOT_FOUND.getDefaultMessage());
         }
@@ -118,7 +118,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.saveStore(authOwner, dto)
+                    storeService.createStore(authOwner, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.STORE_BAD_REQUEST_TIME.getDefaultMessage());
         }
@@ -131,7 +131,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.saveStore(authOwner, dto)
+                    storeService.createStore(authOwner, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.STORE_EXCEED_MAX.getDefaultMessage());
         }
@@ -144,7 +144,7 @@ public class StoreServiceTest {
             given(storeRepository.save(any(Store.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            StoreCreateResponseDto response = storeService.saveStore(authOwner, dto);
+            StoreCreateResponseDto response = storeService.createStore(authOwner, dto);
 
             // then
             assertNotNull(response);
