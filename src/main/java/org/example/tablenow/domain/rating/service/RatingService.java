@@ -50,7 +50,7 @@ public class RatingService {
     public RatingUpdateResponseDto updateRating(AuthUser authUser, Long storeId, RatingRequestDto requestDto) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(storeId);
-        Rating rating = getRating(user, store);
+        Rating rating = getRating(user.getId(), store.getId());
 
         int oldRating = rating.getRating();
         int newRating = requestDto.getRating();
@@ -65,7 +65,7 @@ public class RatingService {
     public RatingDeleteResponseDto deleteRating(AuthUser authUser, Long storeId) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(storeId);
-        Rating rating = getRating(user, store);
+        Rating rating = getRating(user.getId(), store.getId());
 
         store.removeRating(rating.getRating());
         ratingRepository.delete(rating);
@@ -73,8 +73,8 @@ public class RatingService {
         return RatingDeleteResponseDto.fromRating(rating.getId());
     }
 
-    private Rating getRating(User user, Store store) {
-        return ratingRepository.findByUserAndStore(user, store)
+    private Rating getRating(Long userId, Long storeId) {
+        return ratingRepository.findByUserIdAndStoreId(userId, storeId)
                 .orElseThrow(() -> new HandledException(ErrorCode.RATING_NOT_FOUND));
     }
 

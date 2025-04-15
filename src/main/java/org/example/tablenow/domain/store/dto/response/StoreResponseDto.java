@@ -16,13 +16,13 @@ public class StoreResponseDto {
     private final String description;
     private final String address;
     private final String imageUrl;
-    private final int capacity;
+    private final Integer capacity;
     private final LocalTime startTime;
     private final LocalTime endTime;
-    private final int deposit;
+    private final Integer deposit;
 
     @Builder
-    public StoreResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, int capacity, LocalTime startTime, LocalTime endTime, int deposit) {
+    public StoreResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, Integer capacity, LocalTime startTime, LocalTime endTime, Integer deposit) {
         this.storeId = storeId;
         this.name = name;
         this.userId = userId;

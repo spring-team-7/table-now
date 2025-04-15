@@ -30,9 +30,9 @@ public class Store extends TimeStamped {
     private String address;
     private String imageUrl;
     @Min(0)
-    private int capacity;
+    private Integer capacity;
     @Min(0)
-    private int deposit;
+    private Integer deposit;
     private Double averageRating = 0.0;
     private Integer ratingCount = 0;
     @Column(nullable = false)
@@ -49,7 +49,7 @@ public class Store extends TimeStamped {
     private LocalDateTime deletedAt;
 
     @Builder
-    private Store(Long id, String name, String description, String address, String imageUrl, int capacity, int deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
+    private Store(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -81,11 +81,11 @@ public class Store extends TimeStamped {
         this.imageUrl = imageUrl;
     }
 
-    public void updateCapacity(int capacity) {
+    public void updateCapacity(Integer capacity) {
         this.capacity = capacity;
     }
 
-    public void updateDeposit(int deposit) {
+    public void updateDeposit(Integer deposit) {
         this.deposit = deposit;
     }
 
@@ -114,16 +114,16 @@ public class Store extends TimeStamped {
         return reservedCount < this.capacity;
     }
 
-    public void applyRating(int rating) {
-        int newRatingCount = this.ratingCount + 1;
+    public void applyRating(Integer rating) {
+        Integer newRatingCount = this.ratingCount + 1;
         Double newAverageRating = ((this.averageRating * this.ratingCount) + rating) / newRatingCount;
 
         this.ratingCount = newRatingCount;
         this.averageRating = newAverageRating;
     }
 
-    public void removeRating(int rating) {
-        int newRatingCount = this.ratingCount - 1;
+    public void removeRating(Integer rating) {
+        Integer newRatingCount = this.ratingCount - 1;
 
         if (newRatingCount <= 0) {
             this.ratingCount = 0;
@@ -136,7 +136,7 @@ public class Store extends TimeStamped {
         this.averageRating = newAverageRating;
     }
 
-    public void updateRating(int oldRating, int newRating) {
+    public void updateRating(Integer oldRating, Integer newRating) {
         if (this.ratingCount == 0) {
             throw new HandledException(ErrorCode.CONFLICT);
         }

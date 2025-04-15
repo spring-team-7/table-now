@@ -44,7 +44,6 @@ public class UserService {
         User user = validatePasswordAndGetUser(authUser, request.getPassword());
 
         user.deleteUser();
-        tokenService.deleteRefreshTokenByUserId(user.getId());
         if (StringUtils.hasText(user.getImageUrl())) {
             imageService.delete(user.getImageUrl());
         }
@@ -60,7 +59,6 @@ public class UserService {
         User user = validatePasswordAndGetUser(authUser, request.getPassword());
 
         user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
-        tokenService.deleteRefreshTokenByUserId(user.getId());
 
         return SimpleUserResponse.builder()
                 .id(user.getId())

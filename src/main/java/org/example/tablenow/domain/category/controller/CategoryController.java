@@ -22,8 +22,8 @@ public class CategoryController {
     // 카테고리 등록
     @Secured("ROLE_ADMIN")
     @PostMapping("/v1/admin/categories")
-    public ResponseEntity<CategoryResponseDto> saveCategory(@Valid @RequestBody CategoryRequestDto requestDto) {
-        return ResponseEntity.ok(categoryService.saveCategory(requestDto));
+    public ResponseEntity<CategoryResponseDto> createCategory(@Valid @RequestBody CategoryRequestDto requestDto) {
+        return ResponseEntity.ok(categoryService.createCategory(requestDto));
     }
 
     // 카테고리 수정

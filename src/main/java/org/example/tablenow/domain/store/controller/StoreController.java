@@ -26,9 +26,9 @@ public class StoreController {
     // 가게 등록
     @Secured(UserRole.Authority.OWNER)
     @PostMapping("/v1/owner/stores")
-    public ResponseEntity<StoreCreateResponseDto> saveStore(@AuthenticationPrincipal AuthUser authUser,
-                                                            @Valid @RequestBody StoreCreateRequestDto requestDto) {
-        return ResponseEntity.ok(storeService.saveStore(authUser, requestDto));
+    public ResponseEntity<StoreCreateResponseDto> createStore(@AuthenticationPrincipal AuthUser authUser,
+                                                              @Valid @RequestBody StoreCreateRequestDto requestDto) {
+        return ResponseEntity.ok(storeService.createStore(authUser, requestDto));
     }
 
     // 내 가게 목록 조회
