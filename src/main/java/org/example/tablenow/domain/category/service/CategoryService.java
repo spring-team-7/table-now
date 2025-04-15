@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +22,8 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Transactional
-    public CategoryResponseDto saveCategory(CategoryRequestDto requestDto) {
-        validateExistCategory(requestDto);
+    public CategoryResponseDto createCategory(CategoryRequestDto requestDto) {
+        validateExistCategoryName(requestDto.getName());
         Category category = Category.builder().name(requestDto.getName()).build();
         Category savedCategory = categoryRepository.save(category);
         return CategoryResponseDto.fromCategory(savedCategory);
@@ -33,7 +32,7 @@ public class CategoryService {
     @Transactional
     public CategoryResponseDto updateCategory(Long id, CategoryRequestDto requestDto) {
         Category category = findCategory(id);
-        validateExistCategory(requestDto);
+        validateExistCategoryName(requestDto.getName());
         category.updateName(requestDto.getName());
         return CategoryResponseDto.fromCategory(category);
     }
@@ -56,13 +55,9 @@ public class CategoryService {
                 .orElseThrow(() -> new HandledException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
-    public Optional<Category> findCategoryByName(String name) {
-        return categoryRepository.findByName(name);
-    }
-
-    private void validateExistCategory(CategoryRequestDto requestDto) {
-        findCategoryByName(requestDto.getName()).ifPresent(it -> {
+    private void validateExistCategoryName(String name) {
+        if (categoryRepository.existsByName(name)) {
             throw new HandledException(ErrorCode.CATEGORY_ALREADY_EXISTS);
-        });
+        }
     }
 }
