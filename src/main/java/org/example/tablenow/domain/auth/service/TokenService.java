@@ -8,7 +8,6 @@ import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.JwtUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +31,6 @@ public class TokenService {
         );
     }
 
-    @Transactional
     public String createRefreshToken(User user) {
         String refreshToken = UUID.randomUUID().toString();
         String redisKey = REFRESH_TOKEN_KEY_PREFIX + refreshToken;
@@ -48,7 +46,6 @@ public class TokenService {
         return refreshToken;
     }
 
-    @Transactional
     public RefreshToken validateRefreshToken(String token) {
         String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
         String userIdValue = redisTemplate.opsForValue().get(redisKey);
@@ -63,7 +60,6 @@ public class TokenService {
                 .build();
     }
 
-    @Transactional
     public void deleteRefreshToken(String token) {
         String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
         redisTemplate.delete(redisKey);
