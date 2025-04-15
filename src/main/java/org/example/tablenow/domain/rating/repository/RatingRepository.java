@@ -19,6 +19,5 @@ public interface RatingRepository extends CrudRepository<Rating, Long> {
             """)
     boolean existsByUserAndStore(Long userId, Long storeId);
 
-    @EntityGraph(attributePaths = {"user", "store"}, type = EntityGraph.EntityGraphType.FETCH)
-    Optional<Rating> findByUserAndStore(User user, Store store);
+    Optional<Rating> findByUserIdAndStoreId(Long userId, Long storeId);
 }
