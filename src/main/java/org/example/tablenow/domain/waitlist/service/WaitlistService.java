@@ -7,16 +7,19 @@ import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.waitlist.dto.request.WaitlistRequestDto;
-import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
 import org.example.tablenow.domain.waitlist.dto.response.WaitlistFindResponseDto;
+import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class WaitlistService {
     private final ReservationService reservationService;
 
     private static final int MAX_WAITING = 100;
+    private final RedissonClient redissonClient;
 
     @Transactional
     public WaitlistResponseDto registerWaitlist(Long userId, WaitlistRequestDto requestDto) {
@@ -44,7 +48,7 @@ public class WaitlistService {
             throw new HandledException(ErrorCode.WAITLIST_ALREADY_REGISTERED);
         }
 
-        // 대기 등록 인원 제한(100명)
+        // 대기 등록 인원 제한 (100명)
         long waitingCount = waitlistRepository.countByStoreAndIsNotifiedFalse(findStore);
         if (waitingCount >= MAX_WAITING) {
             throw new HandledException(ErrorCode.WAITLIST_FULL);
@@ -54,6 +58,54 @@ public class WaitlistService {
         Waitlist savedWaitlist = waitlistRepository.save(waitlist);
 
         return WaitlistResponseDto.fromWaitlist(savedWaitlist);
+    }
+
+    // 빈자리 대기 등록 - Redisson 분산 락 적용
+    @Transactional
+    public WaitlistResponseDto registerLockWaitlist(Long userId, WaitlistRequestDto requestDto) {
+        // 가게 ID별로 락 설정
+        String lockKey = "lock:store" + requestDto.getStoreId();
+        RLock lock = redissonClient.getLock(lockKey);
+
+        boolean available = false;
+        try {
+            available = lock.tryLock(3, 3, TimeUnit.SECONDS);
+            if (!available) {
+                throw new HandledException(ErrorCode.WAITLIST_REQUEST_TIMEOUT);
+            }
+
+            User findUser = userRepository.findById(userId)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+            Store findStore = storeService.getStore(requestDto.getStoreId());
+
+            // 빈자리 있는 경우 대기 등록 안됨
+            if (reservationService.hasVacancy(findStore)) {
+                throw new HandledException(ErrorCode.WAITLIST_NOT_ALLOWED);
+            }
+
+            // 해당 가게에 유저가 이미 대기 중인지 확인
+            if (waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(findUser, findStore)) {
+                throw new HandledException(ErrorCode.WAITLIST_ALREADY_REGISTERED);
+            }
+
+            // 대기 등록 인원 제한(100명)
+            long waitingCount = waitlistRepository.countByStoreAndIsNotifiedFalse(findStore);
+            if (waitingCount >= MAX_WAITING) {
+                throw new HandledException(ErrorCode.WAITLIST_FULL);
+            }
+
+            Waitlist waitlist = new Waitlist(findUser, findStore);
+            Waitlist savedWaitlist = waitlistRepository.save(waitlist);
+
+            return WaitlistResponseDto.fromWaitlist(savedWaitlist);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HandledException(ErrorCode.WAITLIST_REQUEST_INTERRUPTED);
+        } finally {
+            if (available && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
     // 내 대기 목록 조회
@@ -67,4 +119,5 @@ public class WaitlistService {
             .map(WaitlistFindResponseDto::fromWaitlist)
             .toList();
     }
+
 }
