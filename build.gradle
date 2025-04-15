@@ -67,6 +67,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // redisson
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.0'
 }
 
 def querydslDir = 'src/main/generated'

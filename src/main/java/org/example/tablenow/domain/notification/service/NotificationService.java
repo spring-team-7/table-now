@@ -39,15 +39,16 @@ public class NotificationService {
         User findUser = userRepository.findById(requestDto.getUserId())
             .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
+
         Notification notification = new Notification(findUser, requestDto.getType(), requestDto.getContent());
-        notificationRepository.save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
 
         // 빈자리 대기 알림일 경우에는 isNotified = true로 업데이트
         if (NotificationType.VACANCY.equals(requestDto.getType())) {
             handleVacancyNotification(findUser, requestDto.getStoreId());
         }
 
-        return NotificationResponseDto.fromNotification(notification);
+        return NotificationResponseDto.fromNotification(savedNotification);
     }
 
     // 알림 조회
