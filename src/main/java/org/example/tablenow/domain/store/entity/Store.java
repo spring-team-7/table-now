@@ -49,7 +49,7 @@ public class Store extends TimeStamped {
     private LocalDateTime deletedAt;
 
     @Builder
-    private Store(Long id, String name, String description, String address, String imageUrl, int capacity, int deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
+    private Store(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
         this.id = id;
         this.name = name;
         this.description = description;
