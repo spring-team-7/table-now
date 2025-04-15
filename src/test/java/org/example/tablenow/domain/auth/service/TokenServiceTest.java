@@ -1,133 +1,156 @@
 package org.example.tablenow.domain.auth.service;
 
-import io.jsonwebtoken.Claims;
+import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.JwtUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class TokenServiceTest {
 
-    @Autowired
+    @InjectMocks
     private TokenService tokenService;
 
-//    @Autowired
-//    private RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
 
-    @Autowired
+    @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    private ValueOperations<String, String> ops;
+
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
+    private static final Long USER_ID = 1L;
+
+    @BeforeEach
+    void setupOps() {
+        lenient().when(redisTemplate.opsForValue()).thenReturn(ops);
+    }
 
     @Nested
     class 액세스_토큰_생성 {
         User user = User.builder()
-                .id(-1L)
-                .email("accress@test.com")
+                .id(USER_ID)
+                .email("access@test.com")
                 .userRole(UserRole.ROLE_USER)
                 .nickname("닉네임")
                 .build();
 
         @Test
-        void 성공() {
+        void 사용자정보로_액세스_토큰_생성_성공() {
+            // given
+            String fakeToken = "Bearer fake.jwt.token";
+
+            given(jwtUtil.createToken(
+                    eq(user.getId()),
+                    eq(user.getEmail()),
+                    eq(user.getUserRole()),
+                    eq(user.getNickname())
+            )).willReturn(fakeToken);
+
             // when
             String accessToken = tokenService.createAccessToken(user);
 
             // then
-            assertThat(accessToken).isNotNull();
-            assertThat(accessToken).startsWith("Bearer ");
-
-            String tokenWithoutPrefix = jwtUtil.substringToken(accessToken);
-            Claims claims = jwtUtil.extractClaims(tokenWithoutPrefix);
-
-            assertThat(claims.getSubject()).isEqualTo(String.valueOf(user.getId()));
-            assertThat(claims.get("email")).isEqualTo(user.getEmail());
-            assertThat(claims.get("userRole")).isEqualTo(user.getUserRole().name());
-            assertThat(claims.get("nickname")).isEqualTo(user.getNickname());
+            assertThat(accessToken).isEqualTo(fakeToken);
+            verify(jwtUtil).createToken(
+                    eq(user.getId()),
+                    eq(user.getEmail()),
+                    eq(user.getUserRole()),
+                    eq(user.getNickname())
+            );
         }
     }
 
     @Nested
     class 리프레시_토큰_생성 {
         User user = User.builder()
-                .id(-1L)
+                .id(USER_ID)
                 .build();
 
-//        @Test
-//        void 성공() {
-//            // when
-//            String refreshToken = tokenService.createRefreshToken(user);
-//
-//            // then
-//            assertThat(refreshToken).isNotNull();
-//            assertThat(refreshTokenRepository.findByUserId(user.getId())).isPresent();
-//        }
+        @Test
+        void 사용자ID로_리프레시_토큰을_생성하고_Redis에_저장_성공() {
+            // when
+            String refreshToken = tokenService.createRefreshToken(user);
 
-//        @Test
-//        void 기존_리프레시_토큰_존재_시_갱신() {
-//            // given
-//            String oldToken = tokenService.createRefreshToken(user);
-//
-//            // when
-//            String newToken = tokenService.createRefreshToken(user);
-//
-//            // then
-//            assertThat(newToken).isNotNull();
-//            assertThat(newToken).isNotEqualTo(oldToken);
-//            assertThat(refreshTokenRepository.findByUserId(user.getId())).isPresent();
-//        }
+            // then
+            verify(redisTemplate.opsForValue())
+                    .set(startsWith(REFRESH_TOKEN_KEY_PREFIX), eq(USER_ID.toString()), anyLong(), eq(TimeUnit.SECONDS));
+            assertThat(refreshToken).isNotNull();
+        }
     }
 
 
     @Nested
     class 리프레시_토큰_검증 {
-//        @Test
-//        void 존재하지_않는_리프레시_토큰_예외() {
-//            // when & then
-//            assertThatThrownBy(() -> tokenService.validateRefreshToken("invalidToken"))
-//                    .isInstanceOf(HandledException.class)
-//                    .hasMessage(ErrorCode.REFRESH_TOKEN_NOT_FOUND.getDefaultMessage());
-//        }
 
-//        @Test
-//        void 만료된_리프레시_토큰_예외() {
-//            // given
-//            RefreshToken expiredToken = RefreshToken.builder()
-//                    .userId(-1L)
-//                    .build();
-//            expiredToken.expireToken();
-//            refreshTokenRepository.save(expiredToken);
-//
-//            // when & then
-//            assertThatThrownBy(() -> tokenService.validateRefreshToken(expiredToken.getToken()))
-//                    .isInstanceOf(HandledException.class)
-//                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
-//            assertThat(refreshTokenRepository.findByToken(expiredToken.getToken())).isEmpty();
-//        }
+        @Test
+        void Redis에_존재하지_않는_토큰으로_검증_시_예외_발생() {
+            // given
+            String token = "invalid";
+            given(ops.get(REFRESH_TOKEN_KEY_PREFIX + token)).willReturn(null);
+
+            // when & then
+            assertThatThrownBy(() -> tokenService.validateRefreshToken(token))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
+        }
+
+        @Test
+        void Redis에_저장된_토큰으로_검증_시_RefreshToken_반환_성공() {
+            // given
+            String token = UUID.randomUUID().toString();
+            String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
+            given(ops.get(redisKey)).willReturn(USER_ID.toString());
+
+            // when
+            RefreshToken result = tokenService.validateRefreshToken(token);
+
+            // then
+            assertAll(
+                    () -> assertThat(result.getUserId()).isEqualTo(USER_ID),
+                    () -> assertThat(result.getToken()).isEqualTo(token)
+            );
+        }
     }
 
     @Nested
-    class 토큰_삭제 {
-        User user = User.builder()
-                .id(-1L)
-                .build();
+    class 리프레시_토큰_삭제 {
 
-//        @Test
-//        void 리프레시토큰_삭제_성공() {
-//            // given
-//            String refreshToken = tokenService.createRefreshToken(user);
-//
-//            // when
-//            tokenService.deleteRefreshToken(refreshToken);
-//
-//            // then
-//            assertThat(refreshTokenRepository.findByToken(refreshToken)).isEmpty();
-//        }
+        @Test
+        void Redis에서_리프레시_토큰_삭제_성공() {
+            // given
+            String token = UUID.randomUUID().toString();
+            String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
+
+            // when
+            tokenService.deleteRefreshToken(token);
+
+            // then
+            verify(redisTemplate).delete(redisKey);
+        }
     }
 }
