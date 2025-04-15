@@ -5,7 +5,7 @@ import org.example.tablenow.domain.auth.dto.request.SigninRequest;
 import org.example.tablenow.domain.auth.dto.request.SignupRequest;
 import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
-import org.example.tablenow.domain.auth.entity.RefreshToken;
+import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.user.service.UserService;
@@ -53,7 +53,6 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
     public TokenResponse signin(SigninRequest request) {
         User user = userService.getUserByEmail(request.getEmail());
 
@@ -68,14 +67,12 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
-    @Transactional
     public TokenResponse refreshToken(String token) {
         RefreshToken refreshToken = tokenService.validateRefreshToken(token);
         User user = userService.getUser(refreshToken.getUserId());
         return generateTokenResponse(user);
     }
 
-    @Transactional
     public void logout(String token) {
         tokenService.deleteRefreshToken(token);
     }
