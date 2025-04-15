@@ -53,7 +53,6 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
     public TokenResponse signin(SigninRequest request) {
         User user = userService.getUserByEmail(request.getEmail());
 
@@ -68,14 +67,12 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
-    @Transactional
     public TokenResponse refreshToken(String token) {
         RefreshToken refreshToken = tokenService.validateRefreshToken(token);
         User user = userService.getUser(refreshToken.getUserId());
         return generateTokenResponse(user);
     }
 
-    @Transactional
     public void logout(String token) {
         tokenService.deleteRefreshToken(token);
     }
