@@ -4,11 +4,11 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 public class RatingDeleteResponseDto {
     private final Long ratingId;
     private final String message;
 
+    @Builder
     public RatingDeleteResponseDto(Long ratingId, String message) {
         this.ratingId = ratingId;
         this.message = message;

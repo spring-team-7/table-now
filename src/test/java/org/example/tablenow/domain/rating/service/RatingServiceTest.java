@@ -48,7 +48,7 @@ public class RatingServiceTest {
 
     Long storeId = 1L;
     Double averageRating = 5.0;
-    int ratingCount = 2;
+    Integer ratingCount = 2;
     Store store = Store.builder().id(storeId).averageRating(averageRating).ratingCount(ratingCount).build();
 
     Long ratingId = 1L;
