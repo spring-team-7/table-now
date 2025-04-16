@@ -165,4 +165,9 @@ public class ReservationService {
             throw new HandledException(ErrorCode.RATING_RESERVATION_NOT_FOUND);
         }
     }
+
+    public boolean hasVacancyDate(Store store, LocalDate date){
+        long reservedCount = reservationRepository.countReservedTablesByDate(store, date);
+        return store.hasVacancy(reservedCount);
+    }
 }

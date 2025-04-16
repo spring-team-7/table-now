@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.waitlist.service;
 
+import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +44,9 @@ class WaitlistServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private ReservationService reservationService;
+
+    @Mock
     private StoreService storeService;
 
     @Mock
@@ -49,6 +54,8 @@ class WaitlistServiceTest {
 
     @Mock
     private Store store;
+
+    private final LocalDate testDate = LocalDate.of(2025, 4, 17);
 
     @Nested
     class 대기등록 {
@@ -59,6 +66,8 @@ class WaitlistServiceTest {
         void setUp() {
             requestDto = new WaitlistRequestDto();
             ReflectionTestUtils.setField(requestDto, "storeId", 10L);
+            ReflectionTestUtils.setField(requestDto, "waitDate", testDate);
+
         }
 
         @Test
@@ -69,8 +78,7 @@ class WaitlistServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
             given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
-            given(waitlistRepository.countByStoreAndIsNotifiedFalse(store)).willReturn(3L);
-            given(waitlistRepository.save(any(Waitlist.class)))
+            given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(3L);            given(waitlistRepository.save(any(Waitlist.class)))
                 .willAnswer(invocation -> {
                     Waitlist saved = invocation.getArgument(0);
                     ReflectionTestUtils.setField(saved, "id", 1L);
@@ -134,7 +142,7 @@ class WaitlistServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
             given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
-            given(waitlistRepository.countByStoreAndIsNotifiedFalse(store)).willReturn(100L);
+            given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(100L);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -153,8 +161,8 @@ class WaitlistServiceTest {
             // given
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
-            Waitlist waitlist1 = new Waitlist(user, store);
-            Waitlist waitlist2 = new Waitlist(user, store);
+            Waitlist waitlist1 = new Waitlist(user, store, testDate);
+            Waitlist waitlist2 = new Waitlist(user, store, testDate);
             ReflectionTestUtils.setField(waitlist1, "id", 1L);
             ReflectionTestUtils.setField(waitlist2, "id", 2L);
 
