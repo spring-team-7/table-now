@@ -33,6 +33,9 @@ public class Event extends TimeStamped {
     private LocalDateTime openAt;
 
     @Column(nullable = false)
+    private LocalDateTime endAt;
+
+    @Column(nullable = false)
     private LocalDateTime eventTime;
 
     @Column(nullable = false)
