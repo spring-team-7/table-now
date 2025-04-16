@@ -25,7 +25,7 @@ public class UserController {
     @DeleteMapping("/v1/users")
     public ResponseEntity<SimpleUserResponse> deleteUser(
             @AuthenticationPrincipal AuthUser authUser,
-            @Valid @RequestBody UserDeleteRequest request,
+            @RequestBody UserDeleteRequest request,
             HttpServletResponse response
     ) {
         CookieUtil.deleteRefreshTokenCookie(response);

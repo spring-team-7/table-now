@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
-import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfo;
-import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfoResponse;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
+import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfo;
+import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @RequiredArgsConstructor
@@ -43,6 +44,10 @@ public class NaverAuthService {
         // 3. 사용자 정보로 기존 유저 조회 또는 신규 회원 가입
         User user = userRepository.findByEmail(naverUserInfo.getEmail())
                 .orElseGet(() -> registerNewUser(naverUserInfo));
+        if (user.getDeletedAt() != null) {
+            // 탈퇴한 유저는 재가입 불가
+            throw new HandledException(ErrorCode.ALREADY_DELETED_USER);
+        }
 
         // 4. JWT 토큰 생성 및 반환
         String accessToken = tokenService.createAccessToken(user);
@@ -64,7 +69,7 @@ public class NaverAuthService {
         return webClient.post()
                 .uri(OAuthProperties.getProvider().getNaver().getTokenUri())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(formData)
+                .body(BodyInserters.fromFormData(formData))
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractAccessToken)
