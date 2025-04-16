@@ -8,6 +8,8 @@ import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.global.entity.TimeStamped;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 
 import java.time.LocalDateTime;
 
@@ -62,6 +64,12 @@ public class Event extends TimeStamped {
 
     public void open() {
         changeStatus(EventStatus.OPENED);
+    }
+
+    public void validateOpenStatus() {
+        if (this.status != EventStatus.OPENED) {
+            throw new HandledException(ErrorCode.EVENT_NOT_OPENED);
+        }
     }
 
     private void changeStatus(EventStatus status) {
