@@ -48,11 +48,11 @@ public class CategoryServiceTest {
         @Test
         void 중복_카테고리_등록_시_예외_발생() {
             // given
-            given(categoryRepository.findByName(anyString())).willReturn(Optional.of(category));
+            given(categoryRepository.existsByName(anyString())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    categoryService.saveCategory(dto)
+                    categoryService.createCategory(dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.CATEGORY_ALREADY_EXISTS.getDefaultMessage());
         }
@@ -60,11 +60,11 @@ public class CategoryServiceTest {
         @Test
         void 등록_성공() {
             // given
-            given(categoryRepository.findByName(anyString())).willReturn(Optional.empty());
+            given(categoryRepository.existsByName(anyString())).willReturn(false);
             given(categoryRepository.save(any(Category.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            CategoryResponseDto response = categoryService.saveCategory(dto);
+            CategoryResponseDto response = categoryService.createCategory(dto);
 
             // then
             assertNotNull(response);
@@ -93,7 +93,7 @@ public class CategoryServiceTest {
             // given
             ReflectionTestUtils.setField(dto, "name", categoryName);
             given(categoryRepository.findById(anyLong())).willReturn(Optional.of(category));
-            given(categoryRepository.findByName(anyString())).willReturn(Optional.of(category));
+            given(categoryRepository.existsByName(anyString())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -108,7 +108,7 @@ public class CategoryServiceTest {
             String requestName = "분식";
             ReflectionTestUtils.setField(dto, "name", requestName);
             given(categoryRepository.findById(anyLong())).willReturn(Optional.of(category));
-            given(categoryRepository.findByName(anyString())).willReturn(Optional.empty());
+            given(categoryRepository.existsByName(anyString())).willReturn(false);
 
             // when
             CategoryResponseDto response = categoryService.updateCategory(categoryId, dto);

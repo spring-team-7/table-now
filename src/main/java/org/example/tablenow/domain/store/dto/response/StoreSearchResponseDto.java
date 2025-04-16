@@ -15,9 +15,11 @@ public class StoreSearchResponseDto {
     private final String imageUrl;
     private final LocalTime startTime;
     private final LocalTime endTime;
+    private final Double averageRating;
+    private final Integer ratingCount;
 
     @Builder
-    public StoreSearchResponseDto(Long storeId, String name, Long categoryId, String categoryName, String imageUrl, LocalTime startTime, LocalTime endTime) {
+    public StoreSearchResponseDto(Long storeId, String name, Long categoryId, String categoryName, String imageUrl, LocalTime startTime, LocalTime endTime, Double averageRating, Integer ratingCount) {
         this.storeId = storeId;
         this.name = name;
         this.categoryId = categoryId;
@@ -25,6 +27,8 @@ public class StoreSearchResponseDto {
         this.imageUrl = imageUrl;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.averageRating = averageRating;
+        this.ratingCount = ratingCount;
     }
 
     public static StoreSearchResponseDto fromStore(Store store) {
@@ -36,6 +40,8 @@ public class StoreSearchResponseDto {
                 .imageUrl(store.getImageUrl())
                 .startTime(store.getStartTime())
                 .endTime(store.getEndTime())
+                .averageRating(store.getAverageRating())
+                .ratingCount(store.getRatingCount())
                 .build();
     }
 }

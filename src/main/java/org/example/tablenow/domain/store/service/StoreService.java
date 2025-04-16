@@ -49,7 +49,7 @@ public class StoreService {
     private static final DateTimeFormatter TIME_KEY_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHH");
 
     @Transactional
-    public StoreCreateResponseDto saveStore(AuthUser authUser, StoreCreateRequestDto request) {
+    public StoreCreateResponseDto createStore(AuthUser authUser, StoreCreateRequestDto request) {
         User user = User.fromAuthUser(authUser);
 
         Category category = categoryService.findCategory(request.getCategoryId());

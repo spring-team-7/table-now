@@ -1,6 +1,5 @@
 package org.example.tablenow.domain.user.service;
 
-import org.example.tablenow.domain.auth.service.TokenService;
 import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
 import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
@@ -37,8 +36,6 @@ class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
-    @Mock
-    private TokenService tokenService;
     @Mock
     private ImageService imageService;
 
@@ -138,7 +135,6 @@ class UserServiceTest {
 
             // then
             assertEquals(userId, response.getId());
-            verify(tokenService).deleteRefreshTokenByUserId(userId);
             verify(imageService).delete("image-url");
         }
 
@@ -198,7 +194,6 @@ class UserServiceTest {
 
             // then
             assertEquals(userId, response.getId());
-            verify(tokenService).deleteRefreshTokenByUserId(userId);
         }
     }
 
