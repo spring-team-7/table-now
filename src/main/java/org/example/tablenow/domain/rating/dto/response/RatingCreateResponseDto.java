@@ -8,16 +8,16 @@ import org.example.tablenow.domain.rating.entity.Rating;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
 public class RatingCreateResponseDto {
     private final Long ratingId;
     private final Long userId;
     private final Long storeId;
-    private final int rating;
+    private final Integer rating;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime createdAt;
 
-    public RatingCreateResponseDto(Long ratingId, Long userId, Long storeId, int rating, LocalDateTime createdAt) {
+    @Builder
+    public RatingCreateResponseDto(Long ratingId, Long userId, Long storeId, Integer rating, LocalDateTime createdAt) {
         this.ratingId = ratingId;
         this.userId = userId;
         this.storeId = storeId;
@@ -25,7 +25,7 @@ public class RatingCreateResponseDto {
         this.createdAt = createdAt;
     }
 
-    public static RatingCreateResponseDto fromRating(final Rating rating) {
+    public static RatingCreateResponseDto fromRating(Rating rating) {
         return RatingCreateResponseDto.builder()
                 .ratingId(rating.getId())
                 .userId(rating.getUser().getId())
