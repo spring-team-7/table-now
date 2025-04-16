@@ -30,7 +30,7 @@ public class NaverAuthService {
     private final TokenService tokenService;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
-    private final OAuthProperties OAuthProperties;
+    private final OAuthProperties oAuthProperties;
 
     @Transactional
     public TokenResponse login(String code) {
@@ -60,14 +60,14 @@ public class NaverAuthService {
 
     private String getNaverAccessToken(String code) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", OAuthProperties.getRegistration().getNaver().getClientId());
-        formData.add("client_secret", OAuthProperties.getRegistration().getNaver().getClientSecret());
-        formData.add("redirect_uri", OAuthProperties.getRegistration().getNaver().getRedirectUri());
-        formData.add("grant_type", OAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
+        formData.add("client_id", oAuthProperties.getRegistration().getNaver().getClientId());
+        formData.add("client_secret", oAuthProperties.getRegistration().getNaver().getClientSecret());
+        formData.add("redirect_uri", oAuthProperties.getRegistration().getNaver().getRedirectUri());
+        formData.add("grant_type", oAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
         formData.add("code", code);
 
         return webClient.post()
-                .uri(OAuthProperties.getProvider().getNaver().getTokenUri())
+                .uri(oAuthProperties.getProvider().getNaver().getTokenUri())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
@@ -78,7 +78,7 @@ public class NaverAuthService {
 
     private NaverUserInfoResponse getNaverUserInfo(String accessToken) {
         return webClient.get()
-                .uri(OAuthProperties.getProvider().getNaver().getUserInfoUri())
+                .uri(oAuthProperties.getProvider().getNaver().getUserInfoUri())
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .bodyToMono(NaverUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> NaverUserInfoResponse 클래스 인스턴스로 역직렬화
