@@ -1,6 +1,7 @@
-package org.example.tablenow.domain.waitlist.entity;
+package org.example.tablenow.domain.rating.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.store.entity.Store;
@@ -8,34 +9,35 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 
 @Getter
+@Builder
 @Entity
+@Table(name = "rating")
 @NoArgsConstructor
-@Table(name = "waitlist")
-public class Waitlist extends TimeStamped {
+public class Rating extends TimeStamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "user_id")
+    private User user; // UserRole: ROLE_USER
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id", nullable = false)
+    @JoinColumn(name = "store_id")
     private Store store;
 
-    @Column(name = "is_notified")
-    private Boolean isNotified = false;
+    @Column(nullable = false)
+    private Integer rating;
 
-
-    public Waitlist(User user, Store store) {
+    public Rating(Long id, User user, Store store, Integer rating) {
+        this.id = id;
         this.user = user;
         this.store = store;
-        this.isNotified = false;
+        this.rating = rating;
     }
 
-    public void updateNotified() {
-        this.isNotified = true;
+    public void updateRating(Integer rating) {
+        this.rating = rating;
     }
 }

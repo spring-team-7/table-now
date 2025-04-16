@@ -58,7 +58,9 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                         store.capacity,
                         store.startTime,
                         store.endTime,
-                        store.deposit
+                        store.deposit,
+                        store.averageRating,
+                        store.ratingCount
                 ))
                 .from(store)
                 .join(store.user, user)
@@ -80,17 +82,19 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                         category.name,
                         store.imageUrl,
                         store.startTime,
-                        store.endTime
+                        store.endTime,
+                        store.averageRating,
+                        store.ratingCount
                 ))
                 .from(store)
                 .join(store.category, category);
+
         // 검색 조건
         BooleanExpression[] conditions = {storeDeletedAtIsNull(), storeCategoryIdEq(categoryId), storeNameContains(keyword)};
         query.where(conditions);
 
         // 정렬 조건
-        List<OrderSpecifier<?>> orderSpecifiers = toOrderSpecifiers(pageable.getSort());
-        query.orderBy(orderSpecifiers.toArray(OrderSpecifier[]::new));
+        query.orderBy(toOrderSpecifiers(pageable.getSort()));
         query.offset(pageable.getOffset());
         query.limit(pageable.getPageSize());
 
@@ -120,7 +124,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
         return Objects.nonNull(keyword) ? store.name.contains(keyword) : null;
     }
 
-    private List<OrderSpecifier<?>> toOrderSpecifiers(Sort sort) {
+    private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
         PathBuilder<Store> path = new PathBuilder<>(Store.class, "store");
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
 
@@ -128,7 +132,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
             StoreSortField sortField = StoreSortField.from(order.getProperty());
             orderSpecifiers.add(sortField.toOrderSpecifier(path, order.isAscending()));
         }
-        return orderSpecifiers;
+        return orderSpecifiers.toArray(OrderSpecifier[]::new);
     }
 
 }

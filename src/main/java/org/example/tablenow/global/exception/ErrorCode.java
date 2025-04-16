@@ -20,21 +20,25 @@ public enum ErrorCode {
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 권한입니다."),
     REFRESH_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "요청 쿠키에 리프레시 토큰이 존재하지 않습니다."),
-    REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "리프레시 토큰이 존재하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
 
     // CATEGORY
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 카테고리를 찾을 수 없습니다."),
-    CATEGORY_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 존재하는 카테고리입니다."),
+    CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 카테고리입니다."),
 
     // STORE
     STORE_EXCEED_MAX(HttpStatus.BAD_REQUEST, "등록 가게 수를 초과하였습니다."),
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 가게를 찾을 수 없습니다."),
     STORE_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 가게의 요청 권한이 없습니다."),
     STORE_BAD_REQUEST_TIME(HttpStatus.BAD_REQUEST, "시작시간은 종료시간보다 이전이어야 합니다."),
-    STORE_CLOSED_TIME(HttpStatus.BAD_REQUEST,"가게 영업시간이 아닙니다."),
+    STORE_CLOSED_TIME(HttpStatus.BAD_REQUEST, "가게 영업시간이 아닙니다."),
     STORE_RANKING_TIME_KEY_ERROR(HttpStatus.BAD_REQUEST, "시간 집계 키는 yyyyMMdd 또는 yyyyMMddHH 형식이어야 합니다."),
-    STORE_TABLE_CAPACITY_EXCEEDED(HttpStatus.BAD_REQUEST,"해당 가게의 하루 수용 가능한 테이블 수를 초과했습니다."),
+    STORE_TABLE_CAPACITY_EXCEEDED(HttpStatus.BAD_REQUEST, "해당 가게의 하루 수용 가능한 테이블 수를 초과했습니다."),
+
+    // RATING
+    RATING_NOT_FOUND(HttpStatus.NOT_FOUND, "평점이 존재하지 않습니다."),
+    RATING_RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "평점 등록 가능한 예약 이력을 찾을 수 없습니다."),
+    RATING_ALREADY_EXISTS(HttpStatus.CONFLICT, "해당 가게에 대한 평점이 이미 존재합니다."),
 
     // RESERVATION
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "예약이 존재하지 않습니다."),
@@ -59,10 +63,12 @@ public enum ErrorCode {
     NOTIFICATION_BAD_REQUEST(HttpStatus.BAD_REQUEST, "가게 아이디 입력 필수입니다."),
 
     // WAITLIST
-    WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT,"이미 대기중인 사용자 입니다."),
+    WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT, "이미 대기중인 사용자 입니다."),
     WAITLIST_FULL(HttpStatus.CONFLICT, "대기 정원이 꽉 찼습니다."),
     WAITLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "대기 정보가 존재하지 않습니다."),
     WAITLIST_NOT_ALLOWED(HttpStatus.CONFLICT, "빈자리가 있어 대기 등록이 불가능합니다."),
+    WAITLIST_REQUEST_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "요청 시간이 초과되었습니다."),
+    WAITLIST_REQUEST_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "대기 등록 중 요청이 인터럽트되었습니다."),
 
     // IMAGE
     INVALID_IMAGE_DOMAIN(HttpStatus.BAD_REQUEST, "잘못된 이미지 도메인입니다."),

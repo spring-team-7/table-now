@@ -1,62 +1,67 @@
 package org.example.tablenow.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.tablenow.domain.auth.entity.RefreshToken;
-import org.example.tablenow.domain.auth.repository.RefreshTokenRepository;
+import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.JwtUtil;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class TokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, String> redisTemplate;
     private final JwtUtil jwtUtil;
 
+    private static final long REFRESH_TOKEN_EXPIRATION_SECONDS = 7 * 24 * 60 * 60; // 7일
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
+
     public String createAccessToken(User user) {
-        return jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole(), user.getNickname());
+        return jwtUtil.createToken(
+                user.getId(),
+                user.getEmail(),
+                user.getUserRole(),
+                user.getNickname()
+        );
     }
 
-    @Transactional
     public String createRefreshToken(User user) {
-        // 기존 토큰이 있다면 갱신, 없으면 생성
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(user.getId())
-                .map(token -> {
-                    token.updateToken();
-                    return token;
-                })
-                .orElseGet(() -> RefreshToken.builder()
-                        .userId(user.getId())
-                        .build());
-        RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
-        return savedToken.getToken();
-    }
+        String refreshToken = UUID.randomUUID().toString();
+        String redisKey = REFRESH_TOKEN_KEY_PREFIX + refreshToken;
 
-    @Transactional
-    public RefreshToken validateRefreshToken(String token) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
-                .orElseThrow(() -> new HandledException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
-
-        if (refreshToken.isExpired()) {
-            // 토큰이 만료되었을 경우 삭제
-            refreshTokenRepository.delete(refreshToken);
-            throw new HandledException(ErrorCode.EXPIRED_REFRESH_TOKEN);
-        }
+        // userId를 값으로 Redis에 저장
+        redisTemplate.opsForValue().set(
+                redisKey,
+                String.valueOf(user.getId()),
+                REFRESH_TOKEN_EXPIRATION_SECONDS,
+                TimeUnit.SECONDS
+        );
 
         return refreshToken;
     }
 
-    @Transactional
-    public void deleteRefreshToken(String token) {
-        refreshTokenRepository.findByToken(token).ifPresent(refreshTokenRepository::delete);
+    public RefreshToken validateRefreshToken(String token) {
+        String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
+        String userIdValue = redisTemplate.opsForValue().get(redisKey);
+
+        if (userIdValue == null) {
+            throw new HandledException(ErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
+
+        return RefreshToken.builder()
+                .token(token)
+                .userId(Long.valueOf(userIdValue))
+                .build();
     }
 
-    @Transactional
-    public void deleteRefreshTokenByUserId(Long userId) {
-        refreshTokenRepository.deleteByUserId(userId);
+    public void deleteRefreshToken(String token) {
+        String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
+        redisTemplate.delete(redisKey);
     }
 }

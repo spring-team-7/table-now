@@ -82,6 +82,8 @@ public class StoreServiceTest {
             .deposit(10000)
             .user(owner)
             .category(category)
+            .averageRating(4.5)
+            .ratingCount(100)
             .build();
 
     @Nested
@@ -105,7 +107,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.saveStore(authOwner, dto)
+                    storeService.createStore(authOwner, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.CATEGORY_NOT_FOUND.getDefaultMessage());
         }
@@ -118,7 +120,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.saveStore(authOwner, dto)
+                    storeService.createStore(authOwner, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.STORE_BAD_REQUEST_TIME.getDefaultMessage());
         }
@@ -131,7 +133,7 @@ public class StoreServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.saveStore(authOwner, dto)
+                    storeService.createStore(authOwner, dto)
             );
             assertEquals(exception.getMessage(), ErrorCode.STORE_EXCEED_MAX.getDefaultMessage());
         }
@@ -144,7 +146,7 @@ public class StoreServiceTest {
             given(storeRepository.save(any(Store.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            StoreCreateResponseDto response = storeService.saveStore(authOwner, dto);
+            StoreCreateResponseDto response = storeService.createStore(authOwner, dto);
 
             // then
             assertNotNull(response);
@@ -430,30 +432,33 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_목록_조회 {
-        @Test
-        void asc_desc_외_정렬_입력_시_예외_발생() {
-            // given
-            String sortField = "name";
-            String sortOrder = "average";
+        @Nested
+        class 정렬_기준_예외 {
+            @Test
+            void asc_desc_외_정렬_입력_시_예외_발생() {
+                // given
+                String sortField = "name";
+                String sortOrder = "average";
 
-            // when & then
-            HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
-            );
-            assertEquals(exception.getMessage(), ErrorCode.INVALID_ORDER_VALUE.getDefaultMessage());
-        }
+                // when & then
+                HandledException exception = assertThrows(HandledException.class, () ->
+                        storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
+                );
+                assertEquals(exception.getMessage(), ErrorCode.INVALID_ORDER_VALUE.getDefaultMessage());
+            }
 
-        @Test
-        void 존재하지_않는_정렬_기준_입력_시_예외_발생() {
-            // given
-            String sortField = "description";
-            String sortOrder = "asc";
+            @Test
+            void 존재하지_않는_정렬_기준_입력_시_예외_발생() {
+                // given
+                String sortField = "description";
+                String sortOrder = "asc";
 
-            // when & then
-            HandledException exception = assertThrows(HandledException.class, () ->
-                    storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
-            );
-            assertEquals(exception.getMessage(), ErrorCode.INVALID_SORT_FIELD.getDefaultMessage());
+                // when & then
+                HandledException exception = assertThrows(HandledException.class, () ->
+                        storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
+                );
+                assertEquals(exception.getMessage(), ErrorCode.INVALID_SORT_FIELD.getDefaultMessage());
+            }
         }
 
         @Test
@@ -471,8 +476,13 @@ public class StoreServiceTest {
             Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, "");
 
             // then
-            assertNotNull(response);
-            assertEquals(response.getTotalElements(), 1);
+            StoreSearchResponseDto dto = response.getContent().get(0);
+            assertAll(
+                    () -> assertNotNull(response),
+                    () -> assertEquals(response.getTotalElements(), 1),
+                    () -> assertEquals(dto.getAverageRating(), store.getAverageRating()),
+                    () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
+            );
         }
 
         @Test
@@ -480,7 +490,7 @@ public class StoreServiceTest {
             // given
             int page = 1;
             int size = 10;
-            String sortField = "createdAt";
+            String sortField = "name";
             String sortOrder = "desc";
             String search = "맛있는";
             given(redisTemplate.hasKey(anyString())).willReturn(true);
@@ -492,8 +502,13 @@ public class StoreServiceTest {
             Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, search);
 
             // then
-            assertNotNull(response);
-            assertEquals(response.getTotalElements(), 1);
+            StoreSearchResponseDto dto = response.getContent().get(0);
+            assertAll(
+                    () -> assertNotNull(response),
+                    () -> assertEquals(response.getTotalElements(), 1),
+                    () -> assertEquals(dto.getAverageRating(), store.getAverageRating()),
+                    () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
+            );
         }
 
         @Test
@@ -501,7 +516,7 @@ public class StoreServiceTest {
             // given
             int page = 1;
             int size = 10;
-            String sortField = "createdAt";
+            String sortField = "averageRating";
             String sortOrder = "desc";
             String search = "맛있는";
             String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
@@ -519,14 +534,19 @@ public class StoreServiceTest {
             Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, search);
 
             // then
-            assertNotNull(response);
-            assertEquals(response.getTotalElements(), 1);
+
+            StoreSearchResponseDto dto = response.getContent().get(0);
+            assertAll(
+                    () -> assertNotNull(response),
+                    () -> assertEquals(response.getTotalElements(), 1),
+                    () -> assertEquals(dto.getAverageRating(), store.getAverageRating()),
+                    () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
+            );
         }
     }
 
     @Nested
     class 가게_상세_조회 {
-
         @Test
         void 존재하지_않는_가게_조회_시_예외_발생() {
             // given
@@ -548,9 +568,13 @@ public class StoreServiceTest {
             StoreResponseDto response = storeService.findStore(storeId);
 
             // then
-            assertNotNull(response);
-            assertEquals(response.getStoreId(), storeId);
-            assertEquals(response.getName(), store.getName());
+            assertAll(
+                    () -> assertNotNull(response),
+                    () -> assertEquals(response.getStoreId(), storeId),
+                    () -> assertEquals(response.getName(), store.getName()),
+                    () -> assertEquals(response.getRatingCount(), store.getRatingCount()),
+                    () -> assertEquals(response.getAverageRating(), store.getAverageRating())
+            );
         }
     }
 
@@ -647,5 +671,4 @@ public class StoreServiceTest {
             assertEquals(response.size(), 2);
         }
     }
-
 }

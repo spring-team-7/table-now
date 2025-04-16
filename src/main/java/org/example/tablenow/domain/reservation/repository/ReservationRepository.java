@@ -73,4 +73,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         """)
     Optional<Reservation> findByIdWithUserAndStore(@Param("id") Long id);
 
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Reservation r
+            WHERE r.user.id = :userId
+              AND r.store.id = :storeId
+              AND r.status = 'COMPLETED'
+            """)
+    boolean existsReviewableReservation(Long userId, Long storeId);
 }

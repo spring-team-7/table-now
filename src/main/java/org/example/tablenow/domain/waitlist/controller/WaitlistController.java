@@ -29,6 +29,16 @@ public class WaitlistController {
         return ResponseEntity.ok(waitlistResponseDto);
     }
 
+    // 빈자리 대기 등록 - Redisson 분산 락 적용
+    @PostMapping("/v2/waitlist")
+    public ResponseEntity<WaitlistResponseDto> registerWaitlistV2(
+        @Valid @RequestBody WaitlistRequestDto requestDto,
+        @AuthenticationPrincipal AuthUser authUser) {
+
+        WaitlistResponseDto waitlistResponseDto = waitlistService.registerLockWaitlist(authUser.getId(), requestDto);
+        return ResponseEntity.ok(waitlistResponseDto);
+    }
+
     // 내 대기 목록 조회
     @GetMapping("/v1/waitlist/my")
     public ResponseEntity<List<WaitlistFindResponseDto>> getMyWaitlist(@AuthenticationPrincipal AuthUser authUser) {
