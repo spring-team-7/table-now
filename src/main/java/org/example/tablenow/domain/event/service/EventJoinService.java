@@ -13,7 +13,7 @@ import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +29,7 @@ public class EventJoinService {
     private final EventJoinRepository eventJoinRepository;
     private final EventRepository eventRepository;
     private final RedissonClient redissonClient;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     private static final String EVENT_JOIN_PREFIX = "event:join:";
     private static final String EVENT_LOCK_PREFIX = "lock:event:";
@@ -118,7 +118,7 @@ public class EventJoinService {
             }
 
             // 중복 신청 방지
-            Boolean added = redisTemplate.opsForZSet().add(zsetKey, user.getId(), System.currentTimeMillis());
+            Boolean added = redisTemplate.opsForZSet().add(zsetKey, String.valueOf(user.getId()), System.currentTimeMillis());
             if (Boolean.FALSE.equals(added)) {
                 throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
             }
