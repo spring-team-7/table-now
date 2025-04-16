@@ -28,16 +28,16 @@ public class Rating extends TimeStamped {
     private Store store;
 
     @Column(nullable = false)
-    private int rating;
+    private Integer rating;
 
-    public Rating(Long id, User user, Store store, int rating) {
+    public Rating(Long id, User user, Store store, Integer rating) {
         this.id = id;
         this.user = user;
         this.store = store;
         this.rating = rating;
     }
 
-    public void updateRating(int rating) {
+    public void updateRating(Integer rating) {
         this.rating = rating;
     }
 }

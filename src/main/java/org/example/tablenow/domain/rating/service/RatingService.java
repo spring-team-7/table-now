@@ -30,7 +30,7 @@ public class RatingService {
     public RatingCreateResponseDto createRating(AuthUser authUser, Long storeId, RatingRequestDto requestDto) {
         User user = User.fromAuthUser(authUser);
         Store store = storeService.getStore(storeId);
-        int newRating = requestDto.getRating();
+        Integer newRating = requestDto.getRating();
 
         validateExistRating(user.getId(), storeId);
         reservationService.validateCreateRating(user.getId(), storeId);
@@ -52,8 +52,8 @@ public class RatingService {
         Store store = storeService.getStore(storeId);
         Rating rating = getRating(user.getId(), store.getId());
 
-        int oldRating = rating.getRating();
-        int newRating = requestDto.getRating();
+        Integer oldRating = rating.getRating();
+        Integer newRating = requestDto.getRating();
 
         rating.updateRating(newRating);
         store.updateRating(oldRating, newRating);

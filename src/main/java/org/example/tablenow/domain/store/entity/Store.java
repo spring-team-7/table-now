@@ -1,7 +1,6 @@
 package org.example.tablenow.domain.store.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +9,6 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -29,9 +27,7 @@ public class Store extends TimeStamped {
     @Column(nullable = false)
     private String address;
     private String imageUrl;
-    @Min(0)
     private Integer capacity;
-    @Min(0)
     private Integer deposit;
     private Double averageRating = 0.0;
     private Integer ratingCount = 0;
@@ -47,6 +43,12 @@ public class Store extends TimeStamped {
     @JoinColumn(name = "category_id")
     private Category category;
     private LocalDateTime deletedAt;
+
+    @PrePersist
+    public void prePersist() {
+        averageRating = 0.0;
+        ratingCount = 0;
+    }
 
     @Builder
     private Store(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
