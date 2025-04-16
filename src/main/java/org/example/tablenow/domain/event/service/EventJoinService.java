@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.event.dto.response.EventJoinResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.entity.EventJoin;
-import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventJoinRepository;
 import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.user.entity.User;
@@ -43,9 +42,7 @@ public class EventJoinService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
 
-        if (event.getStatus() != EventStatus.OPENED) {
-            throw new HandledException(ErrorCode.EVENT_NOT_OPENED);
-        }
+        event.validateOpenStatus();
 
         if (eventJoinRepository.existsByUserAndEvent(user, event)) {
             throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
@@ -70,9 +67,7 @@ public class EventJoinService {
         Event event = eventRepository.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
 
-        if (event.getStatus() != EventStatus.OPENED) {
-            throw new HandledException(ErrorCode.EVENT_NOT_OPENED);
-        }
+        event.validateOpenStatus();
 
         if (eventJoinRepository.existsByUserAndEvent(user, event)) {
             throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
@@ -111,6 +106,9 @@ public class EventJoinService {
 
             Event event = eventRepository.findById(eventId)
                     .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
+
+            event.validateOpenStatus();
+
             int limit = event.getLimitPeople();
 
             // 현재 인원 확인
