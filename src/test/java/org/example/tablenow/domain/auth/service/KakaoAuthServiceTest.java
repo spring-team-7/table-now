@@ -2,6 +2,7 @@ package org.example.tablenow.domain.auth.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
+import org.example.tablenow.domain.auth.oAuth.config.KakaoOAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
 import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfo;
@@ -9,6 +10,7 @@ import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,14 +21,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
-import static org.example.tablenow.testutil.OAuthTestUtil.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.example.tablenow.testutil.OAuthTestUtil.createAccessTokenJson;
+import static org.example.tablenow.testutil.OAuthTestUtil.stubJsonParsing;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -47,6 +50,8 @@ class KakaoAuthServiceTest {
     private ObjectMapper objectMapper;
     @Mock
     private OAuthProperties oAuthProperties;
+    @Mock
+    private KakaoOAuthProperties kakaoOAuthProperties;
 
     // WebClient mocking을 위한 내부 변수들
     @Mock
@@ -60,28 +65,6 @@ class KakaoAuthServiceTest {
 
     private static final String AUTHORIZATION_CODE = "test_authorization_code";
     private static final String KAKAO_ACCESS_TOKEN = "test_access_token";
-
-    @BeforeEach
-    void setup() {
-        // OAuth 설정값 모킹
-        OAuthProperties.Registration.Kakao regKakao = new OAuthProperties.Registration.Kakao();
-        regKakao.setClientId("clientId");
-        regKakao.setClientSecret("clientSecret");
-        regKakao.setRedirectUri("redirectUri");
-        regKakao.setAuthorizationGrantType("authorization_code");
-
-        OAuthProperties.Provider.Kakao providerKakao = new OAuthProperties.Provider.Kakao();
-        providerKakao.setTokenUri("token_uri");
-        providerKakao.setUserInfoUri("user_info_uri");
-
-        OAuthProperties.Registration registration = new OAuthProperties.Registration();
-        registration.setKakao(regKakao);
-        when(oAuthProperties.getRegistration()).thenReturn(registration);
-
-        OAuthProperties.Provider provider = new OAuthProperties.Provider();
-        provider.setKakao(providerKakao);
-        when(oAuthProperties.getProvider()).thenReturn(provider);
-    }
 
     private KakaoUserInfoResponse createKakaoUserInfoResponse(
             Long id, String email, String name, String phone, String nickname, String imageUrl) {
@@ -120,8 +103,7 @@ class KakaoAuthServiceTest {
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.bodyValue(any()))
-                .thenAnswer(invocation -> requestHeadersSpec);
+        when(requestBodyUriSpec.body(any(BodyInserter.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just(responseJson));
     }
@@ -141,6 +123,28 @@ class KakaoAuthServiceTest {
     @Nested
     class 로그인 {
 
+        @BeforeEach
+        void setup() {
+            // OAuth 설정값 모킹
+            OAuthProperties.Registration.Kakao regKakao = new OAuthProperties.Registration.Kakao();
+            regKakao.setClientId("clientId");
+            regKakao.setClientSecret("clientSecret");
+            regKakao.setRedirectUri("redirectUri");
+            regKakao.setAuthorizationGrantType("authorization_code");
+
+            OAuthProperties.Provider.Kakao providerKakao = new OAuthProperties.Provider.Kakao();
+            providerKakao.setTokenUri("token_uri");
+            providerKakao.setUserInfoUri("user_info_uri");
+
+            OAuthProperties.Registration registration = new OAuthProperties.Registration();
+            registration.setKakao(regKakao);
+            when(oAuthProperties.getRegistration()).thenReturn(registration);
+
+            OAuthProperties.Provider provider = new OAuthProperties.Provider();
+            provider.setKakao(providerKakao);
+            when(oAuthProperties.getProvider()).thenReturn(provider);
+        }
+
         @Test
         void 액세스토큰_JSON파싱_실패_예외_발생() throws Exception {
             // given
@@ -153,6 +157,30 @@ class KakaoAuthServiceTest {
             assertThrows(HandledException.class, () -> {
                 kakaoAuthService.login(AUTHORIZATION_CODE);
             });
+        }
+
+        @Test
+        void 탈퇴한_유저가_로그인_시_예외_발생() throws Exception {
+            // given
+            String accessTokenJson = createAccessTokenJson(KAKAO_ACCESS_TOKEN);
+            KakaoUserInfoResponse response = createKakaoUserInfoResponse(
+                    99L, "deleted@test.com", "탈퇴자", "+82 10-9999-9999", "탈퇴유저", "image-url");
+            User deletedUser = User.builder()
+                    .email("deleted@test.com")
+                    .build();
+            deletedUser.deleteUser();
+
+            mockWebClientTokenRequest(accessTokenJson);
+            mockWebClientUserInfoRequest(response);
+            stubJsonParsing(objectMapper, accessTokenJson);
+
+            when(userRepository.findByEmail("deleted@test.com")).thenReturn(Optional.of(deletedUser));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () -> {
+                kakaoAuthService.login(AUTHORIZATION_CODE);
+            });
+            assertEquals(ErrorCode.ALREADY_DELETED_USER.getDefaultMessage(), exception.getMessage());
         }
 
         @Test
@@ -206,6 +234,34 @@ class KakaoAuthServiceTest {
             // then
             assertEquals("access_token", tokenResponse.getAccessToken());
             assertEquals("refresh_token", tokenResponse.getRefreshToken());
+        }
+    }
+
+    @Nested
+    class 연결끊기Api_호출 {
+
+        private String kakaoId = "kakao-user-id";
+
+        @BeforeEach
+        void setup() {
+            // mock 속성
+            when(kakaoOAuthProperties.getAdminKey()).thenReturn("admin-key");
+            when(kakaoOAuthProperties.getUnlinkUri()).thenReturn("https://kapi.kakao.com/v1/user/unlink");
+        }
+
+        @Test
+        void unlinkKakaoByAdminKey_성공() {
+            // given: mock WebClient 호출
+            when(webClient.post()).thenReturn(requestBodyUriSpec);
+            when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+            when(requestBodyUriSpec.header(anyString(), anyString())).thenReturn(requestBodyUriSpec);
+            when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
+            when(requestBodyUriSpec.body(any(BodyInserter.class))).thenReturn(requestHeadersSpec);
+            when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+            when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
+
+            // when & then
+            assertDoesNotThrow(() -> kakaoAuthService.unlinkKakaoByAdminKey(kakaoId));
         }
     }
 }

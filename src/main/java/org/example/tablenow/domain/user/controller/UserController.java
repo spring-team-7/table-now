@@ -25,7 +25,7 @@ public class UserController {
     @DeleteMapping("/v1/users")
     public ResponseEntity<SimpleUserResponse> deleteUser(
             @AuthenticationPrincipal AuthUser authUser,
-            @Valid @RequestBody UserDeleteRequest request,
+            @RequestBody UserDeleteRequest request,
             HttpServletResponse response
     ) {
         CookieUtil.deleteRefreshTokenCookie(response);
@@ -35,7 +35,7 @@ public class UserController {
     @PatchMapping("/v1/users/password")
     public ResponseEntity<SimpleUserResponse> updatePassword(
             @AuthenticationPrincipal AuthUser authUser,
-            @Valid @RequestBody UpdatePasswordRequest request,
+            @RequestBody UpdatePasswordRequest request,
             HttpServletResponse response
     ) {
         CookieUtil.deleteRefreshTokenCookie(response);
