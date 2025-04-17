@@ -2,13 +2,13 @@ package org.example.tablenow.domain.image.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.tablenow.domain.image.config.S3Properties;
 import org.example.tablenow.domain.image.dto.request.PresignedUrlRequest;
 import org.example.tablenow.domain.image.dto.response.PresignedUrlResponse;
 import org.example.tablenow.domain.image.enums.ImageDomain;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -30,11 +30,7 @@ public class ImageService {
 
     private final S3Presigner presigner;
     private final S3Client s3Client;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucketName;
-    @Value("${cloud.aws.s3.presigned-url-expiration}")
-    private int expirationMinutes;
+    private final S3Properties s3Properties;
 
     private static final String S3_URL_PREFIX = "https://";
     private static final String S3_URL_SUFFIX = ".s3.amazonaws.com/";
@@ -45,14 +41,14 @@ public class ImageService {
         String key = generateKey(imageDomain, userId, fileExtension);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
+                .bucket(s3Properties.getBucket())
                 .key(key)
                 .contentType(request.getFileType().getMimeType())
                 .build();
 
         PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(
                 PutObjectPresignRequest.builder()
-                        .signatureDuration(Duration.ofMinutes(expirationMinutes))
+                        .signatureDuration(Duration.ofMinutes(s3Properties.getPresignedUrlExpiration()))
                         .putObjectRequest(putObjectRequest)
                         .build()
         );
@@ -69,7 +65,7 @@ public class ImageService {
     public void delete(String objectPath) {
         try {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(s3Properties.getBucket())
                     .key(getImageKey(objectPath))
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
@@ -83,7 +79,7 @@ public class ImageService {
     }
 
     private String getFileUrl(String key) {
-        return S3_URL_PREFIX + bucketName + S3_URL_SUFFIX + key;
+        return S3_URL_PREFIX + s3Properties.getBucket() + S3_URL_SUFFIX + key;
     }
 
     private String extractExtension(String fileName) {
