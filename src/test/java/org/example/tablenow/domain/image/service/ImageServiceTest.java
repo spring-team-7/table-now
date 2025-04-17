@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.image.service;
 
+import org.example.tablenow.domain.image.config.S3Properties;
 import org.example.tablenow.domain.image.dto.request.PresignedUrlRequest;
 import org.example.tablenow.domain.image.dto.response.PresignedUrlResponse;
 import org.example.tablenow.domain.image.enums.FileType;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -38,19 +38,19 @@ class ImageServiceTest {
     private S3Presigner presigner;
     @Mock
     private S3Client s3Client;
+    @Mock
+    private S3Properties s3Properties;
 
     private final Long userId = 1L;
     private final AuthUser authUser = new AuthUser(userId, "user@test.com", UserRole.ROLE_USER, "일반회원");
-    private final String bucketName = "test-bucket";
+
+    @BeforeEach
+    void setup() {
+        when(s3Properties.getBucket()).thenReturn("test-bucket");
+    }
 
     @Nested
     class 이미지업로드_Url_발급 {
-
-        @BeforeEach
-        void setup() {
-            ReflectionTestUtils.setField(imageService, "bucketName", bucketName);
-            ReflectionTestUtils.setField(imageService, "expirationMinutes", 3);
-        }
 
         @Test
         void presignedUrl_발급_성공() throws Exception {
@@ -74,7 +74,7 @@ class ImageServiceTest {
             // then
             assertAll(
                     () -> assertTrue(response.getUploadUrl().startsWith("https://upload-url.com")),
-                    () -> assertTrue(response.getFileUrl().startsWith("https://" + bucketName + ".s3.amazonaws.com/" + "user/1/")),
+                    () -> assertTrue(response.getFileUrl().startsWith("https://" + s3Properties.getBucket() + ".s3.amazonaws.com/" + "user/1/")),
                     () -> assertTrue(response.getFileUrl().endsWith(".png"))
             );
         }
@@ -98,7 +98,7 @@ class ImageServiceTest {
         @Test
         void 삭제_성공() {
             // given
-            String imageUrl = "https://" + bucketName + ".s3.amazonaws.com/user/1/test.png";
+            String imageUrl = "https://" + s3Properties.getBucket() + ".s3.amazonaws.com/user/1/test.png";
 
             // when
             imageService.delete(imageUrl);
