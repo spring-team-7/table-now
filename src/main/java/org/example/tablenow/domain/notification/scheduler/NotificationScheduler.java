@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,8 +37,8 @@ public class NotificationScheduler {
         LocalDateTime targetTime = now.plusDays(1);
 
         List<Reservation> reservations = reservationRepository.findAllByReservedAtBetween(
-            targetTime.minusMinutes(1),
-            targetTime.plusMinutes(1)
+            targetTime.minusMinutes(5),
+            targetTime.plusMinutes(5)
         );
 
         for (Reservation reservation : reservations) {
@@ -53,15 +54,18 @@ public class NotificationScheduler {
     @Transactional
     public void sendVacancyNotifications() {
         List<Store> stores = storeRepository.findAll();
+        List<LocalDate> waitDates = waitlistRepository.findDistinctWaitDates();
 
         for (Store store : stores) {
-            if (reservationService.hasVacancy(store)) {
-                List<Waitlist> waitlists = waitlistRepository.findAllByStoreAndIsNotifiedFalse(store);
+            for (LocalDate waitDate : waitDates) {
+                if (reservationService.hasVacancyDate(store, waitDate)) {
+                    List<Waitlist> waitlists = waitlistRepository.findAllByStoreAndWaitDateAndIsNotifiedFalse(store, waitDate);
 
-                for (Waitlist waitlist : waitlists) {
-                    User user = waitlist.getUser();
-                    if (Boolean.TRUE.equals(user.getIsAlarmEnabled())) {
-                        notifyVacancy(store, waitlist);
+                    for (Waitlist waitlist : waitlists) {
+                        User user = waitlist.getUser();
+                        if (Boolean.TRUE.equals(user.getIsAlarmEnabled())) {
+                            notifyVacancy(store, waitlist);
+                        }
                     }
                 }
             }
@@ -86,7 +90,9 @@ public class NotificationScheduler {
             .userId(waitlist.getUser().getId())
             .storeId(store.getId())
             .type(NotificationType.VACANCY)
-            .content(String.format("%s 가게 빈자리가 생겼습니다.", store.getName()))
+            .content(String.format("%s가게에서 %s에 빈자리가 생겼습니다.",
+                store.getName(),
+                waitlist.getWaitDate().toString()))
             .build();
 
         notificationService.createNotification(dto);

@@ -7,6 +7,8 @@ import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 
+import java.time.LocalDate;
+
 @Getter
 @Entity
 @NoArgsConstructor
@@ -28,10 +30,13 @@ public class Waitlist extends TimeStamped {
     @Column(name = "is_notified")
     private Boolean isNotified = false;
 
+    @Column(name = "wait_date", nullable = false)
+    private LocalDate waitDate;
 
-    public Waitlist(User user, Store store) {
+    public Waitlist(User user, Store store, LocalDate waitDate) {
         this.user = user;
         this.store = store;
+        this.waitDate = waitDate;
         this.isNotified = false;
     }
 

@@ -81,4 +81,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
               AND r.status = 'COMPLETED'
             """)
     boolean existsReviewableReservation(Long userId, Long storeId);
+
+
+
+
 }
