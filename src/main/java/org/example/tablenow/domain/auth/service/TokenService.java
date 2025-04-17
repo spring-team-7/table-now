@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.ErrorCode;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenService {
@@ -62,6 +64,10 @@ public class TokenService {
 
     public void deleteRefreshToken(String token) {
         String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
-        redisTemplate.delete(redisKey);
+        Boolean deleted = redisTemplate.delete(redisKey);
+
+        if (Boolean.FALSE.equals(deleted)) {
+            log.warn("삭제 시도한 RefreshToken이 Redis에 존재하지 않아 삭제되지 않음. 토큰값: {}", token);
+        }
     }
 }
