@@ -1,66 +1,64 @@
 package org.example.tablenow.domain.auth.oAuth.config;
 
 import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 @Getter
-@Setter
-@Component
+@RequiredArgsConstructor
 @ConfigurationProperties(prefix = "spring.security.oauth2.client")
 public class OAuthProperties {
 
-    private Provider provider;
-    private Registration registration;
+    private final Provider provider;
+    private final Registration registration;
 
     @Getter
-    @Setter
+    @RequiredArgsConstructor
     public static class Provider {
-        private Kakao kakao;
-        private Naver naver;
+        private final Kakao kakao;
+        private final Naver naver;
 
         @Getter
-        @Setter
+        @RequiredArgsConstructor
         public static class Kakao {
-            private String authorizationUri;
-            private String tokenUri;
-            private String userInfoUri;
-            private String userNameAttribute;
+            private final String authorizationUri;
+            private final String tokenUri;
+            private final String userInfoUri;
+            private final String userNameAttribute;
         }
 
         @Getter
-        @Setter
+        @RequiredArgsConstructor
         public static class Naver {
-            private String authorizationUri;
-            private String tokenUri;
-            private String userInfoUri;
-            private String userNameAttribute;
+            private final String authorizationUri;
+            private final String tokenUri;
+            private final String userInfoUri;
+            private final String userNameAttribute;
         }
     }
 
     @Getter
-    @Setter
+    @RequiredArgsConstructor
     public static class Registration {
-        private Kakao kakao;
-        private Naver naver;
+        private final Kakao kakao;
+        private final Naver naver;
 
         @Getter
-        @Setter
+        @RequiredArgsConstructor
         public static class Kakao {
-            private String clientId;
-            private String clientSecret;
-            private String redirectUri;
-            private String authorizationGrantType;
+            private final String clientId;
+            private final String clientSecret;
+            private final String redirectUri;
+            private final String authorizationGrantType;
         }
 
         @Getter
-        @Setter
+        @RequiredArgsConstructor
         public static class Naver {
-            private String clientId;
-            private String clientSecret;
-            private String redirectUri;
-            private String authorizationGrantType;
+            private final String clientId;
+            private final String clientSecret;
+            private final String redirectUri;
+            private final String authorizationGrantType;
         }
     }
 }
