@@ -69,7 +69,9 @@ public class AuthService {
 
     public TokenResponse refreshToken(String token) {
         RefreshToken refreshToken = tokenService.validateRefreshToken(token);
+        tokenService.deleteRefreshToken(token);
         User user = userService.getUser(refreshToken.getUserId());
+
         return generateTokenResponse(user);
     }
 

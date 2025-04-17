@@ -96,4 +96,8 @@ public class User extends TimeStamped {
     public void updateImageUrl(String newImageUrl) {
         this.imageUrl = newImageUrl;
     }
+
+    public boolean isOAuthUser() {
+        return this.oauthProvider != null;
+    }
 }

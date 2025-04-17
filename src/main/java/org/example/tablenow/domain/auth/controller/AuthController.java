@@ -62,7 +62,6 @@ public class AuthController {
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response
     ) {
-        // 리프레시 토큰이 존재할 경우 DB에서 삭제
         if (refreshToken != null) {
             authService.logout(refreshToken);
         }

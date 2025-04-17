@@ -25,7 +25,7 @@ public class UserProfileResponse {
                 .nickname(user.getNickname())
                 .phoneNumber(user.getPhoneNumber())
                 .imageUrl(user.getImageUrl())
-                .socialUser(user.getOauthProvider() != null)
+                .socialUser(user.isOAuthUser())
                 .build();
     }
 }

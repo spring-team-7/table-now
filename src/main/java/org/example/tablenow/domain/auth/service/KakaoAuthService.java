@@ -5,21 +5,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
-import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfo;
-import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfoResponse;
+import org.example.tablenow.domain.auth.oAuth.config.KakaoOAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
+import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfo;
+import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @RequiredArgsConstructor
@@ -30,7 +33,8 @@ public class KakaoAuthService {
     private final TokenService tokenService;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
-    private final OAuthProperties OAuthProperties;
+    private final OAuthProperties oAuthProperties;
+    private final KakaoOAuthProperties kakaoOAuthProperties;
 
     @Transactional
     public TokenResponse login(String code) {
@@ -44,6 +48,10 @@ public class KakaoAuthService {
         // 3. 사용자 정보로 기존 유저 조회 또는 신규 회원 가입
         User user = userRepository.findByEmail(kakaoUserInfo.getEmail())
                 .orElseGet(() -> registerNewUser(kakaoUserInfo));
+        if (user.getDeletedAt() != null) {
+            // 탈퇴한 유저는 재가입 불가
+            throw new HandledException(ErrorCode.ALREADY_DELETED_USER);
+        }
 
         // 4. JWT 토큰 생성 및 반환
         String accessToken = tokenService.createAccessToken(user);
@@ -54,18 +62,33 @@ public class KakaoAuthService {
                 .build();
     }
 
+    public void unlinkKakaoByAdminKey(String kakaoUserId) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("target_id_type", "user_id");
+        formData.add("target_id", kakaoUserId);
+
+        webClient.post()
+                .uri(kakaoOAuthProperties.getUnlinkUri())
+                .header(HttpHeaders.AUTHORIZATION, "KakaoAK " + kakaoOAuthProperties.getAdminKey())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(formData))
+                .retrieve()
+                .bodyToMono(Void.class)
+                .block();
+    }
+
     private String getKakaoAccessToken(String code) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", OAuthProperties.getRegistration().getKakao().getClientId());
-        formData.add("client_secret", OAuthProperties.getRegistration().getKakao().getClientSecret());
-        formData.add("redirect_uri", OAuthProperties.getRegistration().getKakao().getRedirectUri());
-        formData.add("grant_type", OAuthProperties.getRegistration().getKakao().getAuthorizationGrantType());
+        formData.add("client_id", oAuthProperties.getRegistration().getKakao().getClientId());
+        formData.add("client_secret", oAuthProperties.getRegistration().getKakao().getClientSecret());
+        formData.add("redirect_uri", oAuthProperties.getRegistration().getKakao().getRedirectUri());
+        formData.add("grant_type", oAuthProperties.getRegistration().getKakao().getAuthorizationGrantType());
         formData.add("code", code);
 
         return webClient.post()
-                .uri(OAuthProperties.getProvider().getKakao().getTokenUri())
+                .uri(oAuthProperties.getProvider().getKakao().getTokenUri())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(formData)
+                .body(BodyInserters.fromFormData(formData))
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractAccessToken)
@@ -74,7 +97,7 @@ public class KakaoAuthService {
 
     private KakaoUserInfoResponse getKakaoUserInfo(String accessToken) {
         return webClient.get()
-                .uri(OAuthProperties.getProvider().getKakao().getUserInfoUri())
+                .uri(oAuthProperties.getProvider().getKakao().getUserInfoUri())
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .bodyToMono(KakaoUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> KakaoUserInfoResponse 클래스 인스턴스로 역직렬화

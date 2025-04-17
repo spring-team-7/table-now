@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.user.service;
 
+import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
+import org.example.tablenow.domain.auth.service.KakaoAuthService;
 import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
 import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
@@ -38,6 +40,8 @@ class UserServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private ImageService imageService;
+    @Mock
+    private KakaoAuthService kakaoAuthService;
 
     @InjectMocks
     private UserService userService;
@@ -52,9 +56,24 @@ class UserServiceTest {
                 .id(authUser.getId())
                 .email(authUser.getEmail())
                 .nickname(authUser.getNickname())
+                .userRole(UserRole.of(authUser.getAuthorities().iterator().next().getAuthority()))
                 .password("encoded-password")
                 .phoneNumber("01012345678")
                 .imageUrl("image-url")
+                .build();
+    }
+
+    private User createSocialUser(OAuthProvider provider, String oauthId) {
+        return User.builder()
+                .id(userId)
+                .email("socialuser@test.com")
+                .nickname("소셜회원")
+                .userRole(UserRole.ROLE_USER)
+                .password(null)
+                .phoneNumber("01098765432")
+                .imageUrl("image-url")
+                .oauthProvider(provider)
+                .oauthId(oauthId)
                 .build();
     }
 
@@ -102,6 +121,22 @@ class UserServiceTest {
 
     @Nested
     class 회원_탈퇴 {
+
+        @Test
+        void 비밀번호가_없으면_예외_발생() {
+            // given
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+            UserDeleteRequest request = UserDeleteRequest.builder()
+                    .password(null)
+                    .build();
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    userService.deleteUser(authUser, request)
+            );
+            assertEquals(ErrorCode.MISSING_PASSWORD.getDefaultMessage(), exception.getMessage());
+        }
 
         @Test
         void 비밀번호_일치하지_않으면_예외_발생() {
@@ -155,10 +190,91 @@ class UserServiceTest {
             // then
             verify(imageService, never()).delete(anyString());
         }
+
+        @Test
+        void 카카오_소셜유저_탈퇴_시_unlink_호출됨() {
+            // given
+            User socialUser = createSocialUser(OAuthProvider.KAKAO, "kakao-user-id");
+            given(userRepository.findById(userId)).willReturn(Optional.of(socialUser));
+
+            UserDeleteRequest request = UserDeleteRequest.builder().build();
+
+            // when
+            SimpleUserResponse response = userService.deleteUser(authUser, request);
+
+            // then
+            verify(kakaoAuthService).unlinkKakaoByAdminKey("kakao-user-id");
+            assertEquals(userId, response.getId());
+        }
+
+        @Test
+        void 네이버_소셜유저_탈퇴_시_unlink_호출되지_않고_성공() {
+            // given
+            User socialUser = createSocialUser(OAuthProvider.NAVER, "naver-user-id");
+            given(userRepository.findById(userId)).willReturn(Optional.of(socialUser));
+
+            UserDeleteRequest request = UserDeleteRequest.builder().build();
+
+            // when
+            SimpleUserResponse response = userService.deleteUser(authUser, request);
+
+            // then
+            // unlink 호출 없음, 로그만 남김
+            assertEquals(userId, response.getId());
+        }
     }
 
     @Nested
     class 비밀번호_변경 {
+
+        @Test
+        void 소셜유저면_예외_발생() {
+            // given
+            User socialUser = createSocialUser(OAuthProvider.KAKAO, "kakao-user-id");
+            given(userRepository.findById(userId)).willReturn(Optional.of(socialUser));
+
+            UpdatePasswordRequest request = UpdatePasswordRequest.builder().build();
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    userService.updatePassword(authUser, request)
+            );
+            assertEquals(ErrorCode.UNSUPPORTED_SOCIAL_USER_OPERATION.getDefaultMessage(), exception.getMessage());
+        }
+
+        @Test
+        void 비밀번호_입력이_없으면_예외_발생() {
+            // given
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+            UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                    .password(null)
+                    .newPassword("")
+                    .build();
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    userService.updatePassword(authUser, request)
+            );
+            assertEquals(ErrorCode.MISSING_PASSWORD.getDefaultMessage(), exception.getMessage());
+        }
+
+        @Test
+        void 새_비밀번호_형식_틀리면_예외_발생() {
+            // given
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+            UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                    .password("encoded-password")
+                    .newPassword("0000") // 규칙에 안 맞는 비밀번호
+                    .build();
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    userService.updatePassword(authUser, request)
+            );
+            assertEquals(ErrorCode.INVALID_PASSWORD_FORMAT.getDefaultMessage(), exception.getMessage());
+        }
 
         @Test
         void 비밀번호_일치하지_않으면_예외_발생() {
@@ -168,7 +284,7 @@ class UserServiceTest {
 
             UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                     .password("wrong-password")
-                    .newPassword("new-password")
+                    .newPassword("newPassword123")
                     .build();
 
             // when & then
@@ -186,7 +302,7 @@ class UserServiceTest {
 
             UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                     .password("encoded-password")
-                    .newPassword("new-password")
+                    .newPassword("newPassword123")
                     .build();
 
             // when

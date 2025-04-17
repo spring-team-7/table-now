@@ -177,6 +177,10 @@ class AuthServiceTest {
                     () -> assertThat(newAccessToken).isNotEqualTo(oldAccessToken),
                     () -> assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken)
             );
+            // 기존 RefreshToken이 삭제되었는지 확인
+            assertThatThrownBy(() -> tokenService.validateRefreshToken(oldRefreshToken))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
         }
     }
 
@@ -207,7 +211,7 @@ class AuthServiceTest {
             // when
             authService.logout(refreshToken);
 
-            // then
+            // then: RefreshToken이 삭제되었는지 확인
             assertThatThrownBy(() -> tokenService.validateRefreshToken(refreshToken))
                     .isInstanceOf(HandledException.class)
                     .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
