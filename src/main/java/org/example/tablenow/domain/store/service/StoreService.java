@@ -159,18 +159,18 @@ public class StoreService {
 
     @Cacheable(
             value = "stores",
-            key = "T(org.example.tablenow.domain.store.util.StoreKeyGenerator).generateStoreListKey(#page, #size, #sort, #direction, #categoryId, #search)"
+            key = "T(org.example.tablenow.domain.store.util.StoreKeyGenerator).generateStoreListKey(#page, #size, #sort, #direction, #categoryId, #keyword)"
     )
     @Transactional(readOnly = true)
-    public Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String search) {
+    public Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
         try {
             Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
             Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
-            if (StringUtils.hasText(search)) {
+            if (StringUtils.hasText(keyword)) {
                 // 로그인 사용자 기준 어뷰징 방지
-                String keyword = StoreUtils.normalizeKeyword(search);
-                String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + keyword + ":" + authUser.getId();
+                String normalizeKeyword = StoreUtils.normalizeKeyword(keyword);
+                String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
                 boolean alreadySearched = redisTemplate.hasKey(userKey);
 
                 if (!alreadySearched) {
@@ -182,12 +182,12 @@ public class StoreService {
                     String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
 
                     // 키워드 랭킹 score 증가
-                    redisTemplate.opsForZSet().incrementScore(rankKey, keyword, 1);
+                    redisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
                     // 인기 검색어 TTL 1일 설정
                     redisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
                 }
             }
-            return storeRepository.searchStores(pageable, categoryId, search);
+            return storeRepository.searchStores(pageable, categoryId, keyword);
         } catch (IllegalArgumentException e) {
             throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
         }
