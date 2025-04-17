@@ -126,22 +126,19 @@ class KakaoAuthServiceTest {
         @BeforeEach
         void setup() {
             // OAuth 설정값 모킹
-            OAuthProperties.Registration.Kakao regKakao = new OAuthProperties.Registration.Kakao();
-            regKakao.setClientId("clientId");
-            regKakao.setClientSecret("clientSecret");
-            regKakao.setRedirectUri("redirectUri");
-            regKakao.setAuthorizationGrantType("authorization_code");
+            OAuthProperties.Registration.Kakao regKakao =
+                    new OAuthProperties.Registration.Kakao("clientId", "clientSecret", "redirectUri", "authorization_code");
 
-            OAuthProperties.Provider.Kakao providerKakao = new OAuthProperties.Provider.Kakao();
-            providerKakao.setTokenUri("token_uri");
-            providerKakao.setUserInfoUri("user_info_uri");
+            OAuthProperties.Registration registration =
+                    new OAuthProperties.Registration(regKakao, null); // Naver는 필요 없으므로 null
 
-            OAuthProperties.Registration registration = new OAuthProperties.Registration();
-            registration.setKakao(regKakao);
+            OAuthProperties.Provider.Kakao providerKakao =
+                    new OAuthProperties.Provider.Kakao(null, "token_uri", "user_info_uri", null);
+
+            OAuthProperties.Provider provider =
+                    new OAuthProperties.Provider(providerKakao, null); // Naver는 필요 없으므로 null
+
             when(oAuthProperties.getRegistration()).thenReturn(registration);
-
-            OAuthProperties.Provider provider = new OAuthProperties.Provider();
-            provider.setKakao(providerKakao);
             when(oAuthProperties.getProvider()).thenReturn(provider);
         }
 
