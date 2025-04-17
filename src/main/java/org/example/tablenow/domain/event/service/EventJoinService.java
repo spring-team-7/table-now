@@ -121,10 +121,15 @@ public class EventJoinService {
         validateEventNotAlreadyJoined(zsetKey, user);
         validateEventCapacity(zsetKey, event.getLimitPeople(), event);
 
-        EventJoin eventJoin = saveEventJoin(event, user);
-
-        log.info("이벤트 신청 성공: eventJoinId={}, user={}, event={}", eventJoin.getId(), user.getEmail(), eventId);
-        return EventJoinResponseDto.fromEventJoin(eventJoin);
+        try {
+            EventJoin eventJoin = saveEventJoin(event, user);
+            log.info("이벤트 신청 성공: eventJoinId={}, user={}, event={}", eventJoin.getId(), user.getEmail(), eventId);
+            return EventJoinResponseDto.fromEventJoin(eventJoin);
+        } catch (Exception e) {
+            redisTemplate.opsForZSet().remove(zsetKey, String.valueOf(user.getId()));
+            log.warn("DB insert 실패로 Redis 자리 반환: userId={}, eventId={}", user.getId(), eventId);
+            throw e;
+        }
     }
 
     private void validateEventNotAlreadyJoined(String zsetKey, User user) {
