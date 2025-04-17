@@ -33,6 +33,9 @@ public class Event extends TimeStamped {
     private LocalDateTime openAt;
 
     @Column(nullable = false)
+    private LocalDateTime endAt;
+
+    @Column(nullable = false)
     private LocalDateTime eventTime;
 
     @Column(nullable = false)
@@ -43,10 +46,11 @@ public class Event extends TimeStamped {
     private EventStatus status;
 
     @Builder
-    private Event(Store store, String content, LocalDateTime openAt, LocalDateTime eventTime, int limitPeople) {
+    private Event(Store store, String content, LocalDateTime openAt, LocalDateTime endAt, LocalDateTime eventTime, int limitPeople) {
         this.store = store;
         this.content = content;
         this.openAt = openAt;
+        this.endAt = endAt;
         this.eventTime = eventTime;
         this.limitPeople = limitPeople;
         this.status = EventStatus.READY;
@@ -81,6 +85,7 @@ public class Event extends TimeStamped {
                 .store(store)
                 .content(dto.getContent())
                 .openAt(dto.getOpenAt())
+                .endAt(dto.getEndAt())
                 .eventTime(dto.getEventTime())
                 .limitPeople(dto.getLimitPeople())
                 .build();
