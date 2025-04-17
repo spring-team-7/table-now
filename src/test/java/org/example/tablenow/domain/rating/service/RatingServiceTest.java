@@ -47,9 +47,9 @@ public class RatingServiceTest {
     User user = User.fromAuthUser(authUser);
 
     Long storeId = 1L;
-    Double averageRating = 5.0;
+    Double storeRating = 5.0;
     Integer ratingCount = 2;
-    Store store = Store.builder().id(storeId).averageRating(averageRating).ratingCount(ratingCount).build();
+    Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
 
     Long ratingId = 1L;
     Rating rating = Rating.builder().id(1L).user(user).store(store).rating(4).build();
@@ -119,8 +119,8 @@ public class RatingServiceTest {
                     () -> assertEquals(response.getStoreId(), storeId),
                     () -> assertEquals(response.getRating(), dto.getRating()),
                     () -> assertEquals(store.getRatingCount(), ratingCount + 1),
-                    () -> assertEquals(store.getAverageRating(),
-                            ((averageRating * ratingCount) + dto.getRating()) / store.getRatingCount())
+                    () -> assertEquals(store.getRating(),
+                            ((storeRating * ratingCount) + dto.getRating()) / store.getRatingCount())
             );
         }
     }
@@ -189,8 +189,8 @@ public class RatingServiceTest {
                     () -> assertEquals(response.getStoreId(), storeId),
                     () -> assertEquals(response.getRating(), dto.getRating()),
                     () -> assertEquals(store.getRatingCount(), ratingCount),
-                    () -> assertEquals(store.getAverageRating(),
-                            ((averageRating * ratingCount) - rating.getRating() + dto.getRating()) / ratingCount)
+                    () -> assertEquals(store.getRating(),
+                            ((storeRating * ratingCount) - rating.getRating() + dto.getRating()) / ratingCount)
             );
         }
     }
@@ -241,7 +241,7 @@ public class RatingServiceTest {
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getRatingId(), ratingId),
                     () -> assertEquals(store.getRatingCount(), 0),
-                    () -> assertEquals(store.getAverageRating(), 0.0)
+                    () -> assertEquals(store.getRating(), 0.0)
             );
         }
 
@@ -259,8 +259,8 @@ public class RatingServiceTest {
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getRatingId(), ratingId),
                     () -> assertEquals(store.getRatingCount(), ratingCount - 1),
-                    () -> assertEquals(store.getAverageRating(),
-                            ((averageRating * ratingCount) - rating.getRating()) / (ratingCount - 1))
+                    () -> assertEquals(store.getRating(),
+                            ((storeRating * ratingCount) - rating.getRating()) / (ratingCount - 1))
             );
         }
     }

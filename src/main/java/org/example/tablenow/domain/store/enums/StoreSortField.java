@@ -18,12 +18,21 @@ public enum StoreSortField {
             );
         }
     },
-    AVERAGE_RATING("averageRating") {
+    RATING("rating") {
         @Override
         public OrderSpecifier<?> toOrderSpecifier(PathBuilder<?> path, boolean isAsc) {
             return new OrderSpecifier<>(
                     isAsc ? Order.ASC : Order.DESC,
                     path.getNumber(property, Double.class)
+            );
+        }
+    },
+    RATING_COUNT("ratingCount") {
+        @Override
+        public OrderSpecifier<?> toOrderSpecifier(PathBuilder<?> path, boolean isAsc) {
+            return new OrderSpecifier<>(
+                    isAsc ? Order.ASC : Order.DESC,
+                    path.getNumber(property, Integer.class)
             );
         }
     },

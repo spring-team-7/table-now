@@ -16,11 +16,11 @@ public class StoreSearchResponseDto implements Serializable {
     private final String imageUrl;
     private final LocalTime startTime;
     private final LocalTime endTime;
-    private final Double averageRating;
+    private final Double rating;
     private final Integer ratingCount;
 
     @Builder
-    public StoreSearchResponseDto(Long storeId, String name, Long categoryId, String categoryName, String imageUrl, LocalTime startTime, LocalTime endTime, Double averageRating, Integer ratingCount) {
+    public StoreSearchResponseDto(Long storeId, String name, Long categoryId, String categoryName, String imageUrl, LocalTime startTime, LocalTime endTime, Double rating, Integer ratingCount) {
         this.storeId = storeId;
         this.name = name;
         this.categoryId = categoryId;
@@ -28,7 +28,7 @@ public class StoreSearchResponseDto implements Serializable {
         this.imageUrl = imageUrl;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.averageRating = averageRating;
+        this.rating = rating;
         this.ratingCount = ratingCount;
     }
 
@@ -41,7 +41,7 @@ public class StoreSearchResponseDto implements Serializable {
                 .imageUrl(store.getImageUrl())
                 .startTime(store.getStartTime())
                 .endTime(store.getEndTime())
-                .averageRating(store.getAverageRating())
+                .rating(store.getRating())
                 .ratingCount(store.getRatingCount())
                 .build();
     }
