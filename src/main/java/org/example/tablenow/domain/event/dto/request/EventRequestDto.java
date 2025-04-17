@@ -21,6 +21,9 @@ public class EventRequestDto {
     @Future(message = "openAt은 미래 시각이어야 합니다.")
     private LocalDateTime openAt;
     @NotNull
+    @Future(message = "endAt은 미래 시각이어야 합니다.")
+    private LocalDateTime endAt;
+    @NotNull
     @Future(message = "eventTime은 미래 시각이어야 합니다.")
     private LocalDateTime eventTime;
     @NotNull
@@ -28,11 +31,12 @@ public class EventRequestDto {
     private Integer limitPeople;
 
     @Builder
-    public EventRequestDto(Long storeId, String content, LocalDateTime openAt,
+    public EventRequestDto(Long storeId, String content, LocalDateTime openAt, LocalDateTime endAt,
                            LocalDateTime eventTime, Integer limitPeople) {
         this.storeId = storeId;
         this.content = content;
         this.openAt = openAt;
+        this.endAt = endAt;
         this.eventTime = eventTime;
         this.limitPeople = limitPeople;
     }

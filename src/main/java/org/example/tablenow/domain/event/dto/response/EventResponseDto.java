@@ -14,6 +14,7 @@ public class EventResponseDto {
     private final String storeName;
     private final String content;
     private final LocalDateTime openAt;
+    private final LocalDateTime endAt;
     private final LocalDateTime eventTime;
     private final int limitPeople;
     private final LocalDateTime createdAt;
@@ -21,13 +22,14 @@ public class EventResponseDto {
     private final EventStatus status;
 
     @Builder
-    public  EventResponseDto(Long eventId, Long storeId, String storeName, String content, LocalDateTime openAt,
-                              LocalDateTime eventTime, int limitPeople, LocalDateTime createdAt, LocalDateTime updatedAt, EventStatus status) {
+    public  EventResponseDto(Long eventId, Long storeId, String storeName, String content, LocalDateTime openAt, LocalDateTime endAt,
+                             LocalDateTime eventTime, int limitPeople, LocalDateTime createdAt, LocalDateTime updatedAt, EventStatus status) {
         this.eventId = eventId;
         this.storeId = storeId;
         this.storeName = storeName;
         this.content = content;
         this.openAt = openAt;
+        this.endAt = endAt;
         this.eventTime = eventTime;
         this.limitPeople = limitPeople;
         this.createdAt = createdAt;
@@ -42,6 +44,7 @@ public class EventResponseDto {
                 .storeName(event.getStore().getName())
                 .content(event.getContent())
                 .openAt(event.getOpenAt())
+                .endAt(event.getEndAt())
                 .eventTime(event.getEventTime())
                 .limitPeople(event.getLimitPeople())
                 .createdAt(event.getCreatedAt())
