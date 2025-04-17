@@ -87,67 +87,63 @@ public class EventJoinService {
     }
 
     public EventJoinResponseDto joinEventV3(Long eventId, AuthUser authUser) {
-        User user = User.fromAuthUser(authUser);
-
-        String zsetKey = EVENT_JOIN_PREFIX + eventId;
         String lockKey = EVENT_LOCK_PREFIX + eventId;
-
         RLock lock = redissonClient.getLock(lockKey);
-        boolean isLocked = false;
 
         try {
-            isLocked = lock.tryLock(LOCK_WAIT_TIME, LOCK_LEASE_TIME, TimeUnit.SECONDS);
-            if (!isLocked) {
+            if (!lock.tryLock(LOCK_WAIT_TIME, LOCK_LEASE_TIME, TimeUnit.SECONDS)) {
                 log.warn("락 획득 실패: {}", lockKey);
-                throw new IllegalStateException("이벤트 신청 대기 중 시간이 초과되었습니다.");
+                throw new HandledException(ErrorCode.EVENT_LOCK_TIMEOUT);
             }
 
-            log.info("락 획득 성공: {}", lockKey);
-
-            Event event = eventRepository.findById(eventId)
-                    .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
-
-            event.validateOpenStatus();
-
-            int limit = event.getLimitPeople();
-
-            // 현재 인원 확인
-            Long current = redisTemplate.opsForZSet().zCard(zsetKey);
-            if (current != null && current >= limit) {
-                throw new HandledException(ErrorCode.EVENT_FULL);
-            }
-
-            // 중복 신청 방지
-            Boolean added = redisTemplate.opsForZSet().add(zsetKey, String.valueOf(user.getId()), System.currentTimeMillis());
-            if (Boolean.FALSE.equals(added)) {
-                throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
-            }
-
-            // TTL 설정 (최초 1회만 적용됨)
-            redisTemplate.expire(zsetKey, Duration.ofHours(1));
-
-            // DB 저장
-            EventJoin eventJoin = saveEventJoin(event, user);
-
-            log.info("이벤트 신청 성공: user={}, event={}", user.getEmail(), eventId);
-            return EventJoinResponseDto.fromEventJoin(eventJoin);
+            return handleJoinLogic(eventId, authUser);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("인터럽트 발생", e);
         } catch (Exception e) {
-            log.error("이벤트 신청 중 예외 발생", e);
             throw new RuntimeException("이벤트 신청 중 오류 발생", e);
         } finally {
-            if (isLocked && lock.isHeldByCurrentThread()) {
+            if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                log.info("락 해제: {}", lockKey);
             }
         }
     }
 
+    private EventJoinResponseDto handleJoinLogic(Long eventId, AuthUser authUser) {
+        User user = User.fromAuthUser(authUser);
+        String zsetKey = EVENT_JOIN_PREFIX + eventId;
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
+
+        event.validateOpenStatus();
+        validateEventNotAlreadyJoined(zsetKey, user);
+        validateEventCapacity(zsetKey, event.getLimitPeople());
+
+        EventJoin eventJoin = saveEventJoin(event, user);
+
+        log.info("이벤트 신청 성공: eventJoinId={}, user={}, event={}", eventJoin.getId(), user.getEmail(), eventId);
+        return EventJoinResponseDto.fromEventJoin(eventJoin);
+    }
+
+    private void validateEventNotAlreadyJoined(String zsetKey, User user) {
+        Boolean added = redisTemplate.opsForZSet().add(zsetKey, String.valueOf(user.getId()), System.currentTimeMillis());
+        if (Boolean.FALSE.equals(added)) {
+            throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
+        }
+        redisTemplate.expire(zsetKey, Duration.ofHours(1));
+    }
+
+    private void validateEventCapacity(String zsetKey, int limit) {
+        Long current = redisTemplate.opsForZSet().zCard(zsetKey);
+        if (current != null && current >= limit) {
+            throw new HandledException(ErrorCode.EVENT_FULL);
+        }
+    }
+
     @Transactional
-    public EventJoin saveEventJoin(Event event, User user) {
+    protected EventJoin saveEventJoin(Event event, User user) {
         EventJoin eventJoin = EventJoin.builder()
                 .user(user)
                 .event(event)

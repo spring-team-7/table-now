@@ -55,6 +55,7 @@ public enum ErrorCode {
     EVENT_NOT_OPENED(HttpStatus.BAD_REQUEST, "현재 신청할 수 있는 이벤트가 아닙니다."),
     EVENT_ALREADY_JOINED(HttpStatus.CONFLICT, "이미 해당 이벤트에 참가하였습니다."),
     EVENT_FULL(HttpStatus.BAD_REQUEST, "이벤트 정원이 초과되었습니다."),
+    EVENT_LOCK_TIMEOUT(HttpStatus.CONFLICT, "이벤트 신청 대기 중 시간이 초과되었습니다."),
 
     // NOTIFICATION
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림이 존재하지 않습니다."),
