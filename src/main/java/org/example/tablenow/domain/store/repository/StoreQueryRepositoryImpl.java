@@ -59,7 +59,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                         store.startTime,
                         store.endTime,
                         store.deposit,
-                        store.averageRating,
+                        store.rating,
                         store.ratingCount
                 ))
                 .from(store)
@@ -83,7 +83,7 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                         store.imageUrl,
                         store.startTime,
                         store.endTime,
-                        store.averageRating,
+                        store.rating,
                         store.ratingCount
                 ))
                 .from(store)

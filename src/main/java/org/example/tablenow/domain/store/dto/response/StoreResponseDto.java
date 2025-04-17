@@ -20,11 +20,11 @@ public class StoreResponseDto {
     private final LocalTime startTime;
     private final LocalTime endTime;
     private final Integer deposit;
-    private final Double averageRating;
+    private final Double rating;
     private final Integer ratingCount;
 
     @Builder
-    public StoreResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, Integer capacity, LocalTime startTime, LocalTime endTime, Integer deposit, Double averageRating, Integer ratingCount) {
+    public StoreResponseDto(Long storeId, String name, Long userId, Long categoryId, String categoryName, String description, String address, String imageUrl, Integer capacity, LocalTime startTime, LocalTime endTime, Integer deposit, Double rating, Integer ratingCount) {
         this.storeId = storeId;
         this.name = name;
         this.userId = userId;
@@ -37,7 +37,7 @@ public class StoreResponseDto {
         this.startTime = startTime;
         this.endTime = endTime;
         this.deposit = deposit;
-        this.averageRating = averageRating;
+        this.rating = rating;
         this.ratingCount = ratingCount;
     }
 
@@ -55,7 +55,7 @@ public class StoreResponseDto {
                 .startTime(store.getStartTime())
                 .endTime(store.getEndTime())
                 .deposit(store.getDeposit())
-                .averageRating(store.getAverageRating())
+                .rating(store.getRating())
                 .ratingCount(store.getRatingCount())
                 .build();
     }

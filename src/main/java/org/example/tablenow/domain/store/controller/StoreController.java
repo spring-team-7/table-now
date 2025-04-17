@@ -63,9 +63,9 @@ public class StoreController {
                                                                   @RequestParam(defaultValue = "name") String sort,
                                                                   @RequestParam(defaultValue = "asc") String direction,
                                                                   @RequestParam(required = false) Long categoryId,
-                                                                  @RequestParam(required = false) String search
+                                                                  @RequestParam(required = false) String keyword
     ) {
-        return ResponseEntity.ok(storeService.findAllStores(authUser, page, size, sort, direction, categoryId, search));
+        return ResponseEntity.ok(storeService.findAllStores(authUser, page, size, sort, direction, categoryId, keyword));
     }
 
     // 가게 정보 조회
