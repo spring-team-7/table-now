@@ -31,4 +31,5 @@ public interface WaitlistRepository extends JpaRepository<Waitlist, Long> {
 
     // 특정 가게의 해당 날짜의 대기자 목록 조회
     List<Waitlist> findAllByStoreAndWaitDateAndIsNotifiedFalse(Store store, LocalDate waitDate);
+
 }
