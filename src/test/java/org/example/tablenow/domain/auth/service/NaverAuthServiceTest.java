@@ -67,22 +67,19 @@ class NaverAuthServiceTest {
     @BeforeEach
     void setup() {
         // OAuth 설정값 모킹
-        OAuthProperties.Registration.Naver regNaver = new OAuthProperties.Registration.Naver();
-        regNaver.setClientId("clientId");
-        regNaver.setClientSecret("clientSecret");
-        regNaver.setRedirectUri("redirectUri");
-        regNaver.setAuthorizationGrantType("authorization_code");
+        OAuthProperties.Registration.Naver regNaver =
+                new OAuthProperties.Registration.Naver("clientId", "clientSecret", "redirectUri", "authorization_code");
 
-        OAuthProperties.Provider.Naver providerNaver = new OAuthProperties.Provider.Naver();
-        providerNaver.setTokenUri("token_uri");
-        providerNaver.setUserInfoUri("user_info_uri");
+        OAuthProperties.Registration registration =
+                new OAuthProperties.Registration(null, regNaver);
 
-        OAuthProperties.Registration registration = new OAuthProperties.Registration();
-        registration.setNaver(regNaver);
+        OAuthProperties.Provider.Naver providerNaver =
+                new OAuthProperties.Provider.Naver(null, "token_uri", "user_info_uri", null);
+
+        OAuthProperties.Provider provider =
+                new OAuthProperties.Provider(null, providerNaver);
+
         when(oAuthProperties.getRegistration()).thenReturn(registration);
-
-        OAuthProperties.Provider provider = new OAuthProperties.Provider();
-        provider.setNaver(providerNaver);
         when(oAuthProperties.getProvider()).thenReturn(provider);
     }
 
