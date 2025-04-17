@@ -119,7 +119,7 @@ public class EventJoinService {
 
         event.validateOpenStatus();
         validateEventNotAlreadyJoined(zsetKey, user);
-        validateEventCapacity(zsetKey, event.getLimitPeople());
+        validateEventCapacity(zsetKey, event.getLimitPeople(), event);
 
         EventJoin eventJoin = saveEventJoin(event, user);
 
@@ -135,10 +135,15 @@ public class EventJoinService {
         redisTemplate.expire(zsetKey, Duration.ofHours(1));
     }
 
-    private void validateEventCapacity(String zsetKey, int limit) {
+    private void validateEventCapacity(String zsetKey, int limit, Event event) {
         Long current = redisTemplate.opsForZSet().zCard(zsetKey);
+
         if (current != null && current >= limit) {
-            throw new HandledException(ErrorCode.EVENT_FULL);
+            long dbCount = eventJoinRepository.countByEvent(event);
+
+            if (dbCount >= limit) {
+                throw new HandledException(ErrorCode.EVENT_FULL);
+            }
         }
     }
 
