@@ -6,6 +6,7 @@ import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.util.JwtUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,6 @@ public class TokenService {
     private final RedisTemplate<String, String> redisTemplate;
     private final JwtUtil jwtUtil;
 
-    private static final long REFRESH_TOKEN_EXPIRATION_SECONDS = 7 * 24 * 60 * 60; // 7일
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
 
     public String createAccessToken(User user) {
@@ -41,7 +41,7 @@ public class TokenService {
         redisTemplate.opsForValue().set(
                 redisKey,
                 String.valueOf(user.getId()),
-                REFRESH_TOKEN_EXPIRATION_SECONDS,
+                SecurityConstants.REFRESH_TOKEN_TTL_SECONDS,
                 TimeUnit.SECONDS
         );
 
@@ -66,7 +66,7 @@ public class TokenService {
         String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
         Boolean deleted = redisTemplate.delete(redisKey);
 
-        if (Boolean.FALSE.equals(deleted)) {
+        if (!deleted) {
             log.warn("삭제 시도한 RefreshToken이 Redis에 존재하지 않아 삭제되지 않음. 토큰값: {}", token);
         }
     }

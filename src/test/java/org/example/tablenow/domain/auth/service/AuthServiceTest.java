@@ -9,6 +9,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -143,7 +144,7 @@ class AuthServiceTest {
 
             // then
             assertAll(
-                    () -> assertThat(tokenResponse.getAccessToken()).startsWith("Bearer"),
+                    () -> assertThat(tokenResponse.getAccessToken()).startsWith(SecurityConstants.BEARER_PREFIX),
                     () -> assertThat(tokenResponse.getRefreshToken()).isNotNull()
             );
         }

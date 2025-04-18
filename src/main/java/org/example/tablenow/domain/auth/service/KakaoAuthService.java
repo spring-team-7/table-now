@@ -13,8 +13,10 @@ import org.example.tablenow.domain.auth.oAuth.kakao.KakaoUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.global.constant.OAuthConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -64,12 +66,12 @@ public class KakaoAuthService {
 
     public void unlinkKakaoByAdminKey(String kakaoUserId) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("target_id_type", "user_id");
-        formData.add("target_id", kakaoUserId);
+        formData.add(OAuthConstants.TARGET_ID_TYPE, OAuthConstants.USER_ID);
+        formData.add(OAuthConstants.TARGET_ID, kakaoUserId);
 
         webClient.post()
                 .uri(kakaoOAuthProperties.getUnlinkUri())
-                .header(HttpHeaders.AUTHORIZATION, "KakaoAK " + kakaoOAuthProperties.getAdminKey())
+                .header(HttpHeaders.AUTHORIZATION, OAuthConstants.KAKAO_ADMIN_AUTH_PREFIX + kakaoOAuthProperties.getAdminKey())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
@@ -79,11 +81,11 @@ public class KakaoAuthService {
 
     private String getKakaoAccessToken(String code) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", oAuthProperties.getRegistration().getKakao().getClientId());
-        formData.add("client_secret", oAuthProperties.getRegistration().getKakao().getClientSecret());
-        formData.add("redirect_uri", oAuthProperties.getRegistration().getKakao().getRedirectUri());
-        formData.add("grant_type", oAuthProperties.getRegistration().getKakao().getAuthorizationGrantType());
-        formData.add("code", code);
+        formData.add(OAuthConstants.CLIENT_ID, oAuthProperties.getRegistration().getKakao().getClientId());
+        formData.add(OAuthConstants.CLIENT_SECRET, oAuthProperties.getRegistration().getKakao().getClientSecret());
+        formData.add(OAuthConstants.REDIRECT_URI, oAuthProperties.getRegistration().getKakao().getRedirectUri());
+        formData.add(OAuthConstants.GRANT_TYPE, oAuthProperties.getRegistration().getKakao().getAuthorizationGrantType());
+        formData.add(OAuthConstants.CODE, code);
 
         return webClient.post()
                 .uri(oAuthProperties.getProvider().getKakao().getTokenUri())
@@ -98,7 +100,7 @@ public class KakaoAuthService {
     private KakaoUserInfoResponse getKakaoUserInfo(String accessToken) {
         return webClient.get()
                 .uri(oAuthProperties.getProvider().getKakao().getUserInfoUri())
-                .header("Authorization", "Bearer " + accessToken)
+                .header(HttpHeaders.AUTHORIZATION, SecurityConstants.BEARER_PREFIX + accessToken)
                 .retrieve()
                 .bodyToMono(KakaoUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> KakaoUserInfoResponse 클래스 인스턴스로 역직렬화
                 .block();
@@ -107,7 +109,7 @@ public class KakaoAuthService {
     private String extractAccessToken(String response) {
         try {
             JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode.get("access_token").asText();
+            return jsonNode.get(OAuthConstants.ACCESS_TOKEN).asText();
         } catch (Exception e) {
             throw new HandledException(ErrorCode.FAILED_TO_PARSE_OAUTH_TOKEN);
         }

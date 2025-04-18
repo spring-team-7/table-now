@@ -15,7 +15,7 @@ import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.util.RegexConstants;
+import org.example.tablenow.global.constant.RegexConstants;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

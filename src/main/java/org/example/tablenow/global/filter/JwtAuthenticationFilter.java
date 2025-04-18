@@ -12,9 +12,11 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.user.enums.UserRole;
-import org.example.tablenow.global.security.token.JwtAuthenticationToken;
 import org.example.tablenow.global.dto.AuthUser;
+import org.example.tablenow.global.constant.SecurityConstants;
+import org.example.tablenow.global.security.token.JwtAuthenticationToken;
 import org.example.tablenow.global.util.JwtUtil;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -34,9 +36,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String authorizationHeader = request.getHeader("Authorization");
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader != null && authorizationHeader.startsWith(SecurityConstants.BEARER_PREFIX)) {
             String jwt = jwtUtil.substringToken(authorizationHeader);
             try {
                 // JWT 유효성 검사와 claims 추출
