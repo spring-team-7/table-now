@@ -47,13 +47,14 @@ public class AuthController {
     @PostMapping("/v1/auth/refresh")
     public ResponseEntity<AccessTokenResponse> refreshToken(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
             HttpServletResponse response
     ) {
         if (refreshToken == null) {
             throw new HandledException(ErrorCode.REFRESH_TOKEN_MISSING);
         }
 
-        TokenResponse tokenResponse = authService.refreshToken(refreshToken);
+        TokenResponse tokenResponse = authService.refreshToken(refreshToken, accessToken);
         CookieUtil.addRefreshTokenToCookie(response, tokenResponse.getRefreshToken());
         return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));
     }

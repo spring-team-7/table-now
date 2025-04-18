@@ -11,6 +11,7 @@ import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.security.enums.BlacklistReason;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,10 +68,15 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
-    public TokenResponse refreshToken(String token) {
-        RefreshToken refreshToken = tokenService.validateRefreshToken(token);
-        tokenService.deleteRefreshToken(token);
+    public TokenResponse refreshToken(String refreshTokenValue, String accessToken) {
+        RefreshToken refreshToken = tokenService.validateRefreshToken(refreshTokenValue);
+        tokenService.deleteRefreshToken(refreshTokenValue);
         User user = userService.getUser(refreshToken.getUserId());
+
+        // 기존 AccessToken 블랙리스트 등록
+        if (accessToken != null) {
+            tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.REFRESH);
+        }
 
         return generateTokenResponse(user);
     }
@@ -80,7 +86,7 @@ public class AuthService {
             tokenService.deleteRefreshToken(refreshToken);
         }
         if (accessToken != null) {
-            tokenService.addToBlacklist(accessToken, userId);
+            tokenService.addToBlacklist(accessToken, userId, BlacklistReason.LOGOUT);
         }
     }
 

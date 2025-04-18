@@ -4,9 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.constant.SecurityConstants;
+import org.example.tablenow.global.security.enums.BlacklistReason;
 import org.example.tablenow.global.util.JwtUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -69,11 +70,11 @@ public class TokenService {
         }
     }
 
-    public void addToBlacklist(String accessToken, Long userId) {
+    public void addToBlacklist(String accessToken, Long userId, BlacklistReason reason) {
         String jwt = jwtUtil.substringToken(accessToken);
         String redisKey = SecurityConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
         long ttl = jwtUtil.getRemainingTokenTime(jwt);
-        String value = String.format("logout:userId=%d", userId);
+        String value = String.format("%s:userId=%d", reason.getValue(), userId);
 
         redisTemplate.opsForValue().set(redisKey, value, ttl, TimeUnit.SECONDS);
         log.info("AccessToken 블랙리스트 등록 완료: {} (TTL {}초)", jwt, ttl);

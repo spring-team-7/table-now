@@ -38,8 +38,16 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/logout").authenticated()
-                        .requestMatchers("/api/v1/auth/**", "/oauth2/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/refresh"
+                        ).authenticated()
+
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/oauth2/**"
+                        ).permitAll()
+
                         .requestMatchers("/api/v1/view/reservations/*/payments/checkout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/reservations/*/payments").permitAll()
                         .requestMatchers("/widget/**").permitAll()

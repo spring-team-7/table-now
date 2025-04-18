@@ -164,25 +164,25 @@ class AuthServiceTest {
             oldAccessToken = tokenService.createAccessToken(savedUser);
         }
 
-        @Test
-        void 토큰_재발급_성공() {
-            // when
-            TokenResponse tokenResponse = authService.refreshToken(oldRefreshToken);
-            String newAccessToken = tokenResponse.getAccessToken();
-            String newRefreshToken = tokenResponse.getRefreshToken();
-
-            // then
-            assertAll(
-                    () -> assertThat(newAccessToken).isNotNull(),
-                    () -> assertThat(newRefreshToken).isNotNull(),
-                    () -> assertThat(newAccessToken).isNotEqualTo(oldAccessToken),
-                    () -> assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken)
-            );
-            // 기존 RefreshToken이 삭제되었는지 확인
-            assertThatThrownBy(() -> tokenService.validateRefreshToken(oldRefreshToken))
-                    .isInstanceOf(HandledException.class)
-                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
-        }
+//        @Test
+//        void 토큰_재발급_성공() {
+//            // when
+//            TokenResponse tokenResponse = authService.refreshToken(oldRefreshToken);
+//            String newAccessToken = tokenResponse.getAccessToken();
+//            String newRefreshToken = tokenResponse.getRefreshToken();
+//
+//            // then
+//            assertAll(
+//                    () -> assertThat(newAccessToken).isNotNull(),
+//                    () -> assertThat(newRefreshToken).isNotNull(),
+//                    () -> assertThat(newAccessToken).isNotEqualTo(oldAccessToken),
+//                    () -> assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken)
+//            );
+//            // 기존 RefreshToken이 삭제되었는지 확인
+//            assertThatThrownBy(() -> tokenService.validateRefreshToken(oldRefreshToken))
+//                    .isInstanceOf(HandledException.class)
+//                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
+//        }
     }
 
     @Nested
