@@ -51,6 +51,7 @@ public enum ErrorCode {
     RESERVATION_TIME_INVALID(HttpStatus.BAD_REQUEST, "예약 시간은 정각 또는 30분 단위여야 합니다."),
     RESERVATION_STATUS_INVALID(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다."),
     RESERVATION_STATUS_UPDATE_FORBIDDEN(HttpStatus.BAD_REQUEST, "예약 상태에서만 변경할 수 있습니다."),
+    RESERVATION_LOCK_TIMEOUT(HttpStatus.CONFLICT, "예약 신청 대기 중 시간이 초과되었습니다."),
 
     // EVENT
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "이벤트가 존재하지 않습니다."),

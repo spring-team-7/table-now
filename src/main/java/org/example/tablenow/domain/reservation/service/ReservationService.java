@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.reservation.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.reservation.dto.request.ReservationRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationStatusChangeRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationUpdateRequestDto;
@@ -15,6 +16,8 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +26,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+import java.util.concurrent.TimeUnit;
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StoreService storeService;
+    private final RedissonClient redissonClient;
+
+    private static final String RESERVATION_LOCK_KEY_FORMAT = "lock:reservation:%d:%s";
+    private static final long LOCK_WAIT_TIME = 3L;
+    private static final long LOCK_LEASE_TIME = 3L;
 
     @Transactional
     public ReservationResponseDto makeReservation(AuthUser authUser, ReservationRequestDto request) {
@@ -37,7 +46,7 @@ public class ReservationService {
         Store store = storeService.getStore(request.getStoreId());
 
         validateStoreCapacity(store, request.getReservedAt());
-        validateReservationDuplication(request.getStoreId(), request.getReservedAt());
+        validateReservationDuplication(user, store, request.getReservedAt());
         validateStoreOpening(store, request.getReservedAt());
 
         Reservation reservation = Reservation.builder()
@@ -49,6 +58,50 @@ public class ReservationService {
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
+        return ReservationResponseDto.fromReservation(savedReservation);
+    }
+
+    @Transactional
+    public ReservationResponseDto makeReservationWithLock(AuthUser authUser, ReservationRequestDto request) {
+        LocalDate date = request.getReservedAt().toLocalDate();
+        String lockKey = String.format(RESERVATION_LOCK_KEY_FORMAT, request.getStoreId(), date);
+        RLock lock = redissonClient.getLock(lockKey);
+
+        try {
+            if (!lock.tryLock(LOCK_WAIT_TIME, LOCK_LEASE_TIME, TimeUnit.SECONDS)) {
+                log.warn("락 획득 실패: {}", lockKey);
+                throw new HandledException(ErrorCode.RESERVATION_LOCK_TIMEOUT);
+            }
+
+            return handleReservationCreation(authUser, request);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("인터럽트 발생", e);
+        } catch (Exception e) {
+            throw new RuntimeException("예약 생성 중 오류 발생", e);
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+    }
+
+    private ReservationResponseDto handleReservationCreation(AuthUser authUser, ReservationRequestDto request) {
+        User user = User.fromAuthUser(authUser);
+        Store store = storeService.getStore(request.getStoreId());
+
+        validateStoreCapacity(store, request.getReservedAt());
+        validateReservationDuplication(user, store, request.getReservedAt());
+        validateStoreOpening(store, request.getReservedAt());
+
+        Reservation reservation = Reservation.builder()
+                .user(user)
+                .store(store)
+                .reservedAt(request.getReservedAt())
+                .build();
+
+        Reservation savedReservation = reservationRepository.save(reservation);
         return ReservationResponseDto.fromReservation(savedReservation);
     }
 
@@ -137,13 +190,18 @@ public class ReservationService {
     private void validateStoreCapacity(Store store, LocalDateTime reservedAt) {
         LocalDate date = reservedAt.toLocalDate();
         long reservedCount = reservationRepository.countReservedTablesByDate(store, date);
+
         if (reservedCount >= store.getCapacity()) {
             throw new HandledException(ErrorCode.STORE_TABLE_CAPACITY_EXCEEDED);
         }
     }
 
-    private void validateReservationDuplication(Long storeId, LocalDateTime reservedAt) {
-        if (reservationRepository.isReservedStatusInUse(storeId, reservedAt)) {
+    private void validateReservationDuplication(User user, Store store, LocalDateTime reservedAt) {
+        boolean exists = reservationRepository.existsByUserIdAndStoreIdAndReservedAt(
+                user.getId(), store.getId(), reservedAt
+        );
+
+        if (exists) {
             throw new HandledException(ErrorCode.RESERVATION_DUPLICATE);
         }
     }
