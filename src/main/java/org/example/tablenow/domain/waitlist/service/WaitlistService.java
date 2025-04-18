@@ -34,8 +34,8 @@ public class WaitlistService {
     private final RedissonClient redissonClient;
 
     private static final int MAX_WAITING = 100;
-    private static final int LOCK_WAIT_TIME = 1;
-    private static final int LOCK_LEASE_TIME = 2;
+    private static final int LOCK_WAIT_TIME = 2;
+    private static final int LOCK_LEASE_TIME = 1;
 
     @Transactional
     public WaitlistResponseDto registerWaitlist(Long userId, WaitlistRequestDto requestDto) {
