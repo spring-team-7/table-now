@@ -66,4 +66,10 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public long getRemainingTokenTime(String token) {
+        Date expiration = extractClaims(token).getExpiration();
+        long now = System.currentTimeMillis();
+        return Math.max((expiration.getTime() - now) / 1000, 0); // 초 단위 반환
+    }
 }

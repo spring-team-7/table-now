@@ -11,10 +11,13 @@ import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.service.AuthService;
 import org.example.tablenow.domain.auth.service.KakaoAuthService;
 import org.example.tablenow.domain.auth.service.NaverAuthService;
+import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.CookieUtil;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/api")
@@ -58,10 +61,12 @@ public class AuthController {
     @PostMapping("/v1/auth/logout")
     public ResponseEntity<String> logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
+            @AuthenticationPrincipal AuthUser authUser,
             HttpServletResponse response
     ) {
-        if (refreshToken != null) {
-            authService.logout(refreshToken);
+        if (refreshToken != null || accessToken != null) {
+            authService.logout(refreshToken, accessToken, authUser.getId());
         }
         CookieUtil.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok("로그아웃에 성공했습니다.");

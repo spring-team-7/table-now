@@ -75,8 +75,13 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
-    public void logout(String token) {
-        tokenService.deleteRefreshToken(token);
+    public void logout(String refreshToken, String accessToken, Long userId) {
+        if (refreshToken != null) {
+            tokenService.deleteRefreshToken(refreshToken);
+        }
+        if (accessToken != null) {
+            tokenService.addToBlacklist(accessToken, userId);
+        }
     }
 
     private TokenResponse generateTokenResponse(User user) {

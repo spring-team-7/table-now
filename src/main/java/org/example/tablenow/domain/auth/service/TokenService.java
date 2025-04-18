@@ -22,8 +22,6 @@ public class TokenService {
     private final RedisTemplate<String, String> redisTemplate;
     private final JwtUtil jwtUtil;
 
-    private static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
-
     public String createAccessToken(User user) {
         return jwtUtil.createToken(
                 user.getId(),
@@ -35,7 +33,7 @@ public class TokenService {
 
     public String createRefreshToken(User user) {
         String refreshToken = UUID.randomUUID().toString();
-        String redisKey = REFRESH_TOKEN_KEY_PREFIX + refreshToken;
+        String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
 
         // userId를 값으로 Redis에 저장
         redisTemplate.opsForValue().set(
@@ -48,8 +46,8 @@ public class TokenService {
         return refreshToken;
     }
 
-    public RefreshToken validateRefreshToken(String token) {
-        String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
+    public RefreshToken validateRefreshToken(String refreshToken) {
+        String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
         String userIdValue = redisTemplate.opsForValue().get(redisKey);
 
         if (userIdValue == null) {
@@ -57,17 +55,27 @@ public class TokenService {
         }
 
         return RefreshToken.builder()
-                .token(token)
+                .token(refreshToken)
                 .userId(Long.valueOf(userIdValue))
                 .build();
     }
 
-    public void deleteRefreshToken(String token) {
-        String redisKey = REFRESH_TOKEN_KEY_PREFIX + token;
+    public void deleteRefreshToken(String refreshToken) {
+        String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
         Boolean deleted = redisTemplate.delete(redisKey);
 
         if (!deleted) {
-            log.warn("삭제 시도한 RefreshToken이 Redis에 존재하지 않아 삭제되지 않음. 토큰값: {}", token);
+            log.warn("삭제 시도한 RefreshToken이 Redis에 존재하지 않아 삭제되지 않음. 토큰값: {}", refreshToken);
         }
+    }
+
+    public void addToBlacklist(String accessToken, Long userId) {
+        String jwt = jwtUtil.substringToken(accessToken);
+        String redisKey = SecurityConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
+        long ttl = jwtUtil.getRemainingTokenTime(jwt);
+        String value = String.format("logout:userId=%d", userId);
+
+        redisTemplate.opsForValue().set(redisKey, value, ttl, TimeUnit.SECONDS);
+        log.info("AccessToken 블랙리스트 등록 완료: {} (TTL {}초)", jwt, ttl);
     }
 }
