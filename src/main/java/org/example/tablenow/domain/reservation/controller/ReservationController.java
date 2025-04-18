@@ -35,6 +35,14 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.makeReservation(authUser, request));
     }
 
+    @PostMapping("/v2/reservations")
+    public ResponseEntity<ReservationResponseDto> makeReservationWithLock(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody ReservationRequestDto request
+    ) {
+        return ResponseEntity.ok(reservationService.makeReservationWithLock(authUser, request));
+    }
+
     @PatchMapping("/v1/reservations/{id}")
     public ResponseEntity<ReservationResponseDto> updateReservation(
             @AuthenticationPrincipal AuthUser authUser,

@@ -22,7 +22,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
           and r.status <> 'CANCELED'
         """)
     boolean isReservedStatusInUse(Long storeId, LocalDateTime reservedAt);
-
+    boolean existsByUserIdAndStoreIdAndReservedAt(Long userId, Long storeId, LocalDateTime reservedAt);
     boolean existsByStoreIdAndReservedAtAndIdNot(Long storeId, LocalDateTime reservedAt, Long id);
 
     @Query("""
