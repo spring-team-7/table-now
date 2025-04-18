@@ -33,6 +33,7 @@ public class Reservation extends TimeStamped {
     private ReservationStatus status;
 
     private LocalDateTime reservedAt;
+    private LocalDateTime remindAt;
     private LocalDateTime deletedAt;
 
     @Builder
@@ -41,6 +42,7 @@ public class Reservation extends TimeStamped {
         this.user = user;
         this.store = store;
         this.reservedAt = reservedAt;
+        this.remindAt = reservedAt.minusDays(1);
         this.status = ReservationStatus.RESERVED;
     }
 
