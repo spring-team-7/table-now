@@ -9,6 +9,7 @@ import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -65,22 +67,19 @@ class NaverAuthServiceTest {
     @BeforeEach
     void setup() {
         // OAuth 설정값 모킹
-        OAuthProperties.Registration.Naver regNaver = new OAuthProperties.Registration.Naver();
-        regNaver.setClientId("clientId");
-        regNaver.setClientSecret("clientSecret");
-        regNaver.setRedirectUri("redirectUri");
-        regNaver.setAuthorizationGrantType("authorization_code");
+        OAuthProperties.Registration.Naver regNaver =
+                new OAuthProperties.Registration.Naver("clientId", "clientSecret", "redirectUri", "authorization_code");
 
-        OAuthProperties.Provider.Naver providerNaver = new OAuthProperties.Provider.Naver();
-        providerNaver.setTokenUri("token_uri");
-        providerNaver.setUserInfoUri("user_info_uri");
+        OAuthProperties.Registration registration =
+                new OAuthProperties.Registration(null, regNaver);
 
-        OAuthProperties.Registration registration = new OAuthProperties.Registration();
-        registration.setNaver(regNaver);
+        OAuthProperties.Provider.Naver providerNaver =
+                new OAuthProperties.Provider.Naver(null, "token_uri", "user_info_uri", null);
+
+        OAuthProperties.Provider provider =
+                new OAuthProperties.Provider(null, providerNaver);
+
         when(oAuthProperties.getRegistration()).thenReturn(registration);
-
-        OAuthProperties.Provider provider = new OAuthProperties.Provider();
-        provider.setNaver(providerNaver);
         when(oAuthProperties.getProvider()).thenReturn(provider);
     }
 
@@ -121,8 +120,7 @@ class NaverAuthServiceTest {
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.bodyValue(any()))
-                .thenAnswer(invocation -> requestHeadersSpec);
+        when(requestBodyUriSpec.body(any(BodyInserter.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just(responseJson));
     }
@@ -154,6 +152,30 @@ class NaverAuthServiceTest {
             assertThrows(HandledException.class, () -> {
                 naverAuthService.login(AUTHORIZATION_CODE);
             });
+        }
+
+        @Test
+        void 탈퇴한_유저가_로그인_시_예외_발생() throws Exception {
+            // given
+            String accessTokenJson = createAccessTokenJson(NAVER_ACCESS_TOKEN);
+            NaverUserInfoResponse response = createNaverUserInfoResponse(
+                    "id000", "탈퇴자", "탈퇴유저", "deleted@test.com", "image-url", "010-9999-9999");
+            User deletedUser = User.builder()
+                    .email("deleted@test.com")
+                    .build();
+            deletedUser.deleteUser();
+
+            mockWebClientTokenRequest(accessTokenJson);
+            mockWebClientUserInfoRequest(response);
+            stubJsonParsing(objectMapper, accessTokenJson);
+
+            when(userRepository.findByEmail("deleted@test.com")).thenReturn(Optional.of(deletedUser));
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () -> {
+                naverAuthService.login(AUTHORIZATION_CODE);
+            });
+            assertEquals(ErrorCode.ALREADY_DELETED_USER.getDefaultMessage(), exception.getMessage());
         }
 
         @Test

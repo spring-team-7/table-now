@@ -82,7 +82,7 @@ public class StoreServiceTest {
             .deposit(10000)
             .user(owner)
             .category(category)
-            .averageRating(4.5)
+            .rating(4.5)
             .ratingCount(100)
             .build();
 
@@ -480,7 +480,7 @@ public class StoreServiceTest {
             assertAll(
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getTotalElements(), 1),
-                    () -> assertEquals(dto.getAverageRating(), store.getAverageRating()),
+                    () -> assertEquals(dto.getRating(), store.getRating()),
                     () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
             );
         }
@@ -506,7 +506,7 @@ public class StoreServiceTest {
             assertAll(
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getTotalElements(), 1),
-                    () -> assertEquals(dto.getAverageRating(), store.getAverageRating()),
+                    () -> assertEquals(dto.getRating(), store.getRating()),
                     () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
             );
         }
@@ -516,7 +516,7 @@ public class StoreServiceTest {
             // given
             int page = 1;
             int size = 10;
-            String sortField = "averageRating";
+            String sortField = "rating";
             String sortOrder = "desc";
             String search = "맛있는";
             String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
@@ -539,7 +539,7 @@ public class StoreServiceTest {
             assertAll(
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getTotalElements(), 1),
-                    () -> assertEquals(dto.getAverageRating(), store.getAverageRating()),
+                    () -> assertEquals(dto.getRating(), store.getRating()),
                     () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
             );
         }
@@ -573,7 +573,7 @@ public class StoreServiceTest {
                     () -> assertEquals(response.getStoreId(), storeId),
                     () -> assertEquals(response.getName(), store.getName()),
                     () -> assertEquals(response.getRatingCount(), store.getRatingCount()),
-                    () -> assertEquals(response.getAverageRating(), store.getAverageRating())
+                    () -> assertEquals(response.getRating(), store.getRating())
             );
         }
     }

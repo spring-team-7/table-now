@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
-import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfo;
-import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfoResponse;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
+import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfo;
+import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class NaverAuthService {
     private final TokenService tokenService;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
-    private final OAuthProperties OAuthProperties;
+    private final OAuthProperties oAuthProperties;
 
     @Transactional
     public TokenResponse login(String code) {
@@ -43,6 +44,10 @@ public class NaverAuthService {
         // 3. 사용자 정보로 기존 유저 조회 또는 신규 회원 가입
         User user = userRepository.findByEmail(naverUserInfo.getEmail())
                 .orElseGet(() -> registerNewUser(naverUserInfo));
+        if (user.getDeletedAt() != null) {
+            // 탈퇴한 유저는 재가입 불가
+            throw new HandledException(ErrorCode.ALREADY_DELETED_USER);
+        }
 
         // 4. JWT 토큰 생성 및 반환
         String accessToken = tokenService.createAccessToken(user);
@@ -55,16 +60,16 @@ public class NaverAuthService {
 
     private String getNaverAccessToken(String code) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", OAuthProperties.getRegistration().getNaver().getClientId());
-        formData.add("client_secret", OAuthProperties.getRegistration().getNaver().getClientSecret());
-        formData.add("redirect_uri", OAuthProperties.getRegistration().getNaver().getRedirectUri());
-        formData.add("grant_type", OAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
+        formData.add("client_id", oAuthProperties.getRegistration().getNaver().getClientId());
+        formData.add("client_secret", oAuthProperties.getRegistration().getNaver().getClientSecret());
+        formData.add("redirect_uri", oAuthProperties.getRegistration().getNaver().getRedirectUri());
+        formData.add("grant_type", oAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
         formData.add("code", code);
 
         return webClient.post()
-                .uri(OAuthProperties.getProvider().getNaver().getTokenUri())
+                .uri(oAuthProperties.getProvider().getNaver().getTokenUri())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(formData)
+                .body(BodyInserters.fromFormData(formData))
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(this::extractAccessToken)
@@ -73,7 +78,7 @@ public class NaverAuthService {
 
     private NaverUserInfoResponse getNaverUserInfo(String accessToken) {
         return webClient.get()
-                .uri(OAuthProperties.getProvider().getNaver().getUserInfoUri())
+                .uri(oAuthProperties.getProvider().getNaver().getUserInfoUri())
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .bodyToMono(NaverUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> NaverUserInfoResponse 클래스 인스턴스로 역직렬화

@@ -29,7 +29,7 @@ public class Store extends TimeStamped {
     private String imageUrl;
     private Integer capacity;
     private Integer deposit;
-    private Double averageRating = 0.0;
+    private Double rating = 0.0;
     private Integer ratingCount = 0;
     @Column(nullable = false)
     private LocalTime startTime;
@@ -46,12 +46,12 @@ public class Store extends TimeStamped {
 
     @PrePersist
     public void prePersist() {
-        averageRating = 0.0;
+        rating = 0.0;
         ratingCount = 0;
     }
 
     @Builder
-    private Store(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double averageRating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
+    private Store(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double rating, Integer ratingCount, LocalTime startTime, LocalTime endTime, User user, Category category) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -59,7 +59,7 @@ public class Store extends TimeStamped {
         this.imageUrl = imageUrl;
         this.capacity = capacity;
         this.deposit = deposit;
-        this.averageRating = averageRating;
+        this.rating = rating;
         this.ratingCount = ratingCount;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -118,10 +118,10 @@ public class Store extends TimeStamped {
 
     public void applyRating(Integer rating) {
         Integer newRatingCount = this.ratingCount + 1;
-        Double newAverageRating = ((this.averageRating * this.ratingCount) + rating) / newRatingCount;
+        Double newRating = ((this.rating * this.ratingCount) + rating) / newRatingCount;
 
         this.ratingCount = newRatingCount;
-        this.averageRating = newAverageRating;
+        this.rating = newRating;
     }
 
     public void removeRating(Integer rating) {
@@ -129,13 +129,13 @@ public class Store extends TimeStamped {
 
         if (newRatingCount <= 0) {
             this.ratingCount = 0;
-            this.averageRating = 0.0;
+            this.rating = 0.0;
             return;
         }
-        Double newAverageRating = ((this.averageRating * this.ratingCount) - rating) / newRatingCount;
+        Double newRating = ((this.rating * this.ratingCount) - rating) / newRatingCount;
 
         this.ratingCount = newRatingCount;
-        this.averageRating = newAverageRating;
+        this.rating = newRating;
     }
 
     public void updateRating(Integer oldRating, Integer newRating) {
@@ -143,7 +143,7 @@ public class Store extends TimeStamped {
             throw new HandledException(ErrorCode.CONFLICT);
         }
 
-        Double newAverageRating = ((this.averageRating * this.ratingCount) - oldRating + newRating) / this.ratingCount;
-        this.averageRating = newAverageRating;
+        Double resultRating = ((this.rating * this.ratingCount) - oldRating + newRating) / this.ratingCount;
+        this.rating = resultRating;
     }
 }

@@ -119,12 +119,17 @@ public class EventJoinService {
 
         event.validateOpenStatus();
         validateEventNotAlreadyJoined(zsetKey, user);
-        validateEventCapacity(zsetKey, event.getLimitPeople());
+        validateEventCapacity(zsetKey, event.getLimitPeople(), event);
 
-        EventJoin eventJoin = saveEventJoin(event, user);
-
-        log.info("이벤트 신청 성공: eventJoinId={}, user={}, event={}", eventJoin.getId(), user.getEmail(), eventId);
-        return EventJoinResponseDto.fromEventJoin(eventJoin);
+        try {
+            EventJoin eventJoin = saveEventJoin(event, user);
+            log.info("이벤트 신청 성공: eventJoinId={}, user={}, event={}", eventJoin.getId(), user.getEmail(), eventId);
+            return EventJoinResponseDto.fromEventJoin(eventJoin);
+        } catch (Exception e) {
+            redisTemplate.opsForZSet().remove(zsetKey, String.valueOf(user.getId()));
+            log.warn("DB insert 실패로 Redis 자리 반환: userId={}, eventId={}", user.getId(), eventId);
+            throw e;
+        }
     }
 
     private void validateEventNotAlreadyJoined(String zsetKey, User user) {
@@ -135,10 +140,15 @@ public class EventJoinService {
         redisTemplate.expire(zsetKey, Duration.ofHours(1));
     }
 
-    private void validateEventCapacity(String zsetKey, int limit) {
+    private void validateEventCapacity(String zsetKey, int limit, Event event) {
         Long current = redisTemplate.opsForZSet().zCard(zsetKey);
+
         if (current != null && current >= limit) {
-            throw new HandledException(ErrorCode.EVENT_FULL);
+            long dbCount = eventJoinRepository.countByEvent(event);
+
+            if (dbCount >= limit) {
+                throw new HandledException(ErrorCode.EVENT_FULL);
+            }
         }
     }
 
