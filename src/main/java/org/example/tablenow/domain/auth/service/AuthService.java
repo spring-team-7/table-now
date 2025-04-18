@@ -71,12 +71,9 @@ public class AuthService {
     public TokenResponse refreshToken(String refreshToken, String accessToken, Long userId) {
         RefreshToken refreshTokenInfo = tokenService.validateRefreshToken(refreshToken, userId);
         tokenService.deleteRefreshToken(refreshToken);
-        User user = userService.getUser(refreshTokenInfo.getUserId());
 
-        // 기존 AccessToken 블랙리스트 등록
-        if (accessToken != null) {
-            tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.REFRESH);
-        }
+        User user = userService.getUser(refreshTokenInfo.getUserId());
+        tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.REFRESH);
 
         return generateTokenResponse(user);
     }
@@ -85,9 +82,7 @@ public class AuthService {
         if (refreshToken != null) {
             tokenService.deleteRefreshToken(refreshToken);
         }
-        if (accessToken != null) {
-            tokenService.addToBlacklist(accessToken, userId, BlacklistReason.LOGOUT);
-        }
+        tokenService.addToBlacklist(accessToken, userId, BlacklistReason.LOGOUT);
     }
 
     private TokenResponse generateTokenResponse(User user) {

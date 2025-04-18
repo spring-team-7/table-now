@@ -51,9 +51,7 @@ public class AuthController {
             @AuthenticationPrincipal AuthUser authUser,
             HttpServletResponse response
     ) {
-        if (refreshToken == null) {
-            throw new HandledException(ErrorCode.REFRESH_TOKEN_MISSING);
-        }
+        checkRefreshTokenExists(refreshToken);
 
         TokenResponse tokenResponse = authService.refreshToken(refreshToken, accessToken, authUser.getId());
         CookieUtil.addRefreshTokenToCookie(response, tokenResponse.getRefreshToken());
@@ -67,9 +65,7 @@ public class AuthController {
             @AuthenticationPrincipal AuthUser authUser,
             HttpServletResponse response
     ) {
-        if (refreshToken != null || accessToken != null) {
-            authService.logout(refreshToken, accessToken, authUser.getId());
-        }
+        authService.logout(refreshToken, accessToken, authUser.getId());
         CookieUtil.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok("로그아웃에 성공했습니다.");
     }
@@ -94,5 +90,11 @@ public class AuthController {
 
         CookieUtil.addRefreshTokenToCookie(response, tokenResponse.getRefreshToken());
         return ResponseEntity.ok(AccessTokenResponse.fromTokenResponse(tokenResponse));
+    }
+
+    private void checkRefreshTokenExists(String refreshToken) {
+        if (refreshToken == null) {
+            throw new HandledException(ErrorCode.REFRESH_TOKEN_MISSING);
+        }
     }
 }
