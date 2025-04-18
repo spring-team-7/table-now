@@ -11,6 +11,7 @@ import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.security.enums.BlacklistReason;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,16 +68,21 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
-    public TokenResponse refreshToken(String token) {
-        RefreshToken refreshToken = tokenService.validateRefreshToken(token);
-        tokenService.deleteRefreshToken(token);
-        User user = userService.getUser(refreshToken.getUserId());
+    public TokenResponse refreshToken(String refreshToken, String accessToken, Long userId) {
+        RefreshToken refreshTokenInfo = tokenService.validateRefreshToken(refreshToken, userId);
+        tokenService.deleteRefreshToken(refreshToken);
+
+        User user = userService.getUser(refreshTokenInfo.getUserId());
+        tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.REFRESH);
 
         return generateTokenResponse(user);
     }
 
-    public void logout(String token) {
-        tokenService.deleteRefreshToken(token);
+    public void logout(String refreshToken, String accessToken, Long userId) {
+        if (refreshToken != null) {
+            tokenService.deleteRefreshToken(refreshToken);
+        }
+        tokenService.addToBlacklist(accessToken, userId, BlacklistReason.LOGOUT);
     }
 
     private TokenResponse generateTokenResponse(User user) {

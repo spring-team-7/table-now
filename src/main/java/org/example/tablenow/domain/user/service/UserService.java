@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
 import org.example.tablenow.domain.auth.service.KakaoAuthService;
+import org.example.tablenow.domain.auth.service.TokenService;
 import org.example.tablenow.domain.image.service.ImageService;
 import org.example.tablenow.domain.user.dto.request.UpdatePasswordRequest;
 import org.example.tablenow.domain.user.dto.request.UpdateProfileRequest;
@@ -12,10 +13,11 @@ import org.example.tablenow.domain.user.dto.response.SimpleUserResponse;
 import org.example.tablenow.domain.user.dto.response.UserProfileResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.global.constant.RegexConstants;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.util.RegexConstants;
+import org.example.tablenow.global.security.enums.BlacklistReason;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ImageService imageService;
     private final KakaoAuthService kakaoAuthService;
+    private final TokenService tokenService;
 
     public User getUser(Long id) {
         return userRepository.findById(id)
@@ -45,7 +48,7 @@ public class UserService {
     }
 
     @Transactional
-    public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request) {
+    public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request, String refreshToken, String accessToken) {
         User user = getUser(authUser.getId());
 
         if (user.isOAuthUser()) {
@@ -67,6 +70,8 @@ public class UserService {
         if (StringUtils.hasText(user.getImageUrl())) {
             imageService.delete(user.getImageUrl());
         }
+        tokenService.deleteRefreshToken(refreshToken);
+        tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.WITHDRAWAL);
 
         return SimpleUserResponse.builder()
                 .id(user.getId())
@@ -75,7 +80,7 @@ public class UserService {
     }
 
     @Transactional
-    public SimpleUserResponse updatePassword(AuthUser authUser, UpdatePasswordRequest request) {
+    public SimpleUserResponse updatePassword(AuthUser authUser, UpdatePasswordRequest request, String refreshToken, String accessToken) {
         User user = getUser(authUser.getId());
 
         // OAuth 유저 차단
@@ -94,6 +99,9 @@ public class UserService {
         validatePassword(user, request.getPassword());
 
         user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+
+        tokenService.deleteRefreshToken(refreshToken);
+        tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.PASSWORD_CHANGE);
 
         return SimpleUserResponse.builder()
                 .id(user.getId())
