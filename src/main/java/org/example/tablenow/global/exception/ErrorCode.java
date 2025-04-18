@@ -92,8 +92,11 @@ public enum ErrorCode {
     TOSS_PAYMENT_CANCEL_FAILED(HttpStatus.BAD_REQUEST, "Tosspayment에서 결제 취소가 실패했습니다."),
     PAYMENT_RESERVATION_MISMATCH(HttpStatus.BAD_REQUEST, "예약이 결제와 일치하지 않습니다."),
     ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 결제가 취소된 예약입니다."),
-    UNAUTHORIZED_RESERVATION_ACCESS(HttpStatus.UNAUTHORIZED, "본인 예약이 아닙니다.");
+    UNAUTHORIZED_RESERVATION_ACCESS(HttpStatus.UNAUTHORIZED, "본인 예약이 아닙니다."),
 
+    // SETTLEMENT
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산이 존재하지 않습니다."),
+    INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다.");
 
     private final HttpStatus status;
     private final String defaultMessage;
