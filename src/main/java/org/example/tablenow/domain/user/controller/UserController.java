@@ -13,6 +13,7 @@ import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.CookieUtil;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -27,12 +28,14 @@ public class UserController {
     @DeleteMapping("/v1/users")
     public ResponseEntity<SimpleUserResponse> deleteUser(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody UserDeleteRequest request,
             HttpServletResponse response
     ) {
         checkRefreshTokenExists(refreshToken);
-        SimpleUserResponse deletedUserResponse = userService.deleteUser(authUser, request, refreshToken);
+        SimpleUserResponse deletedUserResponse =
+                userService.deleteUser(authUser, request, refreshToken, accessToken);
         CookieUtil.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok(deletedUserResponse);
     }
@@ -40,12 +43,14 @@ public class UserController {
     @PatchMapping("/v1/users/password")
     public ResponseEntity<SimpleUserResponse> updatePassword(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String accessToken,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody UpdatePasswordRequest request,
             HttpServletResponse response
     ) {
         checkRefreshTokenExists(refreshToken);
-        SimpleUserResponse updatedPasswordResponse = userService.updatePassword(authUser, request, refreshToken);
+        SimpleUserResponse updatedPasswordResponse =
+                userService.updatePassword(authUser, request, refreshToken, accessToken);
         CookieUtil.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok(updatedPasswordResponse);
     }
