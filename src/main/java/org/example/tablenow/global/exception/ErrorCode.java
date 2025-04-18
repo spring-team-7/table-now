@@ -20,6 +20,7 @@ public enum ErrorCode {
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 권한입니다."),
     INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호 형식이 올바르지 않습니다."),
+    INVALID_REFRESH_TOKEN_OWNER(HttpStatus.UNAUTHORIZED, "RefreshToken의 소유자가 일치하지 않습니다."),
     MISSING_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호는 필수 입력값입니다."),
     REFRESH_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "요청 쿠키에 리프레시 토큰이 존재하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

@@ -68,10 +68,10 @@ public class AuthService {
         return generateTokenResponse(user);
     }
 
-    public TokenResponse refreshToken(String refreshTokenValue, String accessToken) {
-        RefreshToken refreshToken = tokenService.validateRefreshToken(refreshTokenValue);
-        tokenService.deleteRefreshToken(refreshTokenValue);
-        User user = userService.getUser(refreshToken.getUserId());
+    public TokenResponse refreshToken(String refreshToken, String accessToken, Long userId) {
+        RefreshToken refreshTokenInfo = tokenService.validateRefreshToken(refreshToken, userId);
+        tokenService.deleteRefreshToken(refreshToken);
+        User user = userService.getUser(refreshTokenInfo.getUserId());
 
         // 기존 AccessToken 블랙리스트 등록
         if (accessToken != null) {

@@ -47,12 +47,15 @@ public class TokenService {
         return refreshToken;
     }
 
-    public RefreshToken validateRefreshToken(String refreshToken) {
+    public RefreshToken validateRefreshToken(String refreshToken, Long userId) {
         String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
         String userIdValue = redisTemplate.opsForValue().get(redisKey);
 
         if (userIdValue == null) {
             throw new HandledException(ErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
+        if (!userIdValue.equals(String.valueOf(userId))) {
+            throw new HandledException(ErrorCode.INVALID_REFRESH_TOKEN_OWNER);
         }
 
         return RefreshToken.builder()
