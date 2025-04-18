@@ -11,9 +11,12 @@ import org.example.tablenow.domain.auth.oAuth.naver.NaverUserInfoResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.global.constant.OAuthConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,11 +63,11 @@ public class NaverAuthService {
 
     private String getNaverAccessToken(String code) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("client_id", oAuthProperties.getRegistration().getNaver().getClientId());
-        formData.add("client_secret", oAuthProperties.getRegistration().getNaver().getClientSecret());
-        formData.add("redirect_uri", oAuthProperties.getRegistration().getNaver().getRedirectUri());
-        formData.add("grant_type", oAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
-        formData.add("code", code);
+        formData.add(OAuthConstants.CLIENT_ID, oAuthProperties.getRegistration().getNaver().getClientId());
+        formData.add(OAuthConstants.CLIENT_SECRET, oAuthProperties.getRegistration().getNaver().getClientSecret());
+        formData.add(OAuthConstants.REDIRECT_URI, oAuthProperties.getRegistration().getNaver().getRedirectUri());
+        formData.add(OAuthConstants.GRANT_TYPE, oAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
+        formData.add(OAuthConstants.CODE, code);
 
         return webClient.post()
                 .uri(oAuthProperties.getProvider().getNaver().getTokenUri())
@@ -79,7 +82,7 @@ public class NaverAuthService {
     private NaverUserInfoResponse getNaverUserInfo(String accessToken) {
         return webClient.get()
                 .uri(oAuthProperties.getProvider().getNaver().getUserInfoUri())
-                .header("Authorization", "Bearer " + accessToken)
+                .header(HttpHeaders.AUTHORIZATION, SecurityConstants.BEARER_PREFIX + accessToken)
                 .retrieve()
                 .bodyToMono(NaverUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> NaverUserInfoResponse 클래스 인스턴스로 역직렬화
                 .block();
@@ -88,7 +91,7 @@ public class NaverAuthService {
     private String extractAccessToken(String response) {
         try {
             JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode.get("access_token").asText();
+            return jsonNode.get(OAuthConstants.ACCESS_TOKEN).asText();
         } catch (Exception e) {
             throw new HandledException(ErrorCode.FAILED_TO_PARSE_OAUTH_TOKEN);
         }

@@ -20,6 +20,7 @@ public enum ErrorCode {
     INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 권한입니다."),
     INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호 형식이 올바르지 않습니다."),
+    INVALID_REFRESH_TOKEN_OWNER(HttpStatus.UNAUTHORIZED, "RefreshToken의 소유자가 일치하지 않습니다."),
     MISSING_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호는 필수 입력값입니다."),
     REFRESH_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "요청 쿠키에 리프레시 토큰이 존재하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -50,6 +51,7 @@ public enum ErrorCode {
     RESERVATION_TIME_INVALID(HttpStatus.BAD_REQUEST, "예약 시간은 정각 또는 30분 단위여야 합니다."),
     RESERVATION_STATUS_INVALID(HttpStatus.BAD_REQUEST, "예약 상태가 유효하지 않습니다."),
     RESERVATION_STATUS_UPDATE_FORBIDDEN(HttpStatus.BAD_REQUEST, "예약 상태에서만 변경할 수 있습니다."),
+    RESERVATION_LOCK_TIMEOUT(HttpStatus.CONFLICT, "예약 신청 대기 중 시간이 초과되었습니다."),
 
     // EVENT
     EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "이벤트가 존재하지 않습니다."),
