@@ -23,7 +23,7 @@ public class StoreJdbcRepository {
     public void insertBatch(List<StoreCreateRequestDto> dto) {
         String sql = """
                 INSERT INTO STORE (name, description, address, user_id, category_id, capacity, deposit,
-                                    start_time, end_time, created_at, updated_at, average_rating, rating_count)
+                                    start_time, end_time, created_at, updated_at, rating, rating_count)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
                 """;
 
