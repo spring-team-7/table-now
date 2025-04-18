@@ -10,6 +10,8 @@ import org.example.tablenow.domain.user.dto.response.SimpleUserResponse;
 import org.example.tablenow.domain.user.dto.response.UserProfileResponse;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.dto.AuthUser;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.CookieUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,22 +26,28 @@ public class UserController {
 
     @DeleteMapping("/v1/users")
     public ResponseEntity<SimpleUserResponse> deleteUser(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody UserDeleteRequest request,
             HttpServletResponse response
     ) {
+        checkRefreshTokenExists(refreshToken);
+        SimpleUserResponse deletedUserResponse = userService.deleteUser(authUser, request, refreshToken);
         CookieUtil.deleteRefreshTokenCookie(response);
-        return ResponseEntity.ok(userService.deleteUser(authUser, request));
+        return ResponseEntity.ok(deletedUserResponse);
     }
 
     @PatchMapping("/v1/users/password")
     public ResponseEntity<SimpleUserResponse> updatePassword(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
             @AuthenticationPrincipal AuthUser authUser,
             @RequestBody UpdatePasswordRequest request,
             HttpServletResponse response
     ) {
+        checkRefreshTokenExists(refreshToken);
+        SimpleUserResponse updatedPasswordResponse = userService.updatePassword(authUser, request, refreshToken);
         CookieUtil.deleteRefreshTokenCookie(response);
-        return ResponseEntity.ok(userService.updatePassword(authUser, request));
+        return ResponseEntity.ok(updatedPasswordResponse);
     }
 
     @GetMapping("/v1/users")
@@ -53,5 +61,11 @@ public class UserController {
             @Valid @RequestBody UpdateProfileRequest request
     ) {
         return ResponseEntity.ok(userService.updateUserProfile(authUser, request));
+    }
+
+    private void checkRefreshTokenExists(String refreshToken) {
+        if (refreshToken == null) {
+            throw new HandledException(ErrorCode.REFRESH_TOKEN_MISSING);
+        }
     }
 }
