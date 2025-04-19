@@ -40,6 +40,7 @@ public class KakaoAuthService {
     private final WebClient webClient;
     private final OAuthProperties oAuthProperties;
     private final KakaoOAuthProperties kakaoOAuthProperties;
+    private final OAuthResponseParser oAuthResponseParser;
 
     @Transactional
     public TokenResponse login(String code) {
@@ -117,7 +118,7 @@ public class KakaoAuthService {
                         return Mono.error(new HandledException(ErrorCode.OAUTH_PROVIDER_SERVER_ERROR));
                     })
                     .bodyToMono(String.class)
-                    .map(OAuthResponseParser::extractAccessToken)
+                    .map(oAuthResponseParser::extractAccessToken)
                     .block();
         } catch (WebClientRequestException e) {
             log.error("[OAuth] 카카오 WebClient 요청 실패", e);

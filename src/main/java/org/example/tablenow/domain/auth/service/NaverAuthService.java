@@ -37,6 +37,7 @@ public class NaverAuthService {
     private final TokenService tokenService;
     private final WebClient webClient;
     private final OAuthProperties oAuthProperties;
+    private final OAuthResponseParser oAuthResponseParser;
 
     @Transactional
     public TokenResponse login(String code) {
@@ -87,7 +88,7 @@ public class NaverAuthService {
                         return Mono.error(new HandledException(ErrorCode.OAUTH_PROVIDER_SERVER_ERROR));
                     })
                     .bodyToMono(String.class)
-                    .map(OAuthResponseParser::extractAccessToken)
+                    .map(oAuthResponseParser::extractAccessToken)
                     .block();
         } catch (WebClientRequestException e) {
             log.error("[OAuth] 네이버 WebClient 요청 실패", e);

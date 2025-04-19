@@ -2,15 +2,19 @@ package org.example.tablenow.global.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.example.tablenow.global.constant.OAuthConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.springframework.stereotype.Component;
 
+@Component
+@RequiredArgsConstructor
 public class OAuthResponseParser {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public static String extractAccessToken(String response) {
+    public String extractAccessToken(String response) {
         try {
             JsonNode jsonNode = objectMapper.readTree(response);
             return jsonNode.get(OAuthConstants.ACCESS_TOKEN).asText();
