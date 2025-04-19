@@ -95,7 +95,7 @@ class TokenServiceTest {
                 .build();
 
         @Test
-        void Redis_장애_발생시_RefreshToken_저장_실패_예외() {
+        void Redis_장애_발생시_RefreshToken_저장_실패_예외처리() {
             // given
             willThrow(new RedisConnectionFailureException("Redis 연결 중 오류 발생"))
                     .given(ops)
@@ -124,7 +124,7 @@ class TokenServiceTest {
     class 리프레시_토큰_검증 {
 
         @Test
-        void Redis에_존재하지_않는_토큰으로_검증_시_예외() {
+        void Redis에_존재하지_않는_토큰으로_검증_시_예외처리() {
             // given
             String token = "invalid";
             given(ops.get(SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + token)).willReturn(null);
@@ -136,7 +136,7 @@ class TokenServiceTest {
         }
 
         @Test
-        void Redis에_저장된_userId와_다른_사용자가_요청시_예외() {
+        void Redis에_저장된_userId와_다른_사용자가_요청시_예외처리() {
             // given
             String token = UUID.randomUUID().toString();
             String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + token;
@@ -149,7 +149,7 @@ class TokenServiceTest {
         }
 
         @Test
-        void Redis_장애_발생시_RefreshToken_검증_실패_예외() {
+        void Redis_장애_발생시_RefreshToken_검증_실패_예외처리() {
             // given
             String token = UUID.randomUUID().toString();
             given(ops.get(anyString()))

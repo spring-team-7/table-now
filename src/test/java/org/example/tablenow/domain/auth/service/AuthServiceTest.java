@@ -61,7 +61,7 @@ class AuthServiceTest {
     class 회원가입 {
 
         @Test
-        void 중복된_이메일로_가입_시_예외() {
+        void 중복된_이메일로_가입_시_예외처리() {
             // given
             authService.signup(signupRequest);
 
@@ -98,7 +98,7 @@ class AuthServiceTest {
         }
 
         @Test
-        void 존재하지_않는_이메일로_로그인_시_예외() {
+        void 존재하지_않는_이메일로_로그인_시_예외처리() {
             // given
             SigninRequest invalidRequest = SigninRequest.builder()
                     .email("invalid@test.com")
@@ -112,7 +112,7 @@ class AuthServiceTest {
         }
 
         @Test
-        void 탈퇴한_사용자가_로그인_시도_시_예외() {
+        void 탈퇴한_사용자가_로그인_시도_시_예외처리() {
             // given
             User savedUser = userService.getUser(signupResponse.getId());
             savedUser.deleteUser();
@@ -124,7 +124,7 @@ class AuthServiceTest {
         }
 
         @Test
-        void 비밀번호가_저장된_비밀번호와_일치하지_않을_시_예외() {
+        void 비밀번호가_저장된_비밀번호와_일치하지_않을_시_예외처리() {
             // given
             SigninRequest wrongPasswordRequest = SigninRequest.builder()
                     .email("user@test.com")
