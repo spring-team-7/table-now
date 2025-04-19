@@ -160,7 +160,7 @@ class KakaoAuthServiceTest {
         }
 
         @Test
-        void 액세스토큰_JSON파싱_실패_예외처리() throws Exception {
+        void 액세스토큰_JSON파싱_실패_예외처리() {
             // given
             String invalidAccessTokenJson = "invalid json";
             mockWebClientTokenRequest(Mono.just(invalidAccessTokenJson));
@@ -174,7 +174,7 @@ class KakaoAuthServiceTest {
         }
 
         @Test
-        void 탈퇴한_유저가_로그인_시_예외처리() throws Exception {
+        void 탈퇴한_유저가_로그인_시_예외처리() {
             // given
             String accessTokenJson = createAccessTokenJson(KAKAO_ACCESS_TOKEN);
             KakaoUserInfoResponse response = createKakaoUserInfoResponse(
