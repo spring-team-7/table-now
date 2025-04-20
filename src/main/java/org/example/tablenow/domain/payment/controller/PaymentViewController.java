@@ -3,10 +3,7 @@ package org.example.tablenow.domain.payment.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.payment.dto.request.CheckoutRequestDto;
 import org.example.tablenow.domain.reservation.entity.Reservation;
-import org.example.tablenow.domain.reservation.repository.ReservationRepository;
 import org.example.tablenow.domain.reservation.service.ReservationService;
-import org.example.tablenow.global.exception.ErrorCode;
-import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,4 +30,3 @@ public class PaymentViewController {
         return "widget/checkout"; // templates/widget/checkout.html
     }
 }
-

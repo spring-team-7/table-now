@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.image.annotation.ImageUrlPattern;
-import org.example.tablenow.global.util.RegexConstants;
+import org.example.tablenow.global.constant.RegexConstants;
 
 @Builder
 @Getter

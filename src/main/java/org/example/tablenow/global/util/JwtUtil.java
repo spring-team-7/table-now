@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -22,7 +23,6 @@ import java.util.UUID;
 @Component
 public class JwtUtil {
 
-    private static final String BEARER_PREFIX = "Bearer ";
     private static final long TOKEN_TIME = 30 * 60 * 1000L; // 30분
 
     @Value("${jwt.secret.key}")
@@ -39,7 +39,7 @@ public class JwtUtil {
     public String createToken(Long userId, String email, UserRole userRole, String nickname) {
         Date date = new Date();
 
-        return BEARER_PREFIX +
+        return SecurityConstants.BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(String.valueOf(userId))
                         .claim("email", email)
@@ -53,7 +53,7 @@ public class JwtUtil {
     }
 
     public String substringToken(String tokenValue) {
-        if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
+        if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(SecurityConstants.BEARER_PREFIX)) {
             return tokenValue.substring(7);
         }
         throw new HandledException(ErrorCode.NOT_FOUND, "토큰이 존재하지 않습니다.");
@@ -65,5 +65,11 @@ public class JwtUtil {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public long getRemainingTokenTime(String token) {
+        Date expiration = extractClaims(token).getExpiration();
+        long now = System.currentTimeMillis();
+        return Math.max((expiration.getTime() - now) / 1000, 0); // 초 단위 반환
     }
 }
