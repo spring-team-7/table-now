@@ -12,9 +12,12 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.user.enums.UserRole;
-import org.example.tablenow.global.security.token.JwtAuthenticationToken;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.dto.AuthUser;
+import org.example.tablenow.global.security.token.JwtAuthenticationToken;
 import org.example.tablenow.global.util.JwtUtil;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -30,14 +33,26 @@ import static org.example.tablenow.global.util.JsonResponseUtil.sendErrorRespons
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String authorizationHeader = request.getHeader("Authorization");
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader != null && authorizationHeader.startsWith(SecurityConstants.BEARER_PREFIX)) {
             String jwt = jwtUtil.substringToken(authorizationHeader);
+
+            // AccessToken 블랙리스트 검증
+            String blacklistKey = SecurityConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
+            Boolean isBlacklisted = redisTemplate.hasKey(blacklistKey);
+            if (isBlacklisted) {
+                String message = "블랙리스트에 등록된 JWT 토큰입니다.";
+                log.warn(message + " token: {}", jwt);
+                sendErrorResponse(response, HttpStatus.UNAUTHORIZED, message);
+                return;
+            }
+
             try {
                 // JWT 유효성 검사와 claims 추출
                 Claims claims = jwtUtil.extractClaims(jwt);

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.image.enums.FileType;
-import org.example.tablenow.global.util.RegexConstants;
+import org.example.tablenow.global.constant.RegexConstants;
 
 @Builder
 @Getter

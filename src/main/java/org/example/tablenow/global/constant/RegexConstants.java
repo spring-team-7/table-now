@@ -1,4 +1,4 @@
-package org.example.tablenow.global.util;
+package org.example.tablenow.global.constant;
 
 public final class RegexConstants {
 
