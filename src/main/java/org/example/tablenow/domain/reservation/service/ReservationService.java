@@ -15,6 +15,7 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StoreService storeService;
+    private final VacancyProducer vacancyProducer;
 
     @Transactional
     public ReservationResponseDto makeReservation(AuthUser authUser, ReservationRequestDto request) {
@@ -102,6 +104,12 @@ public class ReservationService {
         validateReservationOwner(reservation, user);
 
         reservation.tryCancel();
+
+        vacancyProducer.sendVacancyEvent(
+            reservation.getStore().getId(),
+            reservation.getReservedAt().toLocalDate()
+        );
+
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
