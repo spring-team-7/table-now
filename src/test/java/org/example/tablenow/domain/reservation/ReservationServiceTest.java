@@ -28,6 +28,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -58,6 +59,7 @@ public class ReservationServiceTest {
             .id(storeId)
             .startTime(LocalTime.of(9, 0))
             .endTime(LocalTime.of(22, 0))
+            .capacity(20)
             .build();
 
     LocalDateTime reservedAt = LocalDateTime.of(2025, 4, 10, 10, 0);
@@ -83,6 +85,61 @@ public class ReservationServiceTest {
     }
 
     @Nested
+    class 락_기반_예약_생성 {
+
+        ReservationRequestDto dto = ReservationRequestDto.builder()
+                .storeId(storeId)
+                .reservedAt(reservedAt)
+                .build();
+
+        @Test
+        void 예약_성공() {
+            // given
+            given(storeService.getStore(anyLong())).willReturn(store);
+            given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
+            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), anyLong(), any())).willReturn(false);
+            given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+            // when
+            ReservationResponseDto response = reservationService.makeReservationWithLock(authUser, dto);
+
+            // then
+            assertNotNull(response);
+            assertEquals(reservedAt, response.getReservedAt());
+            assertEquals(storeId, response.getStoreId());
+        }
+
+        @Test
+        void 정원_초과시_예외_발생() {
+            // given
+            given(storeService.getStore(anyLong())).willReturn(store);
+            given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(999L); // 정원 초과
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    reservationService.makeReservationWithLock(authUser, dto)
+            );
+
+            assertEquals(ErrorCode.STORE_TABLE_CAPACITY_EXCEEDED.getDefaultMessage(), exception.getMessage());
+        }
+
+        @Test
+        void 중복_예약시_예외_발생() {
+            // given
+            given(storeService.getStore(anyLong())).willReturn(store);
+            given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
+            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), anyLong(), any())).willReturn(true);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    reservationService.makeReservationWithLock(authUser, dto)
+            );
+
+            assertEquals(ErrorCode.RESERVATION_DUPLICATE.getDefaultMessage(), exception.getMessage());
+        }
+    }
+
+    @Nested
     class 예약_생성 {
         ReservationRequestDto dto = ReservationRequestDto.builder()
                 .storeId(storeId)
@@ -90,10 +147,10 @@ public class ReservationServiceTest {
                 .build();
 
         @Test
-        void 이미_예약이_존재하는_경우_예외_발생() {
+        void 이미_같은_유저의_예약이_존재하는_경우_예외_발생() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.isReservedStatusInUse(anyLong(), any())).willReturn(true);
+            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -103,24 +160,10 @@ public class ReservationServiceTest {
         }
 
         @Test
-        void 예약_시간이_정각_또는_30분이_아니면_예외_발생() {
-            // given
-            given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.isReservedStatusInUse(anyLong(), any())).willReturn(false);
-            ReflectionTestUtils.setField(dto, "reservedAt", LocalDateTime.of(2025, 4, 10, 10, 59));
-
-            // when & then
-            HandledException exception = assertThrows(HandledException.class, () ->
-                    reservationService.makeReservation(authUser, dto)
-            );
-            assertEquals(exception.getMessage(), ErrorCode.RESERVATION_TIME_INVALID.getDefaultMessage());
-        }
-
-        @Test
         void 예약_시간이_가게_영업시간이_아니면_예외_발생() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.isReservedStatusInUse(anyLong(), any())).willReturn(false);
+            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             ReflectionTestUtils.setField(dto, "reservedAt", LocalDateTime.of(2025, 4, 10, 23, 0));
 
             // when & then
@@ -134,7 +177,7 @@ public class ReservationServiceTest {
         void 예약_성공() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.isReservedStatusInUse(anyLong(), any())).willReturn(false);
+            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any(Reservation.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -319,6 +362,48 @@ public class ReservationServiceTest {
     }
 
     @Nested
+    class 빈자리_여부_조회 {
+
+        LocalDate date = LocalDate.of(2025, 4, 10);
+
+        @Test
+        void 정원이_남아있으면_true_반환() {
+            // given
+            given(reservationRepository.countReservedTablesByDate(store, date)).willReturn(5L);
+
+            // when
+            boolean result = reservationService.hasVacancyDate(store, date);
+
+            // then
+            assertTrue(result);
+        }
+
+        @Test
+        void 정원이_가득_찼으면_false_반환() {
+            // given
+            given(reservationRepository.countReservedTablesByDate(store, date)).willReturn(20L);
+
+            // when
+            boolean result = reservationService.hasVacancyDate(store, date);
+
+            // then
+            assertFalse(result);
+        }
+
+        @Test
+        void 정원을_초과했으면_false_반환() {
+            // given
+            given(reservationRepository.countReservedTablesByDate(store, date)).willReturn(21L);
+
+            // when
+            boolean result = reservationService.hasVacancyDate(store, date);
+
+            // then
+            assertFalse(result);
+        }
+    }
+
+    @Nested
     class 예약_취소 {
 
         @Test
@@ -395,6 +480,35 @@ public class ReservationServiceTest {
             // then
             assertNotNull(response);
             assertEquals(ReservationStatus.COMPLETED, response.getStatus());
+        }
+    }
+
+    @Nested
+    class 리뷰작성_가능여부_검증 {
+
+        Long userId = 1L;
+        Long storeId = 10L;
+
+        @Test
+        void 리뷰_작성_가능한_예약이_존재하면_예외발생하지_않음() {
+            // given
+            given(reservationRepository.existsReviewableReservation(userId, storeId)).willReturn(true);
+
+            // when & then
+            assertDoesNotThrow(() -> reservationService.validateCreateRating(userId, storeId));
+        }
+
+        @Test
+        void 리뷰_작성_가능한_예약이_없으면_예외발생() {
+            // given
+            given(reservationRepository.existsReviewableReservation(userId, storeId)).willReturn(false);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    reservationService.validateCreateRating(userId, storeId)
+            );
+
+            assertEquals(ErrorCode.RATING_RESERVATION_NOT_FOUND.getDefaultMessage(), exception.getMessage());
         }
     }
 }
