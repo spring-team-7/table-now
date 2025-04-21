@@ -43,7 +43,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final CategoryService categoryService;
     private final ImageService imageService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<Object, Object> redisTemplate;
 
     private static final Long MAX_STORES_COUNT = 3L;
     private static final Integer TARGET_HOUR_LENGTH = 10;
