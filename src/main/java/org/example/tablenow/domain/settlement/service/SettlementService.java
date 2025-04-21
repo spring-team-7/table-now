@@ -1,8 +1,6 @@
 package org.example.tablenow.domain.settlement.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.tablenow.domain.payment.entity.Payment;
-import org.example.tablenow.domain.payment.enums.PaymentStatus;
 import org.example.tablenow.domain.payment.repository.PaymentRepository;
 import org.example.tablenow.domain.settlement.dto.response.SettlementOperationResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementResponseDto;
@@ -20,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,25 +31,13 @@ public class SettlementService {
     @Transactional
     public SettlementOperationResponseDto registerPendingSettlements() {
 
-        List<Payment> payments = paymentRepository.findAll();
+        List<Settlement> settlements = paymentRepository.findUnsettledDonePayments().stream()
+                .map(Settlement::fromPayment)
+                .toList();
 
-        int createdCount = 0;
+        List<Settlement> readySettlements = settlementRepository.saveAll(settlements);
 
-        for (Payment payment : payments) {
-            if (payment.getStatus() != PaymentStatus.DONE) continue;
-            if (settlementRepository.existsByPaymentId(payment.getId())) continue;
-
-            Settlement settlement = Settlement.builder()
-                    .payment(payment)
-                    .amount(payment.getPrice())
-                    .status(SettlementStatus.READY)
-                    .build();
-
-            settlementRepository.save(settlement);
-            createdCount++;
-        }
-
-        return new SettlementOperationResponseDto(createdCount, SettlementStatus.READY);
+        return new SettlementOperationResponseDto(readySettlements.size(), SettlementStatus.READY);
     }
 
     @Transactional
@@ -57,14 +45,11 @@ public class SettlementService {
 
         List<Settlement> readySettlements = settlementRepository.findAllByStatus(SettlementStatus.READY);
 
-        int completedCount = 0;
+        readySettlements.forEach(Settlement::done);
 
-        for (Settlement settlement : readySettlements) {
-            settlement.done();
-            completedCount++;
-        }
+        List<Settlement> doneSettlements = settlementRepository.saveAll(readySettlements);
 
-        return new SettlementOperationResponseDto(completedCount, SettlementStatus.DONE);
+        return new SettlementOperationResponseDto(doneSettlements.size(), SettlementStatus.DONE);
     }
 
     @Transactional(readOnly = true)
@@ -73,7 +58,7 @@ public class SettlementService {
         Pageable pageable = PageRequest.of(page - 1, size);
 
         return settlementRepository.findAll(pageable)
-                .map(SettlementResponseDto::from);
+                .map(SettlementResponseDto::fromSettlement);
     }
 
     @Transactional(readOnly = true)
@@ -82,32 +67,25 @@ public class SettlementService {
         Settlement settlement = settlementRepository.findById(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-        return SettlementResponseDto.from(settlement);
+        return SettlementResponseDto.fromSettlement(settlement);
     }
 
     @Transactional(readOnly = true)
     public SettlementSummaryPageDto getMyStoreSettlements(AuthUser authUser, int page, int size) {
+
         Pageable pageable = PageRequest.of(page - 1, size);
 
         Page<Settlement> settlements = settlementRepository.findByStoreOwnerId(authUser.getId(), pageable);
+        Page<SettlementResponseDto> dtoPage = settlements.map(SettlementResponseDto::fromSettlement);
 
-        Page<SettlementResponseDto> dtoPage = settlements.map(SettlementResponseDto::from);
+        Map<SettlementStatus, Integer> totalAmountByStatus = calculateAmountByStatus(settlements.getContent());
 
-        int doneAmount = 0;
-        int pendingAmount = 0;
-        int canceledAmount = 0;
+        int doneAmount = totalAmountByStatus.getOrDefault(SettlementStatus.DONE, 0);
+        int readyAmount = totalAmountByStatus.getOrDefault(SettlementStatus.READY, 0);
+        int canceledAmount = totalAmountByStatus.getOrDefault(SettlementStatus.CANCELED, 0);
 
-        for (Settlement settlement : settlements) {
-            switch (settlement.getStatus()) {
-                case DONE -> doneAmount += settlement.getAmount();
-                case READY -> pendingAmount += settlement.getAmount();
-                case CANCELED -> canceledAmount += settlement.getAmount();
-            }
-        }
-
-        return SettlementSummaryPageDto.of(dtoPage, doneAmount, pendingAmount, canceledAmount);
+        return SettlementSummaryPageDto.of(doneAmount, readyAmount, canceledAmount, dtoPage);
     }
-
 
     @Transactional
     public SettlementOperationResponseDto cancelSettlement(Long id) {
@@ -115,16 +93,17 @@ public class SettlementService {
         Settlement settlement = settlementRepository.findById(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
-        if (settlement.getStatus() == SettlementStatus.CANCELED) {
-            throw new HandledException(ErrorCode.ALREADY_CANCELED);
-        }
-
-        if (settlement.getStatus() != SettlementStatus.DONE) {
-            throw new HandledException(ErrorCode.INVALID_SETTLEMENT_STATUS);
-        }
-
         settlement.cancel();
 
         return new SettlementOperationResponseDto(1, SettlementStatus.CANCELED);
+    }
+
+    private Map<SettlementStatus, Integer> calculateAmountByStatus(List<Settlement> settlements) {
+
+        return settlements.stream()
+                .collect(Collectors.groupingBy(
+                        Settlement::getStatus,
+                        Collectors.summingInt(Settlement::getAmount)
+                ));
     }
 }

@@ -10,18 +10,26 @@ public class SettlementSummaryPageDto {
 
     private int totalAmount;
     private int doneAmount;
-    private int pendingAmount;
+    private int readyAmount;
     private int canceledAmount;
 
     private Page<SettlementResponseDto> page;
 
     public static SettlementSummaryPageDto of(
-            Page<SettlementResponseDto> page,
             int doneAmount,
-            int pendingAmount,
-            int canceledAmount
+            int readyAmount,
+            int canceledAmount,
+            Page<SettlementResponseDto> page
     ) {
-        int total = doneAmount + pendingAmount + canceledAmount;
-        return new SettlementSummaryPageDto(total, doneAmount, pendingAmount, canceledAmount, page);
+
+        int total = doneAmount + readyAmount + canceledAmount;
+
+        return new SettlementSummaryPageDto(
+                total,
+                doneAmount,
+                readyAmount,
+                canceledAmount,
+                page
+        );
     }
 }

@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.settlement.controller;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.settlement.dto.response.SettlementOperationResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementResponseDto;
@@ -11,11 +12,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@Validated
 public class SettlementController {
 
     private final SettlementService settlementService;
@@ -38,8 +41,8 @@ public class SettlementController {
     @Secured(UserRole.Authority.ADMIN)
     @GetMapping("/v1/settlements")
     public ResponseEntity<Page<SettlementResponseDto>> getAllSettlements(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size
+            @Positive @RequestParam(defaultValue = "1") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(settlementService.getAllSettlements(page, size));
     }
@@ -54,8 +57,8 @@ public class SettlementController {
     @GetMapping("/v1/owner/settlements")
     public ResponseEntity<SettlementSummaryPageDto> getMyStoreSettlements(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size
+            @Positive @RequestParam(defaultValue = "1") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(settlementService.getMyStoreSettlements(authUser, page, size));
     }

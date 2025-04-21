@@ -27,7 +27,7 @@ public class SettlementResponseDto {
         this.createdAt = createdAt;
     }
 
-    public static SettlementResponseDto from(Settlement settlement) {
+    public static SettlementResponseDto fromSettlement(Settlement settlement) {
         return new SettlementResponseDto(
                 settlement.getId(),
                 settlement.getAmount(),

@@ -12,8 +12,6 @@ import java.util.List;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
-    boolean existsByPaymentId(Long paymentId);
-
     List<Settlement> findAllByStatus(SettlementStatus settlementStatus);
 
     @Query("""
