@@ -442,7 +442,7 @@ public class StoreServiceTest {
 
                 // when & then
                 HandledException exception = assertThrows(HandledException.class, () ->
-                        storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
+                        storeService.getStoresV1(authUser, 1, 10, sortField, sortOrder, null, null)
                 );
                 assertEquals(exception.getMessage(), ErrorCode.INVALID_ORDER_VALUE.getDefaultMessage());
             }
@@ -455,7 +455,7 @@ public class StoreServiceTest {
 
                 // when & then
                 HandledException exception = assertThrows(HandledException.class, () ->
-                        storeService.findAllStores(authUser, 1, 10, sortField, sortOrder, null, null)
+                        storeService.getStoresV1(authUser, 1, 10, sortField, sortOrder, null, null)
                 );
                 assertEquals(exception.getMessage(), ErrorCode.INVALID_SORT_FIELD.getDefaultMessage());
             }
@@ -473,7 +473,7 @@ public class StoreServiceTest {
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, "");
+            Page<StoreSearchResponseDto> response = storeService.getStoresV1(authUser, page, size, sortField, sortOrder, categoryId, "");
 
             // then
             StoreSearchResponseDto dto = response.getContent().get(0);
@@ -499,7 +499,7 @@ public class StoreServiceTest {
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, search);
+            Page<StoreSearchResponseDto> response = storeService.getStoresV1(authUser, page, size, sortField, sortOrder, categoryId, search);
 
             // then
             StoreSearchResponseDto dto = response.getContent().get(0);
@@ -531,7 +531,7 @@ public class StoreServiceTest {
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.findAllStores(authUser, page, size, sortField, sortOrder, categoryId, search);
+            Page<StoreSearchResponseDto> response = storeService.getStoresV1(authUser, page, size, sortField, sortOrder, categoryId, search);
 
             // then
 

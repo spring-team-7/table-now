@@ -1,0 +1,24 @@
+FROM docker.elastic.co/logstash/logstash:8.7.1
+
+RUN mkdir -p /usr/share/logstash/pipeline
+
+RUN cat <<EOF > /usr/share/logstash/pipeline/logstash.conf
+input {
+  tcp {
+    port => 5044
+    codec => json_lines
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://elasticsearch:9200"]
+    index => "search-log-%{+YYYY.MM.dd}"
+  }
+}
+EOF
+
+EXPOSE 5044
+EXPOSE 9600
+
+CMD ["logstash", "-f", "/usr/share/logstash/pipeline/logstash.conf"]
