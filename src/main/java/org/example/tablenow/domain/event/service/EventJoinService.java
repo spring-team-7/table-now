@@ -13,7 +13,6 @@ import org.example.tablenow.global.annotation.DistributedLock;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +26,6 @@ public class EventJoinService {
 
     private final EventJoinRepository eventJoinRepository;
     private final EventRepository eventRepository;
-    private final StringRedisTemplate redisTemplate;
     private final EventJoinExecutor eventJoinExecutor;
 
     private static final String EVENT_LOCK_KEY_PREFIX = "lock:event";

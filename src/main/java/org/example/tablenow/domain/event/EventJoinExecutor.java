@@ -29,7 +29,7 @@ public class EventJoinExecutor {
     public EventJoinResponseDto execute(Long eventId, AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
         String userId = String.valueOf(user.getId());
-        String zsetKey = "event:join:" + eventId;
+        String zsetKey = EVENT_JOIN_PREFIX + eventId;
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
