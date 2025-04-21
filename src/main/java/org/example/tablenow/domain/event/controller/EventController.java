@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
+import org.example.tablenow.domain.event.dto.response.EventCloseResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.enums.EventStatus;
@@ -41,6 +42,12 @@ public class EventController {
     @DeleteMapping("/v1/admin/events/{id}")
     public ResponseEntity<EventDeleteResponseDto> deleteEvent(@PathVariable Long id) {
         return ResponseEntity.ok(eventService.deleteEvent(id));
+    }
+
+    @Secured(UserRole.Authority.ADMIN)
+    @PatchMapping("/v1/admin/events/{id}/close")
+    public ResponseEntity<EventCloseResponseDto> closeEvent(@PathVariable Long id) {
+        return ResponseEntity.ok(eventService.closeEvent(id));
     }
 
     @GetMapping("/v1/events")

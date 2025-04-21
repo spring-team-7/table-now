@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
+import org.example.tablenow.domain.event.dto.response.EventCloseResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
@@ -20,6 +21,7 @@ import org.example.tablenow.global.exception.HandledException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,9 @@ public class EventService {
     private final StoreService storeService;
     private final EventJoinService eventJoinService;
     private final NotificationService notificationService;
+    private final RedisTemplate<Object, Object> redisTemplate;
+
+    private static final String EVENT_JOIN_PREFIX = "event:join:";
 
     @Transactional
     public EventResponseDto createEvent(EventRequestDto request) {
@@ -83,7 +88,18 @@ public class EventService {
         validateReadyStatus(event);
 
         eventRepository.delete(event);
+        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
         return EventDeleteResponseDto.fromEvent(event);
+    }
+
+    @Transactional
+    public EventCloseResponseDto closeEvent(Long id) {
+        Event event = getEvent(id);
+
+        event.close();
+
+        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
+        return EventCloseResponseDto.fromEvent(event);
     }
 
     @Transactional
