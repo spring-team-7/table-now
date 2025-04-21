@@ -1,0 +1,6 @@
+FROM docker.elastic.co/kibana/kibana:9.0.0
+
+ENV SERVER_NAME=kibana \
+    ELASTICSEARCH_HOSTS=http://es:9200
+
+EXPOSE 5601

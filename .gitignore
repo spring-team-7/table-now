@@ -47,3 +47,10 @@ out/
 /data/auto.cnf
 /data/binlog.index
 /data/mysql.sock
+
+## crt
+*.crt
+
+### logstash
+logs/
+/src/main/resources/logback-spring.xml

@@ -55,17 +55,30 @@ public class StoreController {
         return ResponseEntity.ok(storeService.deleteStore(id, authUser));
     }
 
-    // 가게 목록 조회
+    // 가게 목록 조회 (RDBMS)
     @GetMapping("/v1/stores")
-    public ResponseEntity<Page<StoreSearchResponseDto>> getStores(@AuthenticationPrincipal AuthUser authUser,
-                                                                  @RequestParam(defaultValue = "1") int page,
-                                                                  @RequestParam(defaultValue = "10") int size,
-                                                                  @RequestParam(defaultValue = "name") String sort,
-                                                                  @RequestParam(defaultValue = "asc") String direction,
-                                                                  @RequestParam(required = false) Long categoryId,
-                                                                  @RequestParam(required = false) String keyword
+    public ResponseEntity<Page<StoreSearchResponseDto>> getStoresV1(@AuthenticationPrincipal AuthUser authUser,
+                                                                     @RequestParam(defaultValue = "1") int page,
+                                                                     @RequestParam(defaultValue = "10") int size,
+                                                                     @RequestParam(defaultValue = "ratingCount") String sort,
+                                                                     @RequestParam(defaultValue = "desc") String direction,
+                                                                     @RequestParam(required = false) Long categoryId,
+                                                                     @RequestParam(required = false) String keyword
     ) {
-        return ResponseEntity.ok(storeService.findAllStores(authUser, page, size, sort, direction, categoryId, keyword));
+        return ResponseEntity.ok(storeService.getStoresV1(authUser, page, size, sort, direction, categoryId, keyword));
+    }
+
+    // 가게 목록 조회 (Redis)
+    @GetMapping("/v2/stores")
+    public ResponseEntity<Page<StoreSearchResponseDto>> getStoresV2(@AuthenticationPrincipal AuthUser authUser,
+                                                                    @RequestParam(defaultValue = "1") int page,
+                                                                    @RequestParam(defaultValue = "10") int size,
+                                                                    @RequestParam(defaultValue = "ratingCount") String sort,
+                                                                    @RequestParam(defaultValue = "desc") String direction,
+                                                                    @RequestParam(required = false) Long categoryId,
+                                                                    @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(storeService.getStoresV2(authUser, page, size, sort, direction, categoryId, keyword));
     }
 
     // 가게 정보 조회
