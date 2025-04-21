@@ -5,6 +5,7 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,5 +31,13 @@ public interface WaitlistRepository extends JpaRepository<Waitlist, Long> {
     List<LocalDate> findDistinctWaitDates();
 
     // 특정 가게의 해당 날짜의 대기자 목록 조회
-    List<Waitlist> findAllByStoreAndWaitDateAndIsNotifiedFalse(Store store, LocalDate waitDate);
+    @Query("""
+            SELECT w FROM Waitlist w
+            JOIN FETCH w.user
+            WHERE w.store = :store
+              AND w.waitDate = :waitDate
+              AND w.isNotified = false
+        """)
+    List<Waitlist> findWaitingList(@Param("store") Store store,
+                                                                       @Param("waitDate") LocalDate waitDate);
 }

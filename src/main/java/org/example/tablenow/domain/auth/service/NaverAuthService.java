@@ -1,8 +1,7 @@
 package org.example.tablenow.domain.auth.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProvider;
@@ -12,11 +11,13 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.constant.OAuthConstants;
+import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.constant.SecurityConstants;
+import org.example.tablenow.global.util.OAuthResponseParser;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import reactor.core.publisher.Mono;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class NaverAuthService {
@@ -32,8 +36,8 @@ public class NaverAuthService {
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final WebClient webClient;
-    private final ObjectMapper objectMapper;
     private final OAuthProperties oAuthProperties;
+    private final OAuthResponseParser oAuthResponseParser;
 
     @Transactional
     public TokenResponse login(String code) {
@@ -69,31 +73,54 @@ public class NaverAuthService {
         formData.add(OAuthConstants.GRANT_TYPE, oAuthProperties.getRegistration().getNaver().getAuthorizationGrantType());
         formData.add(OAuthConstants.CODE, code);
 
-        return webClient.post()
-                .uri(oAuthProperties.getProvider().getNaver().getTokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(formData))
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(this::extractAccessToken)
-                .block();
+        try {
+            return webClient.post()
+                    .uri(oAuthProperties.getProvider().getNaver().getTokenUri())
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(formData))
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, res -> {
+                        log.warn("[OAuth] 네이버 인가코드 오류 (4xx): {}", res.statusCode());
+                        return Mono.error(new HandledException(ErrorCode.OAUTH_TOKEN_REQUEST_FAILED));
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, res -> {
+                        log.error("[OAuth] 네이버 인증 서버 오류 (5xx): {}", res.statusCode());
+                        return Mono.error(new HandledException(ErrorCode.OAUTH_PROVIDER_SERVER_ERROR));
+                    })
+                    .bodyToMono(String.class)
+                    .map(oAuthResponseParser::extractAccessToken)
+                    .block();
+        } catch (WebClientRequestException e) {
+            log.error("[OAuth] 네이버 WebClient 요청 실패", e);
+            throw new HandledException(ErrorCode.OAUTH_PROVIDER_UNREACHABLE);
+        } catch (Exception e) {
+            log.error("[OAuth] 네이버 토큰 요청 중 알 수 없는 오류", e);
+            throw new HandledException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private NaverUserInfoResponse getNaverUserInfo(String accessToken) {
-        return webClient.get()
-                .uri(oAuthProperties.getProvider().getNaver().getUserInfoUri())
-                .header(HttpHeaders.AUTHORIZATION, SecurityConstants.BEARER_PREFIX + accessToken)
-                .retrieve()
-                .bodyToMono(NaverUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> NaverUserInfoResponse 클래스 인스턴스로 역직렬화
-                .block();
-    }
-
-    private String extractAccessToken(String response) {
         try {
-            JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode.get(OAuthConstants.ACCESS_TOKEN).asText();
+            return webClient.get()
+                    .uri(oAuthProperties.getProvider().getNaver().getUserInfoUri())
+                    .header(HttpHeaders.AUTHORIZATION, SecurityConstants.BEARER_PREFIX + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, res -> {
+                        log.warn("[OAuth] 네이버 사용자 정보 요청 실패 (4xx): {}", res.statusCode());
+                        return Mono.error(new HandledException(ErrorCode.OAUTH_USER_INFO_REQUEST_FAILED));
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, res -> {
+                        log.error("[OAuth] 네이버 사용자 정보 요청 서버 오류 (5xx): {}", res.statusCode());
+                        return Mono.error(new HandledException(ErrorCode.OAUTH_PROVIDER_SERVER_ERROR));
+                    })
+                    .bodyToMono(NaverUserInfoResponse.class) // 응답 Body 객체 매핑: JSON -> NaverUserInfoResponse 클래스 인스턴스로 역직렬화
+                    .block();
+        } catch (WebClientRequestException e) {
+            log.error("[OAuth] 네이버 사용자 정보 요청 WebClient 실패", e);
+            throw new HandledException(ErrorCode.OAUTH_PROVIDER_UNREACHABLE);
         } catch (Exception e) {
-            throw new HandledException(ErrorCode.FAILED_TO_PARSE_OAUTH_TOKEN);
+            log.error("[OAuth] 네이버 사용자 정보 요청 중 알 수 없는 오류", e);
+            throw new HandledException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

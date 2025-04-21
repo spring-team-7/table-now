@@ -56,12 +56,12 @@ public class UserService {
             if (user.getOauthProvider() == OAuthProvider.KAKAO) {
                 kakaoAuthService.unlinkKakaoByAdminKey(user.getOauthId());
             } else if (user.getOauthProvider() == OAuthProvider.NAVER) {
-                log.info("네이버는 OAuth AccessToken이 없으므로 연결 해제를 생략.");
+                log.info("[OAuth] 네이버는 OAuth AccessToken이 없으므로 연결 해제를 생략.");
             }
         } else {
             // 일반 유저 비밀번호 검증
             if (!StringUtils.hasText(request.getPassword())) {
-                throw new HandledException(ErrorCode.MISSING_PASSWORD);
+                throw new HandledException(ErrorCode.PASSWORD_REQUIRED);
             }
             validatePassword(user, request.getPassword());
         }
@@ -90,10 +90,10 @@ public class UserService {
 
         // Dto 검증
         if (!StringUtils.hasText(request.getPassword()) || !StringUtils.hasText(request.getNewPassword())) {
-            throw new HandledException(ErrorCode.MISSING_PASSWORD);
+            throw new HandledException(ErrorCode.PASSWORD_REQUIRED);
         }
         if (!Pattern.matches(RegexConstants.PASSWORD_REGEX, request.getNewPassword())) {
-            throw new HandledException(ErrorCode.INVALID_PASSWORD_FORMAT);
+            throw new HandledException(ErrorCode.PASSWORD_FORMAT_INVALID);
         }
 
         validatePassword(user, request.getPassword());

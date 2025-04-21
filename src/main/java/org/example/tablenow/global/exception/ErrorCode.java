@@ -12,19 +12,26 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "접근이 거부되었습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 리소스를 찾을 수 없습니다."),
 
-    // AUTH & USER
+    // AUTH
+    EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
+    INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
+    INVALID_REFRESH_TOKEN_OWNER(HttpStatus.UNAUTHORIZED, "RefreshToken의 소유자가 일치하지 않습니다."),
+    INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 권한입니다."),
+    OAUTH_PROVIDER_SERVER_ERROR(HttpStatus.BAD_GATEWAY, "OAuth 제공자의 서버에서 오류가 발생했습니다."),
+    OAUTH_PROVIDER_UNREACHABLE(HttpStatus.SERVICE_UNAVAILABLE, "OAuth 제공자 서버에 연결할 수 없습니다."),
+    OAUTH_RESPONSE_PARSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "소셜 로그인 토큰 파싱에 실패했습니다."),
+    OAUTH_TOKEN_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "OAuth 토큰 요청에 실패했습니다."),
+    OAUTH_USER_INFO_REQUEST_FAILED(HttpStatus.UNAUTHORIZED, "OAuth 사용자 정보 요청에 실패했습니다."),
+    OAUTH_USER_UNLINK_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "OAuth 사용자 연결 해제 요청에 실패했습니다."),
+    REFRESH_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "요청 쿠키에 리프레시 토큰이 존재하지 않습니다."),
+    UNSUPPORTED_SOCIAL_USER_OPERATION(HttpStatus.FORBIDDEN, "소셜 로그인 유저는 해당 기능을 사용할 수 없습니다."),
+
+    // USER
     ALREADY_DELETED_USER(HttpStatus.BAD_REQUEST, "이미 탈퇴한 사용자입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 가입된 이메일 입니다."),
-    EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
-    FAILED_TO_PARSE_OAUTH_TOKEN(HttpStatus.INTERNAL_SERVER_ERROR, "소셜 로그인 토큰 파싱에 실패했습니다."),
-    INCORRECT_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
-    INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "유효하지 않은 사용자 권한입니다."),
-    INVALID_PASSWORD_FORMAT(HttpStatus.BAD_REQUEST, "비밀번호 형식이 올바르지 않습니다."),
-    INVALID_REFRESH_TOKEN_OWNER(HttpStatus.UNAUTHORIZED, "RefreshToken의 소유자가 일치하지 않습니다."),
-    MISSING_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호는 필수 입력값입니다."),
-    REFRESH_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "요청 쿠키에 리프레시 토큰이 존재하지 않습니다."),
+    PASSWORD_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "비밀번호 형식이 올바르지 않습니다."),
+    PASSWORD_REQUIRED(HttpStatus.BAD_REQUEST, "비밀번호는 필수 입력값입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
-    UNSUPPORTED_SOCIAL_USER_OPERATION(HttpStatus.FORBIDDEN, "소셜 로그인 유저는 해당 기능을 사용할 수 없습니다."),
 
     // CATEGORY
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 카테고리를 찾을 수 없습니다."),
@@ -80,6 +87,7 @@ public enum ErrorCode {
     INVALID_IMAGE_DOMAIN(HttpStatus.BAD_REQUEST, "잘못된 이미지 도메인입니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
     INVALID_IMAGE_URL(HttpStatus.BAD_REQUEST, "잘못된 이미지 URL 입니다."),
+    S3_PRESIGNED_URL_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Presigned URL 생성 중 오류가 발생했습니다."),
 
     // COMMON
     INVALID_SORT_FIELD(HttpStatus.BAD_REQUEST, "정렬 필드가 잘못되었습니다."),
@@ -95,6 +103,9 @@ public enum ErrorCode {
     PAYMENT_RESERVATION_MISMATCH(HttpStatus.BAD_REQUEST, "예약이 결제와 일치하지 않습니다."),
     ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 결제가 취소된 예약입니다."),
     UNAUTHORIZED_RESERVATION_ACCESS(HttpStatus.UNAUTHORIZED, "본인 예약이 아닙니다."),
+
+    // REDIS
+    REDIS_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결 중 오류가 발생했습니다."),
 
     // SETTLEMENT
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산이 존재하지 않습니다."),
