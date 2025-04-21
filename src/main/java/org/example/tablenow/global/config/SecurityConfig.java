@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/view/reservations/*/payments/checkout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/reservations/*/payments").permitAll()
                         .requestMatchers("/widget/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/v*/stores").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

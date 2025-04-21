@@ -43,7 +43,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final CategoryService categoryService;
     private final ImageService imageService;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final Long MAX_STORES_COUNT = 3L;
     private static final Integer TARGET_HOUR_LENGTH = 10;
@@ -157,40 +157,18 @@ public class StoreService {
         return StoreDeleteResponseDto.fromStore(store.getId());
     }
 
+    @Transactional(readOnly = true)
+    public Page<StoreSearchResponseDto> getStoresV1(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
+        return findAllStores(authUser, page, size, sort, direction, categoryId, keyword);
+    }
+
     @Cacheable(
             value = "stores",
             key = "T(org.example.tablenow.domain.store.util.StoreKeyGenerator).generateStoreListKey(#page, #size, #sort, #direction, #categoryId, #keyword)"
     )
     @Transactional(readOnly = true)
-    public Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
-        try {
-            Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
-            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
-
-            if (StringUtils.hasText(keyword)) {
-                // 로그인 사용자 기준 어뷰징 방지
-                String normalizeKeyword = StoreUtils.normalizeKeyword(keyword);
-                String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
-                boolean alreadySearched = redisTemplate.hasKey(userKey);
-
-                if (!alreadySearched) {
-                    // 사용자별 조회 기록: 1일 중복 방지
-                    redisTemplate.opsForValue().set(userKey, "1", 1, TimeUnit.DAYS);
-
-                    // 시간 단위 랭킹 키 생성
-                    String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
-                    String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
-
-                    // 키워드 랭킹 score 증가
-                    redisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
-                    // 인기 검색어 TTL 1일 설정
-                    redisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
-                }
-            }
-            return storeRepository.searchStores(pageable, categoryId, keyword);
-        } catch (IllegalArgumentException e) {
-            throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
-        }
+    public Page<StoreSearchResponseDto> getStoresV2(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
+        return findAllStores(authUser, page, size, sort, direction, categoryId, keyword);
     }
 
     @Transactional(readOnly = true)
@@ -225,6 +203,37 @@ public class StoreService {
     public Store getStore(Long id) {
         return storeRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
+    }
+
+    private Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
+        try {
+            Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
+            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+
+            if (authUser != null && StringUtils.hasText(keyword)) {
+                // 로그인 사용자 기준 어뷰징 방지
+                String normalizeKeyword = StoreUtils.normalizeKeyword(keyword);
+                String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
+                boolean alreadySearched = redisTemplate.hasKey(userKey);
+
+                if (!alreadySearched) {
+                    // 사용자별 조회 기록: 1일 중복 방지
+                    redisTemplate.opsForValue().set(userKey, "1", 1, TimeUnit.DAYS);
+
+                    // 시간 단위 랭킹 키 생성
+                    String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
+                    String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
+
+                    // 키워드 랭킹 score 증가
+                    redisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
+                    // 인기 검색어 TTL 1일 설정
+                    redisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
+                }
+            }
+            return storeRepository.searchStores(pageable, categoryId, keyword);
+        } catch (IllegalArgumentException e) {
+            throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
+        }
     }
 
     public void validateStoreOwnerId(Store store, User user) {
@@ -264,7 +273,7 @@ public class StoreService {
         Map<String, Integer> rankMap = new LinkedHashMap<>();
 
         String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
-        Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet()
+        Set<ZSetOperations.TypedTuple<Object>> tuples = redisTemplate.opsForZSet()
                 .reverseRangeWithScores(rankKey, 0L, -1);
 
         if (tuples.isEmpty()) {
@@ -273,7 +282,7 @@ public class StoreService {
 
         return tuples.stream()
                 .collect(Collectors.toMap(
-                        ZSetOperations.TypedTuple::getValue,
+                        tuple -> tuple.getValue().toString(),
                         tuple -> tuple.getScore().intValue()
                 ));
     }
@@ -285,15 +294,15 @@ public class StoreService {
             String hourStr = String.format("%02d", hour);
             String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey + hourStr;
 
-            Set<ZSetOperations.TypedTuple<String>> tuples =
+            Set<ZSetOperations.TypedTuple<Object>> tuples =
                     redisTemplate.opsForZSet().reverseRangeWithScores(rankKey, 0, -1);
 
             if (tuples.isEmpty()) {
                 continue;
             }
 
-            for (ZSetOperations.TypedTuple<String> tuple : tuples) {
-                String keyword = tuple.getValue();
+            for (ZSetOperations.TypedTuple<Object> tuple : tuples) {
+                String keyword = tuple.getValue().toString();
                 Integer score = tuple.getScore().intValue();
                 result.merge(keyword, score, Integer::sum);
             }
