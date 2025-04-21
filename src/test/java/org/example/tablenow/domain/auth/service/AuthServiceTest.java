@@ -61,7 +61,7 @@ class AuthServiceTest {
     class 회원가입 {
 
         @Test
-        void 중복된_이메일로_가입_시_예외() {
+        void 중복된_이메일로_가입_시_예외처리() {
             // given
             authService.signup(signupRequest);
 
@@ -98,7 +98,7 @@ class AuthServiceTest {
         }
 
         @Test
-        void 존재하지_않는_이메일로_로그인_시_예외() {
+        void 존재하지_않는_이메일로_로그인_시_예외처리() {
             // given
             SigninRequest invalidRequest = SigninRequest.builder()
                     .email("invalid@test.com")
@@ -112,7 +112,7 @@ class AuthServiceTest {
         }
 
         @Test
-        void 탈퇴한_사용자가_로그인_시도_시_예외() {
+        void 탈퇴한_사용자가_로그인_시도_시_예외처리() {
             // given
             User savedUser = userService.getUser(signupResponse.getId());
             savedUser.deleteUser();
@@ -124,7 +124,7 @@ class AuthServiceTest {
         }
 
         @Test
-        void 비밀번호가_저장된_비밀번호와_일치하지_않을_시_예외() {
+        void 비밀번호가_저장된_비밀번호와_일치하지_않을_시_예외처리() {
             // given
             SigninRequest wrongPasswordRequest = SigninRequest.builder()
                     .email("user@test.com")
@@ -155,39 +155,41 @@ class AuthServiceTest {
 
         private String oldRefreshToken;
         private String oldAccessToken;
+        private User savedUser;
 
         @BeforeEach
         void setupTokens() {
             SignupResponse response = authService.signup(signupRequest);
-            User savedUser = userService.getUser(response.getId());
+            savedUser = userService.getUser(response.getId());
             oldRefreshToken = tokenService.createRefreshToken(savedUser);
             oldAccessToken = tokenService.createAccessToken(savedUser);
         }
 
-//        @Test
-//        void 토큰_재발급_성공() {
-//            // when
-//            TokenResponse tokenResponse = authService.refreshToken(oldRefreshToken);
-//            String newAccessToken = tokenResponse.getAccessToken();
-//            String newRefreshToken = tokenResponse.getRefreshToken();
-//
-//            // then
-//            assertAll(
-//                    () -> assertThat(newAccessToken).isNotNull(),
-//                    () -> assertThat(newRefreshToken).isNotNull(),
-//                    () -> assertThat(newAccessToken).isNotEqualTo(oldAccessToken),
-//                    () -> assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken)
-//            );
-//            // 기존 RefreshToken이 삭제되었는지 확인
-//            assertThatThrownBy(() -> tokenService.validateRefreshToken(oldRefreshToken))
-//                    .isInstanceOf(HandledException.class)
-//                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
-//        }
+        @Test
+        void 토큰_재발급_성공() {
+            // when
+            TokenResponse tokenResponse = authService.refreshToken(oldRefreshToken, oldAccessToken, savedUser.getId());
+            String newAccessToken = tokenResponse.getAccessToken();
+            String newRefreshToken = tokenResponse.getRefreshToken();
+
+            // then
+            assertAll(
+                    () -> assertThat(newAccessToken).isNotNull(),
+                    () -> assertThat(newRefreshToken).isNotNull(),
+                    () -> assertThat(newAccessToken).isNotEqualTo(oldAccessToken),
+                    () -> assertThat(newRefreshToken).isNotEqualTo(oldRefreshToken)
+            );
+            // 기존 RefreshToken이 삭제되었는지 확인
+            assertThatThrownBy(() -> tokenService.validateRefreshToken(oldRefreshToken, savedUser.getId()))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
+        }
     }
 
     @Nested
     class 로그아웃 {
 
+        private String accessToken;
         private String refreshToken;
         private User savedUser;
 
@@ -204,18 +206,19 @@ class AuthServiceTest {
 
             SignupResponse response = authService.signup(request);
             savedUser = userService.getUser(response.getId());
+            accessToken = tokenService.createAccessToken(savedUser);
             refreshToken = tokenService.createRefreshToken(savedUser);
         }
 
-//        @Test
-//        void 로그아웃_시_리프레시토큰_Redis에서_삭제_성공() {
-//            // when
-//            authService.logout(refreshToken);
-//
-//            // then: RefreshToken이 삭제되었는지 확인
-//            assertThatThrownBy(() -> tokenService.validateRefreshToken(refreshToken))
-//                    .isInstanceOf(HandledException.class)
-//                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
-//        }
+        @Test
+        void 로그아웃_시_리프레시토큰_Redis에서_삭제_성공() {
+            // when
+            authService.logout(refreshToken, accessToken, savedUser.getId());
+
+            // then: RefreshToken이 삭제되었는지 확인
+            assertThatThrownBy(() -> tokenService.validateRefreshToken(refreshToken, savedUser.getId()))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.EXPIRED_REFRESH_TOKEN.getDefaultMessage());
+        }
     }
 }
