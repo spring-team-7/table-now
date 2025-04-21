@@ -84,7 +84,7 @@ public class EventJoinServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    eventJoinService.joinEvent(eventId, authUser)
+                    eventJoinService.joinEventWithoutLock(eventId, authUser)
             );
 
             assertEquals(ErrorCode.EVENT_NOT_OPENED.getDefaultMessage(), exception.getMessage());
@@ -98,7 +98,7 @@ public class EventJoinServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    eventJoinService.joinEvent(eventId, authUser)
+                    eventJoinService.joinEventWithoutLock(eventId, authUser)
             );
 
             assertEquals(ErrorCode.EVENT_ALREADY_JOINED.getDefaultMessage(), exception.getMessage());
@@ -113,7 +113,7 @@ public class EventJoinServiceTest {
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
-                    eventJoinService.joinEvent(eventId, authUser)
+                    eventJoinService.joinEventWithoutLock(eventId, authUser)
             );
 
             assertEquals(ErrorCode.EVENT_FULL.getDefaultMessage(), exception.getMessage());
@@ -128,7 +128,7 @@ public class EventJoinServiceTest {
             given(eventJoinRepository.save(any(EventJoin.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            EventJoinResponseDto response = eventJoinService.joinEvent(eventId, authUser);
+            EventJoinResponseDto response = eventJoinService.joinEventWithoutLock(eventId, authUser);
 
             // then
             assertNotNull(response);
