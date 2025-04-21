@@ -17,6 +17,8 @@ import org.example.tablenow.global.annotation.DistributedLock;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +36,9 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StoreService storeService;
+    private final RedissonClient redissonClient;
+    private final VacancyProducer vacancyProducer;
+
 
     private static final String RESERVATION_LOCK_KEY_PREFIX = "lock:reservation";
 
@@ -134,6 +140,12 @@ public class ReservationService {
         validateReservationOwner(reservation, user);
 
         reservation.tryCancel();
+
+        vacancyProducer.sendVacancyEvent(
+            reservation.getStore().getId(),
+            reservation.getReservedAt().toLocalDate()
+        );
+
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
