@@ -28,6 +28,9 @@ spring:
       host: localhost
       port: 6379
 
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+
   cache:
     type: redis
 
