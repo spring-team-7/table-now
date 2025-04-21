@@ -11,12 +11,10 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.*;
+
 @Configuration
 public class RabbitConfig {
-    // vacancy
-    public static final String VACANCY_EXCHANGE = "vacancy.direct";
-    public static final String VACANCY_QUEUE = "vacancy.queue";
-    public static final String VACANCY_ROUTING_KEY = "vacancy.key";
 
     // vacancy Queue 등록(durable=true : 서버 재시작 후에도 큐가 사라지지 않게 함)
     @Bean

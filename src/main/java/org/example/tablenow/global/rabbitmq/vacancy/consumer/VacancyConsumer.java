@@ -11,13 +11,14 @@ import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
-import org.example.tablenow.global.rabbitmq.config.RabbitConfig;
 import org.example.tablenow.global.rabbitmq.vacancy.dto.VacancyEventDto;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.VACANCY_QUEUE;
 
 @Slf4j
 @Component
@@ -28,33 +29,51 @@ public class VacancyConsumer {
     private final StoreService storeService;
     private final ReservationService reservationService;
 
-    @RabbitListener(queues = RabbitConfig.VACANCY_QUEUE)
-    public void consume(VacancyEventDto vacancyEventDto) {
-        Long storeId = vacancyEventDto.getStoreId();
-        LocalDate waitDate = vacancyEventDto.getWaitDate();
+    @RabbitListener(queues =VACANCY_QUEUE)
+    public void consume(VacancyEventDto event) {
+        try {
+            Long storeId = event.getStoreId();
+            LocalDate waitDate = event.getWaitDate();
 
-        log.info("[VacancyConsumer] MQ 수신 → storeId={}, waitDate={}", storeId, waitDate);
+            log.info("[VacancyConsumer] MQ 수신 → storeId={}, waitDate={}", storeId, waitDate);
 
-        Store findStore = storeService.getStore(storeId);
-        List<Waitlist> waitlists = waitlistRepository.findAllWithUserByStoreAndWaitDateAndIsNotifiedFalse(findStore, waitDate);
-        for (Waitlist waitlist : waitlists) {
-            User findUser = waitlist.getUser();
-            if (!Boolean.TRUE.equals(findUser.getIsAlarmEnabled())) continue;
-            if (!reservationService.hasVacancyDate(findStore, waitDate)) continue;
+            Store findStore = storeService.getStore(storeId);
 
-            notifyVacancy(findStore, waitlist);
+            if (!reservationService.hasVacancyDate(findStore, waitDate)) {
+                log.info("[VacancyConsumer] 빈자리 없음 → storeId={}, waitDate={}", storeId, waitDate);
+                return;
+            }
+
+            List<Waitlist> waitlists = waitlistRepository.findWaitingList(findStore, waitDate);
+
+            for (Waitlist waitlist : waitlists) {
+                processWaitlist(findStore, waitlist);
+            }
+
+        } catch (Exception e) {
+            log.error("[VacancyConsumer] MQ 처리 중 예외 발생", e);
         }
+    }
+
+    private void processWaitlist(Store store,Waitlist waitlist){
+        User findUser = waitlist.getUser();
+
+        if (!Boolean.TRUE.equals(findUser.getIsAlarmEnabled())) {
+            log.info("[VacancyConsumer] 알림 비활성 유저 → userId={}", findUser.getId());
+            return;
+        }
+
+        notifyVacancy(store, waitlist);
     }
 
     private void notifyVacancy(Store store, Waitlist waitlist) {
         LocalDate waitDate = waitlist.getWaitDate();
+
         NotificationRequestDto dto = NotificationRequestDto.builder()
             .userId(waitlist.getUser().getId())
             .storeId(store.getId())
             .type(NotificationType.VACANCY)
-            .content(String.format("%s가게에서 %s에 빈자리가 생겼습니다.",
-                store.getName(),
-                waitDate.toString()))
+            .content(vacancyMessage(store.getName(), waitlist.getWaitDate()))
             .build();
 
         notificationService.createNotification(dto);
@@ -62,5 +81,9 @@ public class VacancyConsumer {
         log.info("[VacancyConsumer] 알림 전송 완료 → userId={}, storeId={}, waitDate={}",
             waitlist.getUser().getId(), store.getId(), waitDate);
 
+    }
+
+    private String vacancyMessage(String storeName, LocalDate waitDate){
+        return String.format("%s가게 %s에 빈자리가 생겼습니다.", storeName, waitDate);
     }
 }

@@ -38,6 +38,6 @@ public interface WaitlistRepository extends JpaRepository<Waitlist, Long> {
               AND w.waitDate = :waitDate
               AND w.isNotified = false
         """)
-    List<Waitlist> findAllWithUserByStoreAndWaitDateAndIsNotifiedFalse(@Param("store") Store store,
+    List<Waitlist> findWaitingList(@Param("store") Store store,
                                                                        @Param("waitDate") LocalDate waitDate);
 }
