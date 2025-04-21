@@ -10,10 +10,12 @@ import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkServiceException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -36,30 +38,35 @@ public class ImageService {
     private static final String S3_URL_SUFFIX = ".s3.amazonaws.com/";
 
     public PresignedUrlResponse generatePresignedUrl(AuthUser authUser, ImageDomain imageDomain, PresignedUrlRequest request) {
-        Long userId = authUser.getId();
-        String fileExtension = extractExtension(request.getFileName());
-        String key = generateKey(imageDomain, userId, fileExtension);
+        try {
+            Long userId = authUser.getId();
+            String fileExtension = extractExtension(request.getFileName());
+            String key = generateKey(imageDomain, userId, fileExtension);
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(s3Properties.getBucket())
-                .key(key)
-                .contentType(request.getFileType().getMimeType())
-                .build();
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(s3Properties.getBucket())
+                    .key(key)
+                    .contentType(request.getFileType().getMimeType())
+                    .build();
 
-        PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(
-                PutObjectPresignRequest.builder()
-                        .signatureDuration(Duration.ofMinutes(s3Properties.getPresignedUrlExpiration()))
-                        .putObjectRequest(putObjectRequest)
-                        .build()
-        );
+            PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(
+                    PutObjectPresignRequest.builder()
+                            .signatureDuration(Duration.ofMinutes(s3Properties.getPresignedUrlExpiration()))
+                            .putObjectRequest(putObjectRequest)
+                            .build()
+            );
 
-        String uploadUrl = presignedRequest.url().toString();
-        String fileUrl = getFileUrl(key);
+            String uploadUrl = presignedRequest.url().toString();
+            String fileUrl = getFileUrl(key);
 
-        return PresignedUrlResponse.builder()
-                .uploadUrl(uploadUrl)
-                .fileUrl(fileUrl)
-                .build();
+            return PresignedUrlResponse.builder()
+                    .uploadUrl(uploadUrl)
+                    .fileUrl(fileUrl)
+                    .build();
+        } catch (S3Exception | SdkClientException | IllegalArgumentException e) {
+            log.error("[S3] Presigned URL 생성 중 예외 발생", e);
+            throw new HandledException(ErrorCode.S3_PRESIGNED_URL_CREATION_FAILED);
+        }
     }
 
     public void delete(String objectPath) {

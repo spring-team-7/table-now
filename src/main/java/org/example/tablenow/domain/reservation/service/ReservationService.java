@@ -13,21 +13,21 @@ import org.example.tablenow.domain.reservation.repository.ReservationRepository;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
+import org.example.tablenow.global.annotation.DistributedLock;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,9 +38,8 @@ public class ReservationService {
     private final RedissonClient redissonClient;
     private final VacancyProducer vacancyProducer;
 
-    private static final String RESERVATION_LOCK_KEY_FORMAT = "lock:reservation:%d:%s";
-    private static final long LOCK_WAIT_TIME = 3L;
-    private static final long LOCK_LEASE_TIME = 3L;
+
+    private static final String RESERVATION_LOCK_KEY_PREFIX = "lock:reservation";
 
     @Transactional
     public ReservationResponseDto makeReservation(AuthUser authUser, ReservationRequestDto request) {
@@ -63,30 +62,13 @@ public class ReservationService {
         return ReservationResponseDto.fromReservation(savedReservation);
     }
 
-    @Transactional
+    @DistributedLock(
+            prefix = RESERVATION_LOCK_KEY_PREFIX,
+            key = "#request.storeId + ':' + #request.reservedAt.toLocalDate()"
+    )
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ReservationResponseDto makeReservationWithLock(AuthUser authUser, ReservationRequestDto request) {
-        LocalDate date = request.getReservedAt().toLocalDate();
-        String lockKey = String.format(RESERVATION_LOCK_KEY_FORMAT, request.getStoreId(), date);
-        RLock lock = redissonClient.getLock(lockKey);
-
-        try {
-            if (!lock.tryLock(LOCK_WAIT_TIME, LOCK_LEASE_TIME, TimeUnit.SECONDS)) {
-                log.warn("락 획득 실패: {}", lockKey);
-                throw new HandledException(ErrorCode.RESERVATION_LOCK_TIMEOUT);
-            }
-
-            return handleReservationCreation(authUser, request);
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("인터럽트 발생", e);
-        } catch (Exception e) {
-            throw new RuntimeException("예약 생성 중 오류 발생", e);
-        } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
-        }
+        return handleReservationCreation(authUser, request);
     }
 
     private ReservationResponseDto handleReservationCreation(AuthUser authUser, ReservationRequestDto request) {
