@@ -2,14 +2,19 @@ package org.example.tablenow.domain.event;
 
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
+import org.example.tablenow.domain.event.dto.response.EventCloseResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventRepository;
+import org.example.tablenow.domain.event.service.EventJoinService;
 import org.example.tablenow.domain.event.service.EventService;
+import org.example.tablenow.domain.notification.enums.NotificationType;
+import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
+import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -32,15 +38,26 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class EventServiceTest {
+
+    @Mock
+    private EventJoinService eventJoinService;
 
     @Mock
     private EventRepository eventRepository;
 
     @Mock
     private StoreService storeService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private RedisTemplate<Object, Object> redisTemplate;
 
     @InjectMocks
     private EventService eventService;
@@ -253,6 +270,8 @@ public class EventServiceTest {
                     () -> assertEquals(storeId, response.getStoreId()),
                     () -> assertEquals("이벤트 삭제에 성공했습니다.", response.getMessage())
             );
+            verify(redisTemplate).delete("event:join:" + eventId);
+            verify(eventRepository).delete(event);
         }
     }
 
@@ -270,6 +289,8 @@ public class EventServiceTest {
                     eq(EventStatus.READY), any(LocalDateTime.class))
             ).willReturn(events);
 
+            given(eventJoinService.getUsersByEventId(anyLong())).willReturn(List.of());
+
             // when
             eventService.openEventsIfDue();
 
@@ -278,6 +299,55 @@ public class EventServiceTest {
                     () -> assertEquals(EventStatus.OPENED, event1.getStatus()),
                     () -> assertEquals(EventStatus.OPENED, event2.getStatus())
             );
+        }
+
+        @Test
+        void 알림_받는_유저가_있을_때_알림_전송됨() {
+            // given
+            Event event = createEvent(eventId, EventStatus.READY);
+            given(eventRepository.findAllByStatusAndOpenAtLessThanEqual(eq(EventStatus.READY), any(LocalDateTime.class)))
+                    .willReturn(List.of(event));
+
+            User user1 = User.builder().id(1L).build();
+            User user2 = User.builder().id(2L).build();
+            ReflectionTestUtils.setField(user1, "isAlarmEnabled", true);
+            ReflectionTestUtils.setField(user2, "isAlarmEnabled", false);
+            given(eventJoinService.getUsersByEventId(eq(eventId))).willReturn(List.of(user1, user2));
+
+            // when
+            eventService.openEventsIfDue();
+
+            // then
+            assertEquals(EventStatus.OPENED, event.getStatus());
+            verify(eventJoinService).getUsersByEventId(eq(eventId));
+            verify(notificationService).createNotification(argThat(req ->
+                    req.getUserId().equals(user1.getId()) &&
+                            req.getStoreId().equals(event.getStore().getId()) &&
+                            req.getType() == NotificationType.REMIND
+            ));
+            verify(notificationService, never()).createNotification(argThat(req ->
+                    req.getUserId().equals(user2.getId())
+            ));
+        }
+    }
+
+    @Nested
+    class 이벤트_마감 {
+
+        @Test
+        void 이벤트_마감_성공() {
+            // given
+            Event event = createEvent(eventId, EventStatus.OPENED);
+            given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
+
+            // when
+            EventCloseResponseDto response = eventService.closeEvent(eventId);
+
+            // then
+            assertNotNull(response);
+            assertEquals(EventStatus.CLOSED, event.getStatus());
+            assertEquals(eventId, response.getEventId());
+            verify(redisTemplate).delete("event:join:" + eventId);
         }
     }
 

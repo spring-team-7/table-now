@@ -6,8 +6,8 @@ import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.entity.EventJoin;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventJoinRepository;
+import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.event.service.EventJoinService;
-import org.example.tablenow.domain.event.service.EventService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +37,10 @@ public class EventJoinServiceTest {
     private EventJoinRepository eventJoinRepository;
 
     @Mock
-    private EventService eventService;
+    private EventRepository eventRepository;
+
+    @Mock
+    private EventJoinExecutor eventJoinExecutor;
 
     @InjectMocks
     private EventJoinService eventJoinService;
@@ -54,6 +58,7 @@ public class EventJoinServiceTest {
         store = Store.builder()
                 .id(100L)
                 .name("테스트 가게")
+                .capacity(10)
                 .build();
 
         event = createEvent(eventId, EventStatus.OPENED);
@@ -74,13 +79,13 @@ public class EventJoinServiceTest {
     }
 
     @Nested
-    class 이벤트_참여 {
+    class 락_없는_이벤트_참여 {
 
         @Test
         void 이벤트가_오픈되지_않은_경우_예외_발생() {
             // given
             ReflectionTestUtils.setField(event, "status", EventStatus.READY);
-            given(eventService.getEvent(eventId)).willReturn(event);
+            given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -93,7 +98,7 @@ public class EventJoinServiceTest {
         @Test
         void 이미_참여한_경우_예외_발생() {
             // given
-            given(eventService.getEvent(eventId)).willReturn(event);
+            given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
             given(eventJoinRepository.existsByUserAndEvent(any(User.class), any(Event.class))).willReturn(true);
 
             // when & then
@@ -107,7 +112,7 @@ public class EventJoinServiceTest {
         @Test
         void 인원이_마감된_경우_예외_발생() {
             // given
-            given(eventService.getEvent(eventId)).willReturn(event);
+            given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
             given(eventJoinRepository.existsByUserAndEvent(any(User.class), any(Event.class))).willReturn(false);
             given(eventJoinRepository.countByEvent(event)).willReturn(10); // 인원 가득 참
 
@@ -122,7 +127,7 @@ public class EventJoinServiceTest {
         @Test
         void 이벤트_참여_성공() {
             // given
-            given(eventService.getEvent(eventId)).willReturn(event);
+            given(eventRepository.findById(eventId)).willReturn(Optional.of(event));
             given(eventJoinRepository.existsByUserAndEvent(any(User.class), any(Event.class))).willReturn(false);
             given(eventJoinRepository.countByEvent(event)).willReturn(3);
             given(eventJoinRepository.save(any(EventJoin.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -136,6 +141,75 @@ public class EventJoinServiceTest {
                     () -> assertEquals(eventId, response.getEventId()),
                     () -> assertEquals(store.getId(), response.getStoreId())
             );
+        }
+    }
+
+    @Nested
+    class DB락_기반_이벤트_참여 {
+
+        @Test
+        void 이미_참여한_경우_예외_발생() {
+            // given
+            given(eventRepository.findByIdForUpdate(eventId)).willReturn(Optional.of(event));
+            given(eventJoinRepository.existsByUserAndEvent(any(User.class), any(Event.class))).willReturn(true);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    eventJoinService.joinEventWithDBLock(eventId, authUser)
+            );
+
+            assertEquals(ErrorCode.EVENT_ALREADY_JOINED.getDefaultMessage(), exception.getMessage());
+        }
+
+        @Test
+        void 인원이_마감된_경우_예외_발생() {
+            // given
+            given(eventRepository.findByIdForUpdate(eventId)).willReturn(Optional.of(event));
+            given(eventJoinRepository.existsByUserAndEvent(any(User.class), any(Event.class))).willReturn(false);
+            given(eventJoinRepository.countByEvent(event)).willReturn(10); // 인원 가득 참
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () ->
+                    eventJoinService.joinEventWithDBLock(eventId, authUser)
+            );
+
+            assertEquals(ErrorCode.EVENT_FULL.getDefaultMessage(), exception.getMessage());
+        }
+
+        @Test
+        void 참여_성공() {
+            // given
+            given(eventRepository.findByIdForUpdate(eventId)).willReturn(Optional.of(event));
+            given(eventJoinRepository.existsByUserAndEvent(any(User.class), any(Event.class))).willReturn(false);
+            given(eventJoinRepository.countByEvent(event)).willReturn(2);
+            given(eventJoinRepository.save(any(EventJoin.class))).willAnswer(invocation -> invocation.getArgument(0));
+
+            // when
+            EventJoinResponseDto response = eventJoinService.joinEventWithDBLock(eventId, authUser);
+
+            // then
+            assertNotNull(response);
+            assertEquals(eventId, response.getEventId());
+        }
+    }
+
+    @Nested
+    class Redisson락_기반_이벤트_참여 {
+
+        @Test
+        void 참여_성공() {
+            // given
+            EventJoinResponseDto expected = EventJoinResponseDto.fromEventJoin(
+                    EventJoin.builder().user(user).event(event).build()
+            );
+            given(eventJoinExecutor.execute(eventId, authUser)).willReturn(expected);
+
+            // when
+            EventJoinResponseDto response = eventJoinService.joinEventWithRedissonLock(eventId, authUser);
+
+            // then
+            assertNotNull(response);
+            assertEquals(expected.getEventId(), response.getEventId());
         }
     }
 }
