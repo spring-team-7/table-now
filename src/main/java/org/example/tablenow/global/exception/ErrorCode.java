@@ -105,8 +105,11 @@ public enum ErrorCode {
     UNAUTHORIZED_RESERVATION_ACCESS(HttpStatus.UNAUTHORIZED, "본인 예약이 아닙니다."),
 
     // REDIS
-    REDIS_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결 중 오류가 발생했습니다.");
+    REDIS_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 연결 중 오류가 발생했습니다."),
 
+    // SETTLEMENT
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산이 존재하지 않습니다."),
+    INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다.");
 
     private final HttpStatus status;
     private final String defaultMessage;
