@@ -1,6 +1,5 @@
 package org.example.tablenow.domain.auth.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.auth.oAuth.config.KakaoOAuthProperties;
 import org.example.tablenow.domain.auth.oAuth.config.OAuthProperties;
@@ -12,6 +11,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.util.OAuthResponseParser;
 import org.example.tablenow.global.util.PhoneNumberNormalizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -20,15 +20,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.example.tablenow.testutil.OAuthTestUtil.createAccessTokenJson;
-import static org.example.tablenow.testutil.OAuthTestUtil.stubJsonParsing;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -47,11 +52,11 @@ class KakaoAuthServiceTest {
     @Mock
     private WebClient webClient;
     @Mock
-    private ObjectMapper objectMapper;
-    @Mock
     private OAuthProperties oAuthProperties;
     @Mock
     private KakaoOAuthProperties kakaoOAuthProperties;
+    @Mock
+    private OAuthResponseParser oAuthResponseParser;
 
     // WebClient mocking을 위한 내부 변수들
     @Mock
@@ -99,25 +104,37 @@ class KakaoAuthServiceTest {
                 .build();
     }
 
-    private void mockWebClientTokenRequest(String responseJson) {
+    // access_token 요청하는 WebClient mocking
+    private void mockWebClientTokenRequest(Mono<String> response) {
         when(webClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.body(any(BodyInserter.class))).thenReturn(requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just(responseJson));
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(String.class)).thenReturn(response);
     }
 
-    // 발급받은 access_token으로 Kakao 사용자 정보 요청하는 WebClient mocking
-    private void mockWebClientUserInfoRequest(KakaoUserInfoResponse response) {
+    // Kakao 사용자 정보 요청하는 WebClient mocking
+    private void mockWebClientUserInfoRequest(Mono<KakaoUserInfoResponse> response) {
         when(webClient.get()).thenAnswer(invocation -> requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(anyString()))
-                .thenAnswer(invocation -> requestHeadersSpec);
-        when(requestHeadersSpec.header(anyString(), anyString()))
-                .thenAnswer(invocation -> requestHeadersSpec);
+        when(requestHeadersUriSpec.uri(anyString())).thenAnswer(invocation -> requestHeadersSpec);
+        when(requestHeadersSpec.header(anyString(), anyString())).thenAnswer(invocation -> requestHeadersSpec);
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(KakaoUserInfoResponse.class))
-                .thenReturn(Mono.just(response));
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(KakaoUserInfoResponse.class)).thenReturn(response);
+    }
+
+    // Kakao 사용자 연결 해제 요청하는 WebClient mocking
+    private void mockWebClientUnlinkRequest(Mono<Void> response) {
+        when(webClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.header(anyString(), anyString())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.body(any(BodyInserter.class))).thenReturn(requestHeadersSpec);
+        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
+        when(responseSpec.bodyToMono(Void.class)).thenReturn(response);
     }
 
     @Nested
@@ -143,11 +160,11 @@ class KakaoAuthServiceTest {
         }
 
         @Test
-        void 액세스토큰_JSON파싱_실패_예외_발생() throws Exception {
+        void 액세스토큰_JSON파싱_실패_예외처리() {
             // given
             String invalidAccessTokenJson = "invalid json";
-            mockWebClientTokenRequest(invalidAccessTokenJson);
-            when(objectMapper.readTree(invalidAccessTokenJson))
+            mockWebClientTokenRequest(Mono.just(invalidAccessTokenJson));
+            when(oAuthResponseParser.extractAccessToken(invalidAccessTokenJson))
                     .thenThrow(new RuntimeException("JSON 파싱 실패"));
 
             // when & then
@@ -157,7 +174,7 @@ class KakaoAuthServiceTest {
         }
 
         @Test
-        void 탈퇴한_유저가_로그인_시_예외_발생() throws Exception {
+        void 탈퇴한_유저가_로그인_시_예외처리() {
             // given
             String accessTokenJson = createAccessTokenJson(KAKAO_ACCESS_TOKEN);
             KakaoUserInfoResponse response = createKakaoUserInfoResponse(
@@ -167,9 +184,11 @@ class KakaoAuthServiceTest {
                     .build();
             deletedUser.deleteUser();
 
-            mockWebClientTokenRequest(accessTokenJson);
-            mockWebClientUserInfoRequest(response);
-            stubJsonParsing(objectMapper, accessTokenJson);
+            mockWebClientTokenRequest(Mono.just(accessTokenJson));
+            when(oAuthResponseParser.extractAccessToken(accessTokenJson))
+                    .thenReturn(KAKAO_ACCESS_TOKEN);
+
+            mockWebClientUserInfoRequest(Mono.just(response));
 
             when(userRepository.findByEmail("deleted@test.com")).thenReturn(Optional.of(deletedUser));
 
@@ -181,7 +200,49 @@ class KakaoAuthServiceTest {
         }
 
         @Test
-        void 기존유저_성공() throws Exception {
+        void 카카오_토큰요청_중_WebClient_요청실패_예외처리() {
+            // given
+            WebClientRequestException webClientRequestException = new WebClientRequestException(
+                    new IOException("연결 실패"),
+                    HttpMethod.POST,
+                    URI.create("https://kauth.kakao.com/oauth/token"),
+                    HttpHeaders.EMPTY
+            );
+            mockWebClientTokenRequest(Mono.error(webClientRequestException));
+
+            // when & then
+            assertThatThrownBy(() -> kakaoAuthService.login(AUTHORIZATION_CODE))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.OAUTH_PROVIDER_UNREACHABLE.getDefaultMessage());
+        }
+
+        @Test
+        void 카카오_유저정보요청_중_WebClient_요청실패_예외처리() {
+            // given
+            String accessTokenJson = createAccessTokenJson(KAKAO_ACCESS_TOKEN);
+
+            // 1. access token 요청 mocking (정상 흐름)
+            mockWebClientTokenRequest(Mono.just(accessTokenJson));
+            when(oAuthResponseParser.extractAccessToken(accessTokenJson))
+                    .thenReturn(KAKAO_ACCESS_TOKEN);
+
+            // 2. 유저정보 요청 mocking (이 부분에서 예외 발생)
+            WebClientRequestException webClientRequestException = new WebClientRequestException(
+                    new IOException("연결 실패"),
+                    HttpMethod.GET,
+                    URI.create("https://kapi.kakao.com/v2/user/me"),
+                    HttpHeaders.EMPTY
+            );
+            mockWebClientUserInfoRequest(Mono.error(webClientRequestException));
+
+            // when & then
+            assertThatThrownBy(() -> kakaoAuthService.login(AUTHORIZATION_CODE))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.OAUTH_PROVIDER_UNREACHABLE.getDefaultMessage());
+        }
+
+        @Test
+        void 기존유저_성공() {
             // given
             String accessTokenJson = createAccessTokenJson(KAKAO_ACCESS_TOKEN); // 카카오 서버에서 받은 토큰 응답 가정
             KakaoUserInfoResponse response = createKakaoUserInfoResponse(
@@ -190,9 +251,11 @@ class KakaoAuthServiceTest {
                     .email("user@test.com")
                     .build();
 
-            mockWebClientTokenRequest(accessTokenJson);
-            mockWebClientUserInfoRequest(response);
-            stubJsonParsing(objectMapper, accessTokenJson);
+            mockWebClientTokenRequest(Mono.just(accessTokenJson));
+            when(oAuthResponseParser.extractAccessToken(accessTokenJson))
+                    .thenReturn(KAKAO_ACCESS_TOKEN);
+
+            mockWebClientUserInfoRequest(Mono.just(response));
 
             when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
             when(tokenService.createAccessToken(user)).thenReturn("access_token");
@@ -207,7 +270,7 @@ class KakaoAuthServiceTest {
         }
 
         @Test
-        void 신규회원가입_성공() throws Exception {
+        void 신규회원가입_성공() {
             // given
             String accessTokenJson = createAccessTokenJson(KAKAO_ACCESS_TOKEN);
             KakaoUserInfoResponse response = createKakaoUserInfoResponse(
@@ -216,9 +279,11 @@ class KakaoAuthServiceTest {
             KakaoUserInfo kakaoUserInfo = KakaoUserInfo.fromKakaoUserInfoResponse(response);
             User newUser = createUserFromKakao(kakaoUserInfo);
 
-            mockWebClientTokenRequest(accessTokenJson);
-            mockWebClientUserInfoRequest(response);
-            stubJsonParsing(objectMapper, accessTokenJson);
+            mockWebClientTokenRequest(Mono.just(accessTokenJson));
+            when(oAuthResponseParser.extractAccessToken(accessTokenJson))
+                    .thenReturn(KAKAO_ACCESS_TOKEN);
+
+            mockWebClientUserInfoRequest(Mono.just(response));
 
             when(userRepository.findByEmail("newuser@test.com")).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(newUser);
@@ -247,15 +312,26 @@ class KakaoAuthServiceTest {
         }
 
         @Test
+        void 카카오_연결해제_중_WebClient_요청실패_예외처리() {
+            // given
+            WebClientRequestException webClientRequestException = new WebClientRequestException(
+                    new IOException("연결 실패"),
+                    HttpMethod.POST,
+                    URI.create("https://kapi.kakao.com/v1/user/unlink"),
+                    HttpHeaders.EMPTY
+            );
+            mockWebClientUnlinkRequest(Mono.error(webClientRequestException));
+
+            // when & then
+            assertThatThrownBy(() -> kakaoAuthService.unlinkKakaoByAdminKey(kakaoId))
+                    .isInstanceOf(HandledException.class)
+                    .hasMessage(ErrorCode.OAUTH_PROVIDER_UNREACHABLE.getDefaultMessage());
+        }
+
+        @Test
         void unlinkKakaoByAdminKey_성공() {
-            // given: mock WebClient 호출
-            when(webClient.post()).thenReturn(requestBodyUriSpec);
-            when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
-            when(requestBodyUriSpec.header(anyString(), anyString())).thenReturn(requestBodyUriSpec);
-            when(requestBodyUriSpec.contentType(any())).thenReturn(requestBodyUriSpec);
-            when(requestBodyUriSpec.body(any(BodyInserter.class))).thenReturn(requestHeadersSpec);
-            when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-            when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
+            // given
+            mockWebClientUnlinkRequest(Mono.empty());
 
             // when & then
             assertDoesNotThrow(() -> kakaoAuthService.unlinkKakaoByAdminKey(kakaoId));
