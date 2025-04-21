@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class StoreSearchService {
 
     private final StoreSearchQueryBuilder storeSearchQueryBuilder;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<Object, Object> redisTemplate;
 
     @Transactional(readOnly = true)
     public PageResponse<StoreDocumentResponseDto> getStoresV3(int page, int size, String sort, String direction, Long categoryId, String keyword) {
