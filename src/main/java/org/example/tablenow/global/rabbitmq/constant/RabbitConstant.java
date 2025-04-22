@@ -6,5 +6,5 @@ public class RabbitConstant {
     public static final String VACANCY_ROUTING_KEY = "vacancy.key";
 
     public static final String EVENT_OPEN_EXCHANGE = "event.open.fanout";
-    public static final String EVENT_OPEN_QUEUE = "event.open.notification.queue";
+    public static final String EVENT_OPEN_QUEUE = "event.open.queue";
 }
