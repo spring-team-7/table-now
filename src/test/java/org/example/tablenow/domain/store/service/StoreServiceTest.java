@@ -442,7 +442,7 @@ public class StoreServiceTest {
 
                 // when & then
                 HandledException exception = assertThrows(HandledException.class, () ->
-                        storeService.getStoresV1(authUser, 1, 10, sortField, sortOrder, null, null)
+                        storeService.getStoresV2(authUser, 1, 10, sortField, sortOrder, null, null)
                 );
                 assertEquals(exception.getMessage(), ErrorCode.INVALID_ORDER_VALUE.getDefaultMessage());
             }
@@ -455,7 +455,7 @@ public class StoreServiceTest {
 
                 // when & then
                 HandledException exception = assertThrows(HandledException.class, () ->
-                        storeService.getStoresV1(authUser, 1, 10, sortField, sortOrder, null, null)
+                        storeService.getStoresV2(authUser, 1, 10, sortField, sortOrder, null, null)
                 );
                 assertEquals(exception.getMessage(), ErrorCode.INVALID_SORT_FIELD.getDefaultMessage());
             }
@@ -473,7 +473,7 @@ public class StoreServiceTest {
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.getStoresV1(authUser, page, size, sortField, sortOrder, categoryId, "");
+            Page<StoreSearchResponseDto> response = storeService.getStoresV2(authUser, page, size, sortField, sortOrder, categoryId, "");
 
             // then
             StoreSearchResponseDto dto = response.getContent().get(0);
@@ -486,7 +486,7 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 동일_검색어_조회_성공() {
+        void 가게_검색_DB_조회_성공() {
             // given
             int page = 1;
             int size = 10;
@@ -500,6 +500,56 @@ public class StoreServiceTest {
 
             // when
             Page<StoreSearchResponseDto> response = storeService.getStoresV1(authUser, page, size, sortField, sortOrder, categoryId, search);
+
+            // then
+            StoreSearchResponseDto dto = response.getContent().get(0);
+            assertAll(
+                    () -> assertNotNull(response),
+                    () -> assertEquals(response.getTotalElements(), 1),
+                    () -> assertEquals(dto.getRating(), store.getRating()),
+                    () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
+            );
+            verify(storeRepository).searchStores(any(Pageable.class), anyLong(), anyString());
+        }
+
+        @Test
+        void 가게_검색_redis_조회_성공() {
+            // given
+            int page = 1;
+            int size = 10;
+            String sortField = "name";
+            String sortOrder = "desc";
+            String search = "맛있는";
+            given(redisTemplate.hasKey(anyString())).willReturn(true);
+            Page<StoreSearchResponseDto> result = new PageImpl<>(List.of(StoreSearchResponseDto.fromStore(store)));
+            given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
+
+            // when
+            Page<StoreSearchResponseDto> response = storeService.getStoresV2(authUser, page, size, sortField, sortOrder, categoryId, search);
+
+            // then
+            StoreSearchResponseDto dto = response.getContent().get(0);
+            assertAll(
+                    () -> assertNotNull(response),
+                    () -> assertEquals(response.getTotalElements(), 1),
+                    () -> assertEquals(dto.getRating(), store.getRating()),
+                    () -> assertEquals(dto.getRatingCount(), store.getRatingCount())
+            );
+        }
+
+        @Test
+        void 가게_검색_비로그인_조회_성공() {
+            // given
+            int page = 1;
+            int size = 10;
+            String sortField = "name";
+            String sortOrder = "desc";
+            String search = "맛있는";
+            Page<StoreSearchResponseDto> result = new PageImpl<>(List.of(StoreSearchResponseDto.fromStore(store)));
+            given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
+
+            // when
+            Page<StoreSearchResponseDto> response = storeService.getStoresV2(null, page, size, sortField, sortOrder, categoryId, search);
 
             // then
             StoreSearchResponseDto dto = response.getContent().get(0);
@@ -531,7 +581,7 @@ public class StoreServiceTest {
             given(storeRepository.searchStores(any(Pageable.class), anyLong(), anyString())).willReturn(result);
 
             // when
-            Page<StoreSearchResponseDto> response = storeService.getStoresV1(authUser, page, size, sortField, sortOrder, categoryId, search);
+            Page<StoreSearchResponseDto> response = storeService.getStoresV2(authUser, page, size, sortField, sortOrder, categoryId, search);
 
             // then
 
