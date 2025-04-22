@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.store.dto.response.StoreDocumentResponseDto;
 import org.example.tablenow.domain.store.entity.StoreDocument;
 import org.example.tablenow.domain.store.enums.StoreSortField;
+import org.example.tablenow.domain.store.repository.StoreElasticRepository;
 import org.example.tablenow.domain.store.util.StoreKeyGenerator;
 import org.example.tablenow.global.dto.PageResponse;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class StoreSearchService {
 
-    private final StoreSearchQueryBuilder storeSearchQueryBuilder;
+    private final StoreElasticRepository storeElasticRepository;
     private final RedisTemplate<Object, Object> redisTemplate;
 
     @Transactional(readOnly = true)
@@ -38,7 +39,7 @@ public class StoreSearchService {
         }
 
         // ElasticSearch 조회
-        Page<StoreDocument> storeDocuments = storeSearchQueryBuilder.searchByKeywordAndCategoryId(keyword, categoryId, pageable);
+        Page<StoreDocument> storeDocuments = storeElasticRepository.searchByKeywordAndCategoryId(keyword, categoryId, pageable);
         PageResponse<StoreDocumentResponseDto> response = new PageResponse<>(storeDocuments.map(storeDocument -> StoreDocumentResponseDto.fromStoreDocument(storeDocument)));
 
         if (!response.getContent().isEmpty()) {

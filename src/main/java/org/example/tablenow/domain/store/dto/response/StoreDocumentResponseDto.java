@@ -7,10 +7,11 @@ import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.store.entity.StoreDocument;
 
+import java.io.Serializable;
 import java.time.LocalTime;
 
 @Getter
-public class StoreDocumentResponseDto {
+public class StoreDocumentResponseDto implements Serializable {
     private final Long storeId;
     private final String name;
     private final Long categoryId;

@@ -6,10 +6,11 @@ import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Getter
-public class PageResponse<T> {
+public class PageResponse<T> implements Serializable {
     private final List<T> content;
     private final int pageNumber;
     private final int pageSize;
