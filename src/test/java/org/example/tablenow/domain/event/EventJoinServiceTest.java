@@ -7,6 +7,7 @@ import org.example.tablenow.domain.event.entity.EventJoin;
 import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.repository.EventJoinRepository;
 import org.example.tablenow.domain.event.repository.EventRepository;
+import org.example.tablenow.domain.event.service.EventJoinExecutor;
 import org.example.tablenow.domain.event.service.EventJoinService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.user.entity.User;

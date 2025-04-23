@@ -1,4 +1,4 @@
-package org.example.tablenow.global.rabbitmq.event.dto;
+package org.example.tablenow.domain.event.message.dto;
 
 import lombok.Builder;
 import lombok.Getter;

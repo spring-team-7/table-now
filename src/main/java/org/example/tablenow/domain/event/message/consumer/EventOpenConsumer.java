@@ -1,4 +1,4 @@
-package org.example.tablenow.global.rabbitmq.event.consumer;
+package org.example.tablenow.domain.event.message.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,7 +7,7 @@ import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
-import org.example.tablenow.global.rabbitmq.event.dto.EventOpenMessage;
+import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 

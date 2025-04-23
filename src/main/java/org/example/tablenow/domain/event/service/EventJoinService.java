@@ -2,7 +2,6 @@ package org.example.tablenow.domain.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.tablenow.domain.event.EventJoinExecutor;
 import org.example.tablenow.domain.event.dto.response.EventJoinResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.entity.EventJoin;
