@@ -1,13 +1,10 @@
 package org.example.tablenow.global.rabbitmq.config;
 
-import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,7 +29,21 @@ public class RabbitConfig {
         return BindingBuilder.bind(vacancyQueue()).to(vacancyExchange()).with(VACANCY_ROUTING_KEY);
     }
 
+    @Bean
+    public Queue eventOpenQueue() {
+        return new Queue(EVENT_OPEN_QUEUE, true);
+    }
 
+    @Bean
+    public FanoutExchange eventOpenExchange() {
+        return new FanoutExchange(EVENT_OPEN_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Binding eventOpenBinding() {
+        return BindingBuilder.bind(eventOpenQueue())
+                .to(eventOpenExchange());
+    }
 
     // 공통 설정
     @Bean
