@@ -32,7 +32,7 @@ public class ChatMessage {
     @Column(nullable = false)
     private Long reservationUserId;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Column(columnDefinition = "TEXT")

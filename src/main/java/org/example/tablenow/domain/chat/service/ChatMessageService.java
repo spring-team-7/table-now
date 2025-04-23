@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.chat.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.tablenow.domain.chat.dto.request.ChatMessageRequest;
 import org.example.tablenow.domain.chat.entity.ChatMessage;
 import org.example.tablenow.domain.chat.repository.ChatMessageRepository;
 import org.example.tablenow.domain.reservation.entity.Reservation;
@@ -23,23 +24,23 @@ public class ChatMessageService {
     private final UserRepository userRepository;
 
     @Transactional
-    public ChatMessage saveMessage(Long reservationId, Long senderId, String content, String imageUrl) {
+    public ChatMessage saveMessage(ChatMessageRequest request, Long senderId) {
 
         // 1. 기존 메시지가 존재하는지 확인
-        return chatMessageRepository.findTop1ByReservationIdOrderByCreatedAtDesc(reservationId)
+        return chatMessageRepository.findTop1ByReservationIdOrderByCreatedAtDesc(request.getReservationId())
                 .map(lastMessage -> {
                     Long ownerId = lastMessage.getOwnerId();
                     Long reservationUserId = lastMessage.getReservationUserId();
                     validateSender(senderId, ownerId, reservationUserId);
-                    return chatMessageRepository.save(buildChatMessage(reservationId, senderId, ownerId, reservationUserId, content, imageUrl));
+                    return chatMessageRepository.save(buildChatMessage(request, senderId, ownerId, reservationUserId));
                 })
                 .orElseGet(() -> {
                     // 최초 메시지: reservation 기준으로 권한 확인 및 역정규화 값 추출
-                    Reservation reservation = reservationService.getReservation(reservationId);
+                    Reservation reservation = reservationService.getReservation(request.getReservationId());
                     Long ownerId = reservation.getStore().getUser().getId();
                     Long reservationUserId = reservation.getUser().getId();
                     validateSender(senderId, ownerId, reservationUserId);
-                    return chatMessageRepository.save(buildChatMessage(reservationId, senderId, ownerId, reservationUserId, content, imageUrl));
+                    return chatMessageRepository.save(buildChatMessage(request, senderId, ownerId, reservationUserId));
                 });
     }
 
@@ -49,16 +50,15 @@ public class ChatMessageService {
         }
     }
 
-    private ChatMessage buildChatMessage(Long reservationId, Long senderId, Long ownerId, Long reservationUserId,
-                                         String content, String imageUrl) {
+    private ChatMessage buildChatMessage(ChatMessageRequest request, Long senderId, Long ownerId, Long reservationUserId) {
         User sender = userRepository.getReferenceById(senderId);
         return ChatMessage.builder()
-                .reservationId(reservationId)
+                .reservationId(request.getReservationId())
                 .sender(sender)
                 .ownerId(ownerId)
                 .reservationUserId(reservationUserId)
-                .content(content)
-                .imageUrl(imageUrl)
+                .content(request.getContent())
+                .imageUrl(request.getImageUrl())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
