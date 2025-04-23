@@ -22,7 +22,8 @@ public class StoreCreateRequestDto {
     private String address;
     @ImageUrlPattern
     private String imageUrl;
-    @Min(value = 0, message = "수용테이블은 0 미만일 수 없습니다.")
+    @NotNull(message = "수용테이블 수는 필수값입니다.")
+    @Min(value = 0, message = "수용테이블 수는 0 미만일 수 없습니다.")
     private Integer capacity;
     @NotNull(message = "시작시간은 필수값입니다.")
     @HalfHourOnly // 00분 또는 30분 단위
@@ -30,6 +31,7 @@ public class StoreCreateRequestDto {
     @NotNull(message = "마감시간은 필수값입니다.")
     @HalfHourOnly
     private LocalTime endTime;
+    @NotNull(message = "예약금은 필수값입니다.")
     @Min(value = 0, message = "예약금은 0 미만일 수 없습니다.")
     private Integer deposit;
     @NotNull(message = "카테고리는 필수값입니다.")

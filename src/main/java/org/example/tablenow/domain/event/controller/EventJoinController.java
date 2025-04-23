@@ -19,26 +19,26 @@ public class EventJoinController {
     private final EventJoinService eventJoinService;
 
     @PostMapping("/v1/events/{eventId}/join")
-    public ResponseEntity<EventJoinResponseDto> joinEvent(
+    public ResponseEntity<EventJoinResponseDto> joinEventWithoutLock(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long eventId
     ) {
-        return ResponseEntity.ok(eventJoinService.joinEvent(eventId, authUser));
+        return ResponseEntity.ok(eventJoinService.joinEventWithoutLock(eventId, authUser));
     }
 
     @PostMapping("/v2/events/{eventId}/join")
-    public ResponseEntity<EventJoinResponseDto> joinEventV2(
+    public ResponseEntity<EventJoinResponseDto> joinEventWithDBLock(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long eventId
     ) {
-        return ResponseEntity.ok(eventJoinService.joinEventV2(eventId, authUser));
+        return ResponseEntity.ok(eventJoinService.joinEventWithDBLock(eventId, authUser));
     }
 
     @PostMapping("/v3/events/{eventId}/join")
-    public ResponseEntity<EventJoinResponseDto> joinEventV3(
+    public ResponseEntity<EventJoinResponseDto> joinEventWithLock(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long eventId
     ) {
-        return ResponseEntity.ok(eventJoinService.joinEventV3(eventId, authUser));
+        return ResponseEntity.ok(eventJoinService.joinEventWithRedissonLock(eventId, authUser));
     }
 }

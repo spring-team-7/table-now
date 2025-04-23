@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +91,11 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
                 .join(store.category, category);
 
         // 검색 조건
-        BooleanExpression[] conditions = {storeDeletedAtIsNull(), storeCategoryIdEq(categoryId), storeNameContains(keyword)};
+        BooleanExpression[] conditions = {
+                storeDeletedAtIsNull(),
+                storeCategoryIdEq(categoryId),
+                getStoreKeywordContains(keyword)
+        };
         query.where(conditions);
 
         // 정렬 조건
@@ -121,7 +126,27 @@ public class StoreQueryRepositoryImpl implements StoreQueryRepository {
     }
 
     private BooleanExpression storeNameContains(String keyword) {
-        return Objects.nonNull(keyword) ? store.name.contains(keyword) : null;
+        return StringUtils.hasText(keyword) ? store.name.contains(keyword) : null;
+    }
+
+    private BooleanExpression storeDescriptionContains(String keyword) {
+        return StringUtils.hasText(keyword) ? store.description.contains(keyword) : null;
+    }
+
+    private BooleanExpression storeAddressContains(String keyword) {
+        return StringUtils.hasText(keyword) ? store.address.contains(keyword) : null;
+    }
+
+    private BooleanExpression getStoreKeywordContains(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return null;
+        }
+        List<BooleanExpression> orConditions = List.of(
+                storeNameContains(keyword),
+                storeDescriptionContains(keyword),
+                storeAddressContains(keyword)
+        );
+        return orConditions.stream().reduce(BooleanExpression::or).orElse(null);
     }
 
     private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {

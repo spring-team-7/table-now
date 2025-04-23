@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -143,5 +144,9 @@ public class UserService {
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new HandledException(ErrorCode.INCORRECT_PASSWORD);
         }
+    }
+
+    public List<User> getUsersWithAlarmEnabled() {
+        return userRepository.findAllByIsAlarmEnabledTrue();
     }
 }
