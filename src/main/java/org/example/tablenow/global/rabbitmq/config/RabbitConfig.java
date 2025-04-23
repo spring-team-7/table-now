@@ -31,7 +31,7 @@ public class RabbitConfig {
 
     @Bean
     public Queue eventOpenQueue() {
-        return new Queue("event.open.notification.queue", true);
+        return new Queue(EVENT_OPEN_QUEUE, true);
     }
 
     @Bean

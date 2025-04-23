@@ -2,6 +2,7 @@ package org.example.tablenow.global.rabbitmq.event.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.example.tablenow.domain.event.entity.Event;
 
 import java.time.LocalDateTime;
 
@@ -20,12 +21,12 @@ public class EventOpenMessage {
         this.openAt = openAt;
     }
 
-    public static EventOpenMessage from(Long eventId, Long storeId, String storeName, LocalDateTime openAt) {
+    public static EventOpenMessage fromEvent(Event event) {
         return EventOpenMessage.builder()
-                .eventId(eventId)
-                .storeId(storeId)
-                .storeName(storeName)
-                .openAt(openAt)
+                .eventId(event.getId())
+                .storeId(event.getStore().getId())
+                .storeName(event.getStore().getName())
+                .openAt(event.getOpenAt())
                 .build();
     }
 }
