@@ -1,6 +1,8 @@
 package org.example.tablenow.domain.notification.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationAlarmResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationResponseDto;
@@ -16,15 +18,18 @@ import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -32,13 +37,17 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final StoreService storeService;
     private final WaitlistRepository waitlistRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+
+    private static final Duration CACHE_TTL = Duration.ofMinutes(10);
+
 
     // 알림 생성
     @Transactional
     public NotificationResponseDto createNotification(NotificationRequestDto requestDto) {
         User findUser = userRepository.findById(requestDto.getUserId())
             .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
-
 
         Notification notification = new Notification(findUser, requestDto.getType(), requestDto.getContent());
         Notification savedNotification = notificationRepository.save(notification);
@@ -54,14 +63,34 @@ public class NotificationService {
     // 알림 조회
     @Transactional(readOnly = true)
     public Page<NotificationResponseDto> findNotifications(Long userId, int page, int size, Boolean isRead) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
+        String key = "notifications:" + userId;
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
 
-        return (isRead != null)
-            ? notificationRepository.findAllByUserAndIsRead(user, isRead, pageable).map(NotificationResponseDto::fromNotification)
-            : notificationRepository.findAllByUser(user, pageable).map(NotificationResponseDto::fromNotification);
+        User findUser = userRepository.findById(userId)
+            .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+
+        if (Boolean.FALSE.equals(isRead)) {
+            List<NotificationResponseDto> cached = (List<NotificationResponseDto>) redisTemplate.opsForValue().get(key);
+            if (cached != null && !cached.isEmpty()) {
+                log.info(">> Redis hit for {}", key);
+                return toPage(cached, pageable);
+            }
+            log.info(">> Redis miss for {}", key);
+        }
+
+        Page<Notification> notifications = (isRead != null)
+            ? notificationRepository.findAllByUserAndIsRead(findUser, isRead, pageable)
+            : notificationRepository.findAllByUser(findUser, pageable);
+
+        List<NotificationResponseDto> result = notifications.map(NotificationResponseDto::fromNotification).getContent();
+
+        // 캐시 저장
+        if (Boolean.FALSE.equals(isRead) && !result.isEmpty()) {
+            redisTemplate.opsForValue().set(key, result, CACHE_TTL);
+        }
+
+        return toPage(result, pageable);
     }
 
     // 알림 읽음 처리
@@ -75,6 +104,21 @@ public class NotificationService {
         }
 
         findNotification.updateRead();
+
+        // 캐시에서 해당 알림 제거
+        String key = "notifications:" + userId;
+        Object raw = redisTemplate.opsForValue().get(key);
+        if (raw instanceof List<?>) {
+            List<?> rawList = (List<?>) raw;
+            List<NotificationResponseDto> cached = rawList.stream()
+                .filter(item -> item instanceof LinkedHashMap)
+                .map(item -> objectMapper.convertValue(item, NotificationResponseDto.class))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+            cached.removeIf(n -> n.getNotificationId().equals(notificationId));
+            redisTemplate.opsForValue().set(key, cached, CACHE_TTL);
+        }
+
         return NotificationUpdateReadResponseDto.fromNotification(findNotification);
     }
 
@@ -85,10 +129,17 @@ public class NotificationService {
             .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
 
         List<Notification> notificationList = notificationRepository.findAllByUserAndIsReadFalse(user);
-        return notificationList.stream()
-            .peek(Notification::updateRead)
-            .map(NotificationUpdateReadResponseDto::fromNotification)
-            .toList();
+
+        List<NotificationUpdateReadResponseDto> result = new ArrayList<>();
+
+        for (Notification notification : notificationList) {
+            notification.updateRead();
+            result.add(NotificationUpdateReadResponseDto.fromNotification(notification));
+        }
+        String key = "notifications:" + userId;
+        redisTemplate.delete(key);
+
+        return result;
     }
 
     //알람 수신 여부
@@ -116,5 +167,12 @@ public class NotificationService {
         waitlist.updateNotified();
     }
 
-}
+    // 전체 알림 리스트를 페이징된 Page 객체로 변환
+    private Page<NotificationResponseDto> toPage(List<NotificationResponseDto> list, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), list.size());
+        List<NotificationResponseDto> sublist = list.subList(start, end);
+        return new PageImpl<>(sublist, pageable, list.size());
+    }
 
+}

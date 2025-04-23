@@ -37,6 +37,8 @@ dependencies {
     // Redis, cache
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 
     // Redisson
     implementation 'org.redisson:redisson-spring-boot-starter:3.45.1'
@@ -77,6 +79,7 @@ dependencies {
 
     // RabbitMQ
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
 
 }
 
