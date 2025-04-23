@@ -109,7 +109,10 @@ public enum ErrorCode {
 
     // SETTLEMENT
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산이 존재하지 않습니다."),
-    INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다.");
+    INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다."),
+
+    // CHAT
+    UNAUTHORIZED_CHAT_SENDER(HttpStatus.FORBIDDEN, "채팅에 참여할 수 있는 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String defaultMessage;
