@@ -7,7 +7,7 @@ import org.example.tablenow.domain.chat.repository.ChatMessageRepository;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.user.entity.User;
-import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final ReservationService reservationService;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     @Transactional
     public ChatMessage saveMessage(ChatMessageRequest request, Long senderId) {
@@ -51,7 +51,7 @@ public class ChatMessageService {
     }
 
     private ChatMessage buildChatMessage(ChatMessageRequest request, Long senderId, Long ownerId, Long reservationUserId) {
-        User sender = userRepository.getReferenceById(senderId);
+        User sender = userService.getUser(senderId);
         return ChatMessage.builder()
                 .reservationId(request.getReservationId())
                 .sender(sender)

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.util.JwtUtil;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -57,7 +56,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     }
 
     private String extractToken(HttpServletRequest httpRequest) {
-        String accessToken = httpRequest.getHeader(HttpHeaders.AUTHORIZATION);
+        String accessToken = httpRequest.getParameter("token");
         return (StringUtils.hasText(accessToken) && accessToken.startsWith(SecurityConstants.BEARER_PREFIX))
                 ? accessToken : null;
     }
