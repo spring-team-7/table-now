@@ -13,6 +13,6 @@ public interface StoreRepository extends JpaRepository<Store, Long>, StoreQueryR
     Optional<Store> findByIdAndDeletedAtIsNull(Long id);
 
     @EntityGraph(attributePaths = {"user", "category"})
-    @Query("SELECT s FROM Store s")
+    @Query("SELECT s FROM Store s WHERE s.deletedAt IS NULL")
     List<Store> findAllWithUserAndCategory();
 }
