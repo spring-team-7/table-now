@@ -210,29 +210,33 @@ public class StoreService {
             Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
             Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
-            if (authUser != null && StringUtils.hasText(keyword)) {
-                // 로그인 사용자 기준 어뷰징 방지
-                String normalizeKeyword = StoreUtils.normalizeKeyword(keyword);
-                String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
-                boolean alreadySearched = redisTemplate.hasKey(userKey);
-
-                if (!alreadySearched) {
-                    // 사용자별 조회 기록: 1일 중복 방지
-                    redisTemplate.opsForValue().set(userKey, "1", 1, TimeUnit.DAYS);
-
-                    // 시간 단위 랭킹 키 생성
-                    String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
-                    String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
-
-                    // 키워드 랭킹 score 증가
-                    redisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
-                    // 인기 검색어 TTL 1일 설정
-                    redisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
-                }
-            }
+            savePopularKeyword(authUser, keyword);
             return storeRepository.searchStores(pageable, categoryId, keyword);
         } catch (IllegalArgumentException e) {
             throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
+        }
+    }
+
+    public void savePopularKeyword(AuthUser authUser, String keyword) {
+        if (authUser != null && StringUtils.hasText(keyword)) {
+            // 로그인 사용자 기준 어뷰징 방지
+            String normalizeKeyword = StoreUtils.normalizeKeyword(keyword);
+            String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
+            boolean alreadySearched = redisTemplate.hasKey(userKey);
+
+            if (!alreadySearched) {
+                // 사용자별 조회 기록: 1일 중복 방지
+                redisTemplate.opsForValue().set(userKey, "1", 1, TimeUnit.DAYS);
+
+                // 시간 단위 랭킹 키 생성
+                String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
+                String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
+
+                // 키워드 랭킹 score 증가
+                redisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
+                // 인기 검색어 TTL 1일 설정
+                redisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
+            }
         }
     }
 
