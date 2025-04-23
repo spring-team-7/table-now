@@ -2,12 +2,11 @@ package org.example.tablenow.global.rabbitmq.event.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.tablenow.domain.event.service.EventJoinService;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
 import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.user.entity.User;
-import org.example.tablenow.global.rabbitmq.constant.RabbitConstant;
+import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.rabbitmq.event.dto.EventOpenMessage;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -15,16 +14,18 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.List;
 
+import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.EVENT_OPEN_QUEUE;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EventOpenConsumer {
-    private final EventJoinService eventJoinService;
+    private final UserService userService;
     private final NotificationService notificationService;
 
     private static final String EVENT_OPENED_MSG_TEMPLATE = "%s의 이벤트가 오픈되었습니다!";
 
-    @RabbitListener(queues = RabbitConstant.EVENT_OPEN_QUEUE)
+    @RabbitListener(queues = EVENT_OPEN_QUEUE)
     public void consume(EventOpenMessage message) {
         if (!isValid(message)) return;
 
@@ -49,7 +50,7 @@ public class EventOpenConsumer {
 
     private List<User> getUsers(Long eventId) {
         try {
-            return eventJoinService.getUsersByEventId(eventId);
+            return userService.getUsersWithAlarmEnabled();
         } catch (Exception e) {
             log.error("[EventOpenConsumer] 유저 조회 실패 → eventId={}", eventId, e);
             return Collections.emptyList();
