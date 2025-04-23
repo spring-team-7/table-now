@@ -149,13 +149,7 @@ public class EventService {
                 event.open();
 
                 // MQ 발행
-                EventOpenMessage message = EventOpenMessage.from(
-                        event.getId(),
-                        event.getStore().getId(),
-                        event.getStore().getName(),
-                        event.getOpenAt()
-                );
-
+                EventOpenMessage message = EventOpenMessage.fromEvent(event);
                 eventOpenProducer.send(message);
 
                 log.info("[EventOpenSuccess]: eventId={}, store={}, openAt={}",
