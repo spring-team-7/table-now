@@ -62,7 +62,7 @@ public class EventOpenConsumer {
             NotificationRequestDto dto = NotificationRequestDto.builder()
                     .userId(user.getId())
                     .storeId(message.getStoreId())
-                    .type(NotificationType.REMIND)
+                    .type(NotificationType.EVENT_OPEN)
                     .content(String.format(EVENT_OPENED_MSG_TEMPLATE, message.getStoreName()))
                     .build();
 

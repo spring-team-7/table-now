@@ -11,7 +11,7 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class EventJoinExecutor {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final EventRepository eventRepository;
     private final EventJoinRepository eventJoinRepository;
     private static final String EVENT_JOIN_PREFIX = "event:join:";
