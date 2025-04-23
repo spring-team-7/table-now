@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.event;
+package org.example.tablenow.domain.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
