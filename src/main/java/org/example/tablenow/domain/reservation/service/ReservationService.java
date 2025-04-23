@@ -9,6 +9,8 @@ import org.example.tablenow.domain.reservation.dto.response.ReservationResponseD
 import org.example.tablenow.domain.reservation.dto.response.ReservationStatusResponseDto;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
+import org.example.tablenow.domain.reservation.message.dto.ReminderMessage;
+import org.example.tablenow.domain.reservation.message.producer.ReminderRegisterProducer;
 import org.example.tablenow.domain.reservation.repository.ReservationRepository;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
@@ -18,7 +20,6 @@ import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
-import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,9 +37,8 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StoreService storeService;
-    private final RedissonClient redissonClient;
     private final VacancyProducer vacancyProducer;
-
+    private final ReminderRegisterProducer reminderRegisterProducer;
 
     private static final String RESERVATION_LOCK_KEY_PREFIX = "lock:reservation";
 
@@ -59,6 +59,7 @@ public class ReservationService {
         validateReservationOwner(reservation, user);
 
         Reservation savedReservation = reservationRepository.save(reservation);
+        reminderRegisterProducer.send(ReminderMessage.fromReservation(savedReservation));
 
         return ReservationResponseDto.fromReservation(savedReservation);
     }
