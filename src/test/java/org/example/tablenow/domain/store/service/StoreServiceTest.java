@@ -35,8 +35,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class StoreServiceTest {
@@ -139,7 +138,7 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 등록_성공() {
+        void 등록_성공_시_MQ_메시지_발송() {
             // given
             given(categoryService.findCategory(anyLong())).willReturn(category);
             given(storeRepository.countActiveStoresByUser(anyLong())).willReturn(0L);
@@ -153,6 +152,7 @@ public class StoreServiceTest {
             assertEquals(response.getName(), dto.getName());
             assertEquals(response.getUserId(), authOwner.getId());
             assertEquals(response.getCategoryId(), category.getId());
+            verify(storeProducer, times(1)).publishStoreCreate(any(Store.class));
         }
     }
 
@@ -353,7 +353,7 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 수정_성공() {
+        void 수정_성공_시_MQ_메시지_발송() {
             // given
             given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
             given(categoryService.findCategory(anyLong())).willReturn(category2);
@@ -370,6 +370,7 @@ public class StoreServiceTest {
                     () -> assertEquals(response.getEndTime(), dto.getEndTime()),
                     () -> assertEquals(response.getCategoryId(), dto.getCategoryId())
             );
+            verify(storeProducer, times(1)).publishStoreUpdate(any(Store.class));
         }
     }
 
@@ -427,6 +428,20 @@ public class StoreServiceTest {
             assertNotNull(response);
             assertEquals(response.getStoreId(), storeId);
             verify(imageService).delete(anyString());
+        }
+
+        @Test
+        void 가게_삭제_시_MQ_메세지_발송() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreDeleteResponseDto response = storeService.deleteStore(storeId, authOwner);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getStoreId(), storeId);
+            verify(storeProducer, times(1)).publishStoreDelete(store.getId());
         }
     }
 

@@ -50,100 +50,127 @@ public class StoreSearchService {
 
     @Transactional(readOnly = true)
     public PageResponse<StoreDocumentResponseDto> getStoresV3(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
+        // 정렬 파싱
+        Pageable pageable = resolvePageable(page, size, sort, direction);
+        String cacheKey = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(page, size, sort, direction, categoryId, keyword);
+
+        // Redis 캐시 조회
+        PageResponse<StoreDocumentResponseDto> cached = getFromCache(cacheKey);
+        if (cached != null) return cached;
+
+        // 인기 검색어 저장
+        storeService.savePopularKeyword(authUser, keyword);
+
+        // ElasticSearch 조회
+        return fetchFromElasticAndCache(categoryId, keyword, pageable, cacheKey);
+    }
+
+    private Pageable resolvePageable(int page, int size, String sort, String direction) {
         try {
             Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
-            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
-
-            // 인기 검색어 저장
-            storeService.savePopularKeyword(authUser, keyword);
-
-            // Redis 조회
-            String storeKey = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(page, size, sort, direction, categoryId, keyword);
-            if (stringRedisTemplate.hasKey(storeKey)) {
-                String storeCache = stringRedisTemplate.opsForValue().get(storeKey);
-                if (StringUtils.hasText(storeCache)) {
-                    try {
-                        return objectMapper.readValue(storeCache, STORE_PAGE_RESPONSE_TYPE);
-                    } catch (JsonProcessingException e) {
-                        log.error("[Redis] Value Json 변환 중 에러 발생", e);
-                    }
-                }
-            }
-
-            // ElasticSearch 조회
-            Page<StoreDocument> storeDocuments = storeElasticRepository.searchByKeywordAndCategoryId(keyword, categoryId, pageable);
-            PageResponse<StoreDocumentResponseDto> response = new PageResponse<>(storeDocuments.map(StoreDocumentResponseDto::fromStoreDocument));
-
-            if (!response.getContent().isEmpty()) {
-                try {
-                    // 검색 결과 Redis 캐시 저장
-                    stringRedisTemplate.opsForValue().set(storeKey, objectMapper.writeValueAsString(response), 1, TimeUnit.DAYS);
-                    // 역인덱스 추가
-                    Long[] storeIds = response.getContent().stream().map(StoreDocumentResponseDto::getStoreId).distinct().toArray(Long[]::new);
-                    for (Long storeId : storeIds) {
-                        stringRedisTemplate.opsForSet().add(STORE_CACHE_KEY + storeId, storeKey);
-                        stringRedisTemplate.expire(STORE_CACHE_KEY + storeId, 1, TimeUnit.DAYS);
-                    }
-                } catch (JsonProcessingException e) {
-                    log.error("[Redis] Value Json 변환 중 에러 발생", e);
-                }
-            }
-            return response;
+            return PageRequest.of(page - 1, size, sortOption);
         } catch (IllegalArgumentException e) {
             throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
         }
     }
 
-    public void invalidateCacheOnNewStore(StoreDocument storeDocument) {
-        Set<String> keysToDelete = new HashSet<>();
-
-        // 키워드 검색 조건: 가게명 기준 예상 검색어 분석
-        Set<String> keywordTokens = textAnalyzerService.analyzeText(STORE_INDEX_NAME, STORE_ANALYZER_NAME, storeDocument.getName());
-        if (!keywordTokens.isEmpty()) {
-            for (String keyword : keywordTokens) {
-                String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", keyword);
-                Set<String> keywordKeys = scanKeys(pattern);
-                keysToDelete.addAll(keywordKeys);
+    private PageResponse<StoreDocumentResponseDto> getFromCache(String cacheKey) {
+        try {
+            String cacheValue = stringRedisTemplate.opsForValue().get(cacheKey);
+            if (StringUtils.hasText(cacheValue)) {
+                return objectMapper.readValue(cacheValue, STORE_PAGE_RESPONSE_TYPE);
+            } else {
+                log.debug("[Redis] 캐시 미스 - 키: {}", cacheKey);
             }
+        } catch (JsonProcessingException e) {
+            log.error("[Redis] Value Json 변환 중 에러 발생", e);
+        }
+        return null;
+    }
+
+
+    private PageResponse<StoreDocumentResponseDto> fetchFromElasticAndCache(Long categoryId, String keyword, Pageable pageable, String storeKey) {
+        Page<StoreDocument> storeDocuments = storeElasticRepository.searchByKeywordAndCategoryId(keyword, categoryId, pageable);
+        PageResponse<StoreDocumentResponseDto> response = new PageResponse<>(storeDocuments.map(StoreDocumentResponseDto::fromStoreDocument));
+        saveToCache(storeKey, response);
+        return response;
+    }
+
+    private void saveToCache(String storeKey, PageResponse<StoreDocumentResponseDto> response) {
+        try {
+            // 검색 결과 Redis 캐시 저장
+            stringRedisTemplate.opsForValue().set(storeKey, objectMapper.writeValueAsString(response), 1, TimeUnit.DAYS);
+
+            // 역인덱스 추가
+            Long[] storeIds = response.getContent().stream().map(StoreDocumentResponseDto::getStoreId).distinct().toArray(Long[]::new);
+
+            for (Long storeId : storeIds) {
+                stringRedisTemplate.opsForSet().add(STORE_CACHE_KEY + storeId, storeKey);
+                stringRedisTemplate.expire(STORE_CACHE_KEY + storeId, 1, TimeUnit.DAYS);
+            }
+        } catch (JsonProcessingException e) {
+            log.error("[Redis] Value Json 변환 중 에러 발생", e);
+        }
+    }
+
+    public void evictSearchCacheForNewStore(StoreDocument storeDocument) {
+        Set<String> keysToDelete = new HashSet<>();
+        keysToDelete.addAll(scanKeysByKeywordTokens(storeDocument.getName()));
+        keysToDelete.addAll(scanKeysByCategoryId(storeDocument.getCategoryId()));
+
+        if (!keysToDelete.isEmpty()) {
+            stringRedisTemplate.delete(keysToDelete);
+            log.info("[Cache Evict] 삭제된 키 수: {}", keysToDelete.size());
+        }
+    }
+
+    private Set<String> scanKeysByKeywordTokens(String storeName) {
+        Set<String> keys = new HashSet<>();
+        Set<String> tokens = textAnalyzerService.analyzeText(STORE_INDEX_NAME, STORE_ANALYZER_NAME, storeName);
+
+        for (String token : tokens) {
+            String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", token);
+            keys.addAll(scanKeys(pattern));
         }
 
-        // 카테고리 검색 조건
-        String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "categoryId", String.valueOf(storeDocument.getCategoryId()));
-        Set<String> categoryKeys = scanKeys(pattern);
-        keysToDelete.addAll(categoryKeys);
+        return keys;
+    }
 
-        stringRedisTemplate.delete(keysToDelete);
+    private Set<String> scanKeysByCategoryId(Long categoryId) {
+        String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "categoryId", String.valueOf(categoryId));
+        return scanKeys(pattern);
     }
 
     private Set<String> scanKeys(String pattern) {
         Set<String> keys = new HashSet<>();
-        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(1000).build();
-        StringRedisSerializer stringSerializer = new StringRedisSerializer();
+        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(500).build();
 
-        RedisConnection connection = stringRedisTemplate.getConnectionFactory().getConnection();
-
-        try (Cursor<byte[]> cursor = connection.scan(options)) {
+        try (
+                RedisConnection connection = stringRedisTemplate.getConnectionFactory().getConnection();
+                Cursor<byte[]> cursor = connection.scan(options)
+        ) {
+            StringRedisSerializer stringSerializer = new StringRedisSerializer();
             while (cursor.hasNext()) {
-                byte[] rawKey = cursor.next();
-                String key = stringSerializer.deserialize(rawKey);
+                String key = stringSerializer.deserialize(cursor.next());
                 if (key != null) {
                     keys.add(key);
                 }
             }
         } catch (Exception e) {
-            log.error("Redis 키 조회 오류 발생: {}", pattern, e);
+            log.error("[Redis] 키 스캔 실패 - 패턴: {}", pattern, e);
         }
+
         return keys;
     }
 
 
-    public void invalidateStoreCacheByKey(Long storeId) {
-        Set<String> cacheKeys = stringRedisTemplate.opsForSet().members(STORE_CACHE_KEY + storeId);
+    public void evictSearchCacheByStoreId(Long storeId) {
+        String indexKey = STORE_CACHE_KEY + storeId;
+        Set<String> cacheKeys = stringRedisTemplate.opsForSet().members(indexKey);
         if (!cacheKeys.isEmpty()) {
-            // 검색 결과 Redis 캐시 삭제
             stringRedisTemplate.delete(cacheKeys);
-            // 역인덱스 삭제
-            stringRedisTemplate.delete(STORE_CACHE_KEY + storeId);
+            stringRedisTemplate.delete(indexKey);
+            log.info("[Cache Evict] storeId {} 관련 {}개 키 삭제", storeId, cacheKeys.size());
         }
     }
 }

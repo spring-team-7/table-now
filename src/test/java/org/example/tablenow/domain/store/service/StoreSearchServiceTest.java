@@ -144,7 +144,6 @@ public class StoreSearchServiceTest {
             // template.opsForValue().get(key) 결과
             String cachedJson = "{\"content\":[{\"storeId\":1,\"name\":\"맛있는 가게\",\"categoryId\":1,\"categoryName\":\"한식\",\"imageUrl\":null,\"startTime\":\"09:00\",\"endTime\":\"21:30\",\"rating\":4.5,\"ratingCount\":100}],\"totalElements\":1}";
 
-            given(stringRedisTemplate.hasKey(anyString())).willReturn(true);
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(anyString())).willReturn(cachedJson);
             given(objectMapper.readValue(anyString(), any(JavaType.class))).willReturn(expectedResponse);
@@ -162,7 +161,6 @@ public class StoreSearchServiceTest {
         @Test
         void 가게_검색_cache_miss_시_elastic_search_조회_결과_없음() {
             // given
-            given(stringRedisTemplate.hasKey(anyString())).willReturn(false);
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
 
             Page<StoreDocument> result = new PageImpl<>(Collections.emptyList());
@@ -179,9 +177,7 @@ public class StoreSearchServiceTest {
         @Test
         void 가게_검색_cache_miss_시_elastic_search_조회_및_캐시_저장() {
             // given
-            given(stringRedisTemplate.hasKey(anyString())).willReturn(false);
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
-
             given(stringRedisTemplate.opsForSet()).willReturn(setOperations);
 
             Page<StoreDocument> result = new PageImpl<>(List.of(storeDocument));
@@ -211,10 +207,10 @@ public class StoreSearchServiceTest {
             given(stringRedisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
 
             // when
-            storeSearchService.invalidateCacheOnNewStore(storeDocument);
+            storeSearchService.evictSearchCacheForNewStore(storeDocument);
 
             // then
-            verify(stringRedisTemplate).delete(Collections.emptySet());
+            verify(stringRedisTemplate, never()).delete(Collections.emptySet());
         }
 
         @Test
@@ -237,7 +233,7 @@ public class StoreSearchServiceTest {
             given(cursor.next()).willReturn(key1.getBytes(), key2.getBytes());
 
             // when
-            storeSearchService.invalidateCacheOnNewStore(storeDocument);
+            storeSearchService.evictSearchCacheForNewStore(storeDocument);
 
             // then
             verify(stringRedisTemplate).delete(scanResult);
@@ -262,7 +258,7 @@ public class StoreSearchServiceTest {
             given(cursor.next()).willReturn(key1.getBytes(), key2.getBytes());
 
             // when
-            storeSearchService.invalidateCacheOnNewStore(storeDocument);
+            storeSearchService.evictSearchCacheForNewStore(storeDocument);
 
             // then
             verify(stringRedisTemplate).delete(scanResult);
@@ -281,7 +277,7 @@ public class StoreSearchServiceTest {
             given(setOperations.members(anyString())).willReturn(cacheResult);
 
             // when
-            storeSearchService.invalidateStoreCacheByKey(storeId);
+            storeSearchService.evictSearchCacheByStoreId(storeId);
 
             // then
             verify(stringRedisTemplate, never()).delete(cacheResult);
@@ -299,7 +295,7 @@ public class StoreSearchServiceTest {
             given(setOperations.members(anyString())).willReturn(cacheResult);
 
             // when
-            storeSearchService.invalidateStoreCacheByKey(storeId);
+            storeSearchService.evictSearchCacheByStoreId(storeId);
 
             // then
             verify(stringRedisTemplate).delete(cacheResult);

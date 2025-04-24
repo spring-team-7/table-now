@@ -22,11 +22,8 @@ public class StoreConsumer {
     @RabbitListener(queues = STORE_CREATE_QUEUE)
     public void handleCreate(StoreEventDto event) {
         try {
-            StoreDocument storeDocument = event.getStoreDocument();
-            // ElasticSearch 인덱스 업데이트
-            storeElasticRepository.updateStoreIndex(storeDocument);
-            // Redis 캐시 키 탐색 및 선별 삭제
-            storeSearchService.invalidateCacheOnNewStore(storeDocument);
+            StoreDocument storeDocument = updateIndexAndGetStoreDocument(event);
+            storeSearchService.evictSearchCacheForNewStore(storeDocument);
         } catch (Exception e) {
             log.error("[StoreDocumentConsumer] MQ 처리 중 예외 발생", e);
         }
@@ -35,11 +32,8 @@ public class StoreConsumer {
     @RabbitListener(queues = STORE_UPDATE_QUEUE)
     public void handleUpdate(StoreEventDto event) {
         try {
-            StoreDocument storeDocument = event.getStoreDocument();
-            // ElasticSearch 인덱스 업데이트
-            storeElasticRepository.updateStoreIndex(storeDocument);
-            // Redis 캐시 삭제
-            storeSearchService.invalidateStoreCacheByKey(storeDocument.getId());
+            StoreDocument storeDocument = updateIndexAndGetStoreDocument(event);
+            storeSearchService.evictSearchCacheByStoreId(storeDocument.getId());
         } catch (Exception e) {
             log.error("[StoreDocumentConsumer] MQ 처리 중 예외 발생", e);
         }
@@ -48,12 +42,16 @@ public class StoreConsumer {
     @RabbitListener(queues = STORE_DELETE_QUEUE)
     public void handleDelete(Long storeId) {
         try {
-            // ElasticSearch 인덱스 삭제
             storeElasticRepository.deleteStoreIndex(storeId);
-            // Redis 캐시 삭제
-            storeSearchService.invalidateStoreCacheByKey(storeId);
+            storeSearchService.evictSearchCacheByStoreId(storeId);
         } catch (Exception e) {
             log.error("[StoreDocumentConsumer] MQ 처리 중 예외 발생", e);
         }
+    }
+
+    private StoreDocument updateIndexAndGetStoreDocument(StoreEventDto event) {
+        StoreDocument storeDocument = event.getStoreDocument();
+        storeElasticRepository.updateStoreIndex(event.getStoreDocument());
+        return storeDocument;
     }
 }
