@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.chat.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.chat.dto.request.ChatMessageRequest;
@@ -22,7 +23,7 @@ public class ChatMessageController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat/message")
-    public void handleMessage(@Payload ChatMessageRequest request,
+    public void handleMessage(@Payload @Valid ChatMessageRequest request,
                               SimpMessageHeaderAccessor headerAccessor) {
         Long userId = (Long) headerAccessor.getSessionAttributes().get("userId");
 
