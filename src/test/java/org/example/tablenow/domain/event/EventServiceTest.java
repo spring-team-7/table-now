@@ -7,14 +7,14 @@ import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.enums.EventStatus;
+import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
+import org.example.tablenow.domain.event.message.producer.EventOpenProducer;
 import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.event.service.EventJoinService;
 import org.example.tablenow.domain.event.service.EventService;
-import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
-import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,19 +27,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class EventServiceTest {
@@ -57,7 +59,13 @@ public class EventServiceTest {
     private NotificationService notificationService;
 
     @Mock
-    private RedisTemplate<Object, Object> redisTemplate;
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ZSetOperations<String, String> zSetOperations;
+
+    @Mock
+    private EventOpenProducer eventOpenProducer;
 
     @InjectMocks
     private EventService eventService;
@@ -121,7 +129,12 @@ public class EventServiceTest {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
             given(eventRepository.existsByStoreIdAndEventTime(anyLong(), any())).willReturn(false);
-            given(eventRepository.save(any(Event.class))).willAnswer(invocation -> invocation.getArgument(0));
+            given(eventRepository.save(any(Event.class))).willAnswer(invocation -> {
+                Event e = invocation.getArgument(0);
+                ReflectionTestUtils.setField(e, "openAt", LocalDateTime.of(2025, 4, 30, 10, 0));
+                return e;
+            });
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
 
             // when
             EventResponseDto response = eventService.createEvent(dto);
@@ -130,6 +143,7 @@ public class EventServiceTest {
             assertNotNull(response);
             assertEquals(storeId, response.getStoreId());
             assertEquals(dto.getLimitPeople(), response.getLimitPeople());
+            verify(zSetOperations).add(eq("event:open"), anyString(), anyDouble());
         }
     }
 
@@ -275,7 +289,7 @@ public class EventServiceTest {
         }
     }
 
-    @Nested
+/*    @Nested
     class 이벤트_오픈_처리 {
 
         @Test
@@ -328,6 +342,88 @@ public class EventServiceTest {
             verify(notificationService, never()).createNotification(argThat(req ->
                     req.getUserId().equals(user2.getId())
             ));
+        }
+    }*/
+
+    @Nested
+    class 이벤트_오픈_처리 {
+
+        @Test
+        void 이벤트_오픈_성공() {
+            // given
+            Event event1 = createEvent(1L, EventStatus.READY);
+            Event event2 = createEvent(2L, EventStatus.READY);
+
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble()))
+                    .willReturn(Set.of("1", "2"));
+            given(eventRepository.findById(1L)).willReturn(Optional.of(event1));
+            given(eventRepository.findById(2L)).willReturn(Optional.of(event2));
+
+            // when
+            eventService.openEventsIfDue();
+
+            // then
+            assertAll(
+                    () -> assertEquals(EventStatus.OPENED, event1.getStatus()),
+                    () -> assertEquals(EventStatus.OPENED, event2.getStatus())
+            );
+
+            verify(eventOpenProducer, times(2)).send(any(EventOpenMessage.class));
+            verify(zSetOperations, times(2)).remove(eq("event:open"), anyString());
+            verify(zSetOperations, times(2)).remove(eq("event:open"), anyString());
+        }
+
+        @Test
+        void 상태가_READY가_아닌_이벤트는_오픈되지_않음() {
+            // given
+            Long notReadyEventId = 1L;
+            Event notReadyEvent = createEvent(notReadyEventId, EventStatus.CLOSED); // 상태 READY 아님
+
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble()))
+                    .willReturn(Set.of(String.valueOf(notReadyEventId)));
+            given(eventRepository.findById(notReadyEventId)).willReturn(Optional.of(notReadyEvent));
+
+            // when
+            eventService.openEventsIfDue();
+
+            // then
+            assertEquals(EventStatus.CLOSED, notReadyEvent.getStatus());
+
+            verify(eventOpenProducer, never()).send(any());
+            verify(zSetOperations, never()).remove(anyString(), anyString());
+        }
+
+        @Test
+        void 오픈시간_도래한_이벤트가_비어있으면_아무작업도_하지_않음() {
+            // given
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble()))
+                    .willReturn(Collections.emptySet()); // 또는 null
+
+            // when
+            eventService.openEventsIfDue();
+
+            // then
+            verify(eventRepository, never()).findById(anyLong());
+            verify(eventOpenProducer, never()).send(any());
+            verify(zSetOperations, never()).remove(anyString(), anyString());
+        }
+
+        @Test
+        void 오픈시간_도래한_이벤트가_null이면_아무작업도_하지_않음() {
+            // given
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble())).willReturn(null);
+
+            // when
+            eventService.openEventsIfDue();
+
+            // then
+            verify(eventRepository, never()).findById(anyLong());
+            verify(eventOpenProducer, never()).send(any());
+            verify(zSetOperations, never()).remove(anyString(), anyString());
         }
     }
 
