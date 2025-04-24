@@ -156,6 +156,11 @@ public class ReservationService {
                 .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
     }
 
+    public Reservation getReservationWithStore(Long id) {
+        return reservationRepository.findWithStoreById(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
+    }
+
     private void validateUpdatableReservation(User user, Long id, ReservationUpdateRequestDto request, Reservation reservation) {
         validateReservationOwner(reservation, user);
         validateReservationTimeDuplicated(id, request, reservation);
