@@ -10,7 +10,7 @@ import org.example.tablenow.domain.notification.repository.NotificationRepositor
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
-import org.example.tablenow.domain.user.repository.UserRepository;
+import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
@@ -22,6 +22,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -32,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +44,13 @@ class NotificationServiceTest {
     private NotificationRepository notificationRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
+
+    @Mock
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
     @Mock
     private StoreService storeService;
@@ -55,6 +63,7 @@ class NotificationServiceTest {
 
     @InjectMocks
     private NotificationService notificationService;
+
 
     @Nested
     class 알림_생성 {
@@ -72,8 +81,9 @@ class NotificationServiceTest {
 
         @Test
         void 알림_정상_생성() {
-            given(userRepository.findById(1L)).willReturn(Optional.of(user));
-            given(notificationRepository.save(any(Notification.class))).willAnswer(invocation -> invocation.getArgument(0));
+            given(userService.getUser(1L)).willReturn(user);
+            given(notificationRepository.save(any(Notification.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
 
             NotificationResponseDto result = notificationService.createNotification(dto);
 
@@ -82,7 +92,7 @@ class NotificationServiceTest {
 
         @Test
         void 유저를_찾지_못해_알림_생성_실패() {
-            given(userRepository.findById(1L)).willReturn(Optional.empty());
+            given(userService.getUser(1L)).willThrow(new HandledException(ErrorCode.USER_NOT_FOUND));
 
             HandledException exception = assertThrows(HandledException.class, () -> {
                 notificationService.createNotification(dto);
@@ -111,8 +121,7 @@ class NotificationServiceTest {
         @Test
         void StoreId_없어서_예외() {
             // given
-            given(userRepository.findById(1L)).willReturn(Optional.of(user));
-            given(user.getIsAlarmEnabled()).willReturn(true);
+            given(userService.getUser(1L)).willReturn(user);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -128,8 +137,7 @@ class NotificationServiceTest {
             ReflectionTestUtils.setField(dto, "storeId", 10L);
             Store store = mock(Store.class);
 
-            given(userRepository.findById(1L)).willReturn(Optional.of(user));
-            given(user.getIsAlarmEnabled()).willReturn(true);
+            given(userService.getUser(1L)).willReturn(user);
             given(storeService.getStore(10L)).willReturn(store);
             given(waitlistRepository.findByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(Optional.empty());
 
@@ -155,17 +163,20 @@ class NotificationServiceTest {
         @Test
         void 알림_정상_조회() {
             // given
-            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
+            given(valueOperations.get(any())).willReturn(null);
+
+            given(userService.getUser(1L)).willReturn(user);
 
             Notification noti1 = new Notification(user, NotificationType.REMIND, "알림1");
             Notification noti2 = new Notification(user, NotificationType.VACANCY, "알림2");
             Page<Notification> page = new PageImpl<>(List.of(noti1, noti2));
 
-            given(notificationRepository.findAllByUser(eq(user), any(Pageable.class)))
+            given(notificationRepository.findAllByUserAndIsRead(eq(user), eq(false), any(Pageable.class)))
                 .willReturn(page);
 
             // when
-            Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5, false); // 👈 여기 page=0 확인!
+            Page<NotificationResponseDto> result = notificationService.findNotifications(1L, 1, 5, false);
 
             // then
             assertEquals("알림1", result.getContent().get(0).getContent());
@@ -175,7 +186,7 @@ class NotificationServiceTest {
 
         @Test
         void 유저를_찾지_못해_알림_조회_실패() {
-            given(userRepository.findById(1L)).willReturn(Optional.empty());
+            given(userService.getUser(1L)).willThrow(new HandledException(ErrorCode.USER_NOT_FOUND));
 
             HandledException exception = assertThrows(HandledException.class, () -> {
                 notificationService.findNotifications(1L, 1, 5, false);
@@ -188,6 +199,9 @@ class NotificationServiceTest {
     @Test
     void 알림_정상_읽음처리() {
         // given
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get(any())).willReturn(null);
+
         Notification notification = new Notification(user, NotificationType.REMIND, "예약 알림");
         ReflectionTestUtils.setField(notification, "id", 10L);
         ReflectionTestUtils.setField(user, "id", 1L);
@@ -246,7 +260,7 @@ class NotificationServiceTest {
         ReflectionTestUtils.setField(n2, "id", 11L);
         ReflectionTestUtils.setField(user, "id", 1L);
 
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(userService.getUser(1L)).willReturn(user);
         given(notificationRepository.findAllByUserAndIsReadFalse(user)).willReturn(List.of(n1, n2));
 
         // when
@@ -262,7 +276,7 @@ class NotificationServiceTest {
     @Test
     void 유저를_찾지_못해서_전체읽음_실패() {
         // given
-        given(userRepository.findById(1L)).willReturn(Optional.empty());
+        given(userService.getUser(1L)).willThrow(new HandledException(ErrorCode.USER_NOT_FOUND));
 
         // when & then
         HandledException exception = assertThrows(HandledException.class, () -> {
@@ -277,7 +291,7 @@ class NotificationServiceTest {
     void 알람_수신_설정_변경_성공() {
         // given
         ReflectionTestUtils.setField(user, "id", 1L);
-        given(userRepository.findById(1L)).willReturn(Optional.of(user));
+        given(userService.getUser(1L)).willReturn(user);
         given(user.getUpdatedAt()).willReturn(LocalDateTime.now());
         given(user.getIsAlarmEnabled()).willReturn(true);
 
@@ -291,7 +305,7 @@ class NotificationServiceTest {
     @Test
     void 유저를_찾지_못해_수신_설정_실패() {
         // given
-        given(userRepository.findById(1L)).willReturn(Optional.empty());
+        given(userService.getUser(1L)).willThrow(new HandledException(ErrorCode.USER_NOT_FOUND));
 
         // when & then
         HandledException exception = assertThrows(HandledException.class, () -> {
