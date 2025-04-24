@@ -51,8 +51,6 @@ public class TokenService {
             throw new HandledException(ErrorCode.REDIS_CONNECTION_ERROR);
         }
 
-        String stored = redisTemplate.opsForValue().get(redisKey);
-        log.info("✅ 저장 후 즉시 조회된 값: key = {}, value = {}", redisKey, stored);
         return refreshToken;
     }
 
