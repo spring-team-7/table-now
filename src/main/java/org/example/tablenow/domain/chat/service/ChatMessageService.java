@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.chat.dto.request.ChatMessageRequest;
 import org.example.tablenow.domain.chat.dto.response.ChatAvailabilityResponse;
 import org.example.tablenow.domain.chat.dto.response.ChatMessageResponse;
+import org.example.tablenow.domain.chat.dto.response.ChatReadStatusResponse;
 import org.example.tablenow.domain.chat.entity.ChatMessage;
 import org.example.tablenow.domain.chat.repository.ChatMessageRepository;
 import org.example.tablenow.domain.reservation.entity.Reservation;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -47,8 +49,7 @@ public class ChatMessageService {
 
     @Transactional(readOnly = true)
     public ChatAvailabilityResponse isChatAvailable(Long reservationId, Long userId) {
-        ChatParticipants participants = loadChatParticipants(reservationId);
-        validateChatParticipant(userId, participants);
+        loadAndValidateChatParticipants(reservationId, userId);
 
         Reservation reservation = reservationService.getReservation(reservationId);
         boolean isAvailable = reservation.getStatus() == ReservationStatus.RESERVED;
@@ -63,12 +64,36 @@ public class ChatMessageService {
 
     @Transactional(readOnly = true)
     public Page<ChatMessageResponse> getMessages(Long reservationId, Long userId, Pageable pageable) {
-        ChatParticipants participants = loadChatParticipants(reservationId);
-        validateChatParticipant(userId, participants);
+        loadAndValidateChatParticipants(reservationId, userId);
 
         Page<ChatMessage> messages = chatMessageRepository.findByReservationId(reservationId, pageable);
 
         return messages.map(ChatMessageResponse::fromChatMessage);
+    }
+
+    @Transactional
+    public ChatReadStatusResponse changeReadStatus(Long reservationId, Long userId) {
+        ChatParticipants participants = loadChatParticipants(reservationId);
+        validateChatParticipant(userId, participants);
+
+        List<ChatMessage> unreadMessages = chatMessageRepository
+                .findByReservationIdAndSenderIdNotAndIsReadFalse(reservationId, userId);
+
+        unreadMessages.forEach(ChatMessage::changeToRead);
+
+        int changedCount = unreadMessages.size();
+        String responseMessage = changedCount + "개의 메시지 읽음 처리가 완료되었습니다.";
+
+        return ChatReadStatusResponse.builder()
+                .reservationId(reservationId)
+                .userId(userId)
+                .message(responseMessage)
+                .build();
+    }
+
+    private void loadAndValidateChatParticipants(Long reservationId, Long userId) {
+        ChatParticipants participants = loadChatParticipants(reservationId);
+        validateChatParticipant(userId, participants);
     }
 
     private ChatParticipants loadChatParticipants(Long reservationId) {

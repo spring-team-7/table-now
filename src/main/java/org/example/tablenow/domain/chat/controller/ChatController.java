@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.chat.dto.response.ChatAvailabilityResponse;
 import org.example.tablenow.domain.chat.dto.response.ChatMessagePageResponse;
 import org.example.tablenow.domain.chat.dto.response.ChatMessageResponse;
+import org.example.tablenow.domain.chat.dto.response.ChatReadStatusResponse;
 import org.example.tablenow.domain.chat.service.ChatMessageService;
 import org.example.tablenow.global.dto.AuthUser;
 import org.springframework.data.domain.Page;
@@ -12,10 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,5 +38,13 @@ public class ChatController {
     ) {
         Page<ChatMessageResponse> page = chatMessageService.getMessages(reservationId, authUser.getId(), pageable);
         return ResponseEntity.ok(ChatMessagePageResponse.fromChatMessageResponsePage(page));
+    }
+
+    @PatchMapping("/v1/chats/{reservationId}/read")
+    public ResponseEntity<ChatReadStatusResponse> changeReadStatus(
+            @PathVariable Long reservationId,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        return ResponseEntity.ok(chatMessageService.changeReadStatus(reservationId, authUser.getId()));
     }
 }
