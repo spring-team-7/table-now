@@ -2,9 +2,11 @@ package org.example.tablenow.domain.chat.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.chat.dto.request.ChatMessageRequest;
+import org.example.tablenow.domain.chat.dto.response.ChatAvailabilityResponse;
 import org.example.tablenow.domain.chat.entity.ChatMessage;
 import org.example.tablenow.domain.chat.repository.ChatMessageRepository;
 import org.example.tablenow.domain.reservation.entity.Reservation;
+import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,30 +26,61 @@ public class ChatMessageService {
     private final ReservationService reservationService;
     private final UserService userService;
 
+    // 참여자 정보 전달용 내부 record
+    private record ChatParticipants(Long ownerId, Long reservationUserId) {}
+
     @Transactional
     public ChatMessage saveMessage(ChatMessageRequest request, Long senderId) {
+        ChatParticipants participants = loadAndValidateParticipants(request.getReservationId(), senderId);
 
-        // 1. 기존 메시지가 존재하는지 확인
-        return chatMessageRepository.findTop1ByReservationIdOrderByCreatedAtDesc(request.getReservationId())
-                .map(lastMessage -> {
-                    Long ownerId = lastMessage.getOwnerId();
-                    Long reservationUserId = lastMessage.getReservationUserId();
-                    validateSender(senderId, ownerId, reservationUserId);
-                    return chatMessageRepository.save(buildChatMessage(request, senderId, ownerId, reservationUserId));
-                })
-                .orElseGet(() -> {
-                    // 최초 메시지: reservation 기준으로 권한 확인 및 역정규화 값 추출
-                    Reservation reservation = reservationService.getReservation(request.getReservationId());
-                    Long ownerId = reservation.getStore().getUser().getId();
-                    Long reservationUserId = reservation.getUser().getId();
-                    validateSender(senderId, ownerId, reservationUserId);
-                    return chatMessageRepository.save(buildChatMessage(request, senderId, ownerId, reservationUserId));
-                });
+        return chatMessageRepository.save(buildChatMessage(
+                request,
+                senderId,
+                participants.ownerId(),
+                participants.reservationUserId()
+        ));
     }
 
-    private void validateSender(Long senderId, Long ownerId, Long reservationUserId) {
+    public ChatAvailabilityResponse isChatAvailable(Long reservationId, Long userId) {
+        ChatParticipants participants = loadAndValidateParticipants(reservationId, userId);
+
+        Reservation reservation = reservationService.getReservation(reservationId);
+        boolean isAvailable = reservation.getStatus() == ReservationStatus.RESERVED;
+        return ChatAvailabilityResponse.builder()
+                .reservationId(reservationId)
+                .userId(userId)
+                .available(isAvailable)
+                .reason(reservation.getStatus().name())
+                .build();
+    }
+
+    private ChatParticipants loadAndValidateParticipants(Long reservationId, Long userId) {
+        Long ownerId;
+        Long reservationUserId;
+
+        Optional<ChatMessage> lastMessageOpt =
+                chatMessageRepository.findTop1ByReservationIdOrderByCreatedAtDesc(reservationId);
+
+
+        if (lastMessageOpt.isPresent()) {
+            // 채팅한 내역이 있을 경우 chatMessage 정보로 참여자 정보 추출
+            ChatMessage lastMessage = lastMessageOpt.get();
+            ownerId = lastMessage.getOwnerId();
+            reservationUserId = lastMessage.getReservationUserId();
+        } else {
+            // 최초 채팅일 경우 reservation 정보로 참여자 정보 추출
+            Reservation reservation = reservationService.getReservation(reservationId);
+            ownerId = reservation.getStore().getUser().getId();
+            reservationUserId = reservation.getUser().getId();
+        }
+
+        validateChatParticipant(userId, ownerId, reservationUserId);
+        return new ChatParticipants(ownerId, reservationUserId);
+    }
+
+    private void validateChatParticipant(Long senderId, Long ownerId, Long reservationUserId) {
         if (!senderId.equals(ownerId) && !senderId.equals(reservationUserId)) {
-            throw new HandledException(ErrorCode.UNAUTHORIZED_CHAT_SENDER);
+            throw new HandledException(ErrorCode.INVALID_CHAT_PARTICIPANT);
         }
     }
 
