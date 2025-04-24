@@ -78,6 +78,8 @@ dependencies {
     // RabbitMQ
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
+    // Spring Batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
 }
 
 def querydslDir = 'src/main/generated'

@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
-    List<Settlement> findAllByStatus(SettlementStatus settlementStatus);
+    Page<Settlement> findAllByStatus(SettlementStatus settlementStatus, Pageable pageable);
 
     @Query("""
     SELECT s FROM Settlement s
