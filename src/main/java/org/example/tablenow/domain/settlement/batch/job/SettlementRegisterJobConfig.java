@@ -2,7 +2,7 @@ package org.example.tablenow.domain.settlement.batch.job;
 
 import org.example.tablenow.domain.payment.entity.Payment;
 import org.example.tablenow.domain.payment.enums.PaymentStatus;
-import org.example.tablenow.domain.payment.repository.PaymentRepository;
+import org.example.tablenow.domain.payment.service.PaymentService;
 import org.example.tablenow.domain.settlement.entity.Settlement;
 import org.example.tablenow.domain.settlement.repository.SettlementRepository;
 import org.springframework.batch.core.Job;
@@ -27,7 +27,7 @@ public class SettlementRegisterJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager platformTransactionManager;
 
-    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
     private final SettlementRepository settlementRepository;
 
     @Qualifier("dataDBSource")
@@ -36,13 +36,13 @@ public class SettlementRegisterJobConfig {
     public SettlementRegisterJobConfig(
             JobRepository jobRepository,
             PlatformTransactionManager platformTransactionManager,
-            PaymentRepository paymentRepository,
+            PaymentService paymentService,
             SettlementRepository settlementRepository,
             @Qualifier("dataDBSource") DataSource dataDBSource
     ) {
         this.jobRepository = jobRepository;
         this.platformTransactionManager = platformTransactionManager;
-        this.paymentRepository = paymentRepository;
+        this.paymentService = paymentService;
         this.settlementRepository = settlementRepository;
         this.dataDBSource = dataDBSource;
     }
@@ -93,8 +93,7 @@ public class SettlementRegisterJobConfig {
     public ItemProcessor<Payment, Settlement> persistentPaymentProcessor() {
         return payment -> {
             // paymentRepository를 통해 영속 객체 다시 조회
-            Payment persistent = paymentRepository.findById(payment.getId())
-                    .orElseThrow(() -> new IllegalStateException("결제 정보 조회 실패: id = " + payment.getId()));
+            Payment persistent = paymentService.getVerifiedPaymentById(payment.getId());
 
             return Settlement.fromPayment(persistent);
         };

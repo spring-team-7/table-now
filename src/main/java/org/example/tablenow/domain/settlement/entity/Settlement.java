@@ -63,9 +63,9 @@ public class Settlement extends TimeStamped {
 
     public static Settlement fromPayment(Payment payment) {
 
-        // ✅ 수정됨: payment가 영속 상태인지 확인
+        // payment가 영속 상태인지 확인
         if (payment.getId() == null) {
-            throw new IllegalArgumentException("영속화되지 않은 Payment 객체입니다");
+            throw new HandledException(ErrorCode.UNPERSISTED_PAYMENT);
         }
         return Settlement.builder()
                 .payment(payment)
