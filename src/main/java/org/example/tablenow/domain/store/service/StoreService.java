@@ -9,8 +9,9 @@ import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.enums.StoreSortField;
+import org.example.tablenow.domain.store.message.producer.StoreProducer;
 import org.example.tablenow.domain.store.repository.StoreRepository;
-import org.example.tablenow.domain.store.util.StoreRedisKey;
+import org.example.tablenow.domain.store.util.StoreConstant;
 import org.example.tablenow.domain.store.util.StoreUtils;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
@@ -22,7 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +44,8 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final CategoryService categoryService;
     private final ImageService imageService;
-    private final RedisTemplate<Object, Object> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final StoreProducer storeProducer;
 
     private static final Long MAX_STORES_COUNT = 3L;
     private static final Integer TARGET_HOUR_LENGTH = 10;
@@ -78,6 +80,7 @@ public class StoreService {
                 .build();
 
         Store savedStore = storeRepository.save(store);
+        storeProducer.publishStoreCreate(savedStore); // Index + Redis 갱신
         return StoreCreateResponseDto.fromStore(savedStore);
     }
 
@@ -137,6 +140,7 @@ public class StoreService {
             store.updateDeposit(request.getDeposit());
         }
 
+        storeProducer.publishStoreUpdate(store); // Index + Redis 갱신
         return StoreUpdateResponseDto.fromStore(store);
     }
 
@@ -154,6 +158,8 @@ public class StoreService {
         }
 
         store.deleteStore();
+        storeProducer.publishStoreDelete(store.getId());
+
         return StoreDeleteResponseDto.fromStore(store.getId());
     }
 
@@ -221,21 +227,21 @@ public class StoreService {
         if (authUser != null && StringUtils.hasText(keyword)) {
             // 로그인 사용자 기준 어뷰징 방지
             String normalizeKeyword = StoreUtils.normalizeKeyword(keyword);
-            String userKey = StoreRedisKey.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
-            boolean alreadySearched = redisTemplate.hasKey(userKey);
+            String userKey = StoreConstant.STORE_KEYWORD_USER_KEY + normalizeKeyword + ":" + authUser.getId();
+            boolean alreadySearched = stringRedisTemplate.hasKey(userKey);
 
             if (!alreadySearched) {
                 // 사용자별 조회 기록: 1일 중복 방지
-                redisTemplate.opsForValue().set(userKey, "1", 1, TimeUnit.DAYS);
+                stringRedisTemplate.opsForValue().set(userKey, "1", 1, TimeUnit.DAYS);
 
                 // 시간 단위 랭킹 키 생성
                 String hourKey = LocalDateTime.now().format(TIME_KEY_FORMATTER);
-                String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
+                String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
 
                 // 키워드 랭킹 score 증가
-                redisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
+                stringRedisTemplate.opsForZSet().incrementScore(rankKey, normalizeKeyword, 1);
                 // 인기 검색어 TTL 1일 설정
-                redisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
+                stringRedisTemplate.expire(rankKey, 1, TimeUnit.DAYS);
             }
         }
     }
@@ -276,8 +282,8 @@ public class StoreService {
     private Map<String, Integer> getKeywordRankingByHour(String timeKey) {
         Map<String, Integer> rankMap = new LinkedHashMap<>();
 
-        String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
-        Set<ZSetOperations.TypedTuple<Object>> tuples = redisTemplate.opsForZSet()
+        String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+        Set<ZSetOperations.TypedTuple<String>> tuples = stringRedisTemplate.opsForZSet()
                 .reverseRangeWithScores(rankKey, 0L, -1);
 
         if (tuples.isEmpty()) {
@@ -296,16 +302,16 @@ public class StoreService {
 
         for (int hour = 0; hour < 24; hour++) {
             String hourStr = String.format("%02d", hour);
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey + hourStr;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey + hourStr;
 
-            Set<ZSetOperations.TypedTuple<Object>> tuples =
-                    redisTemplate.opsForZSet().reverseRangeWithScores(rankKey, 0, -1);
+            Set<ZSetOperations.TypedTuple<String>> tuples =
+                    stringRedisTemplate.opsForZSet().reverseRangeWithScores(rankKey, 0, -1);
 
             if (tuples.isEmpty()) {
                 continue;
             }
 
-            for (ZSetOperations.TypedTuple<Object> tuple : tuples) {
+            for (ZSetOperations.TypedTuple<String> tuple : tuples) {
                 String keyword = tuple.getValue().toString();
                 Integer score = tuple.getScore().intValue();
                 result.merge(keyword, score, Integer::sum);
