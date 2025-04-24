@@ -21,7 +21,7 @@ public class ReminderRegisterProducer {
                 message
         );
 
-        log.info("[ReminderRegisterProducer] 리마인드 알림 등록 메시지 발행 완료 → userId={}, reservationId={}, remindAt={}",
+        log.info("[ReminderRegisterProducer] 리마인드 알림 등록 메시지 발행 → userId={}, reservationId={}, remindAt={}",
                 message.getUserId(),
                 message.getReservationId(),
                 message.getRemindAt());

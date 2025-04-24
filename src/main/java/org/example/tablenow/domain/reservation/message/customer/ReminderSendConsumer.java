@@ -34,6 +34,7 @@ public class ReminderSendConsumer {
         }
 
         sendNotification(user, message);
+        log.info("[ReminderSendConsumer] 리마인드 알림 전송 완료 → reservationId={}", message.getReservationId());
     }
 
     private boolean isValid(ReminderMessage message) {
