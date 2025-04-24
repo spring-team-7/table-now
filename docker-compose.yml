@@ -1,39 +1,5 @@
 version: '3.8'
 services:
-  myapp:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      SPRING_DATASOURCE_URL: ${DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
-      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
-      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID}
-      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-
-  db:
-    image: mysql:8.0
-    container_name: mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
-    ports:
-      - "3306:3306"
-    healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p1234 && sleep 5" ]
-      interval: 5s
-      retries: 10
-    volumes:
-      - mysql-data:/var/lib/mysql
-
   redis:
     image: redis:latest
     container_name: redis
@@ -53,5 +19,51 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+  es:
+    build:
+      context: ./
+      dockerfile: Dockerfile.elasticsearch
+    container_name: es
+    environment:
+      - discovery.type=single-node
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9200/_cluster/health" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  kibana:
+    build:
+      context: ./
+      dockerfile: Dockerfile.kibana
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    depends_on:
+      - es
+
+  logstash:
+    build:
+      context: ./
+      dockerfile: Dockerfile.logstash
+    container_name: logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "9600:9600"
+      - "5044:5044"
+    depends_on:
+      - es
+
 volumes:
   mysql-data:
+    driver: local
+  es-data:
+    driver: local

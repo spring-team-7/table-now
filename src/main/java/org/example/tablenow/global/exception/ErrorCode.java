@@ -45,6 +45,7 @@ public enum ErrorCode {
     STORE_CLOSED_TIME(HttpStatus.BAD_REQUEST, "가게 영업시간이 아닙니다."),
     STORE_RANKING_TIME_KEY_ERROR(HttpStatus.BAD_REQUEST, "시간 집계 키는 yyyyMMdd 또는 yyyyMMddHH 형식이어야 합니다."),
     STORE_TABLE_CAPACITY_EXCEEDED(HttpStatus.BAD_REQUEST, "해당 가게의 하루 수용 가능한 테이블 수를 초과했습니다."),
+    STORE_ELASTICSEARCH_QUERY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Elasticsearch 쿼리가 실패했습니다."),
 
     // RATING
     RATING_NOT_FOUND(HttpStatus.NOT_FOUND, "평점이 존재하지 않습니다."),
@@ -109,7 +110,10 @@ public enum ErrorCode {
 
     // SETTLEMENT
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산이 존재하지 않습니다."),
-    INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다.");
+    INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다."),
+
+    // CHAT
+    UNAUTHORIZED_CHAT_SENDER(HttpStatus.FORBIDDEN, "채팅에 참여할 수 있는 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String defaultMessage;

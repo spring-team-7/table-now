@@ -1,0 +1,65 @@
+{
+  "properties": {
+    "id": {
+      "type": "long"
+    },
+    "name": {
+      "type": "text",
+      "analyzer": "korean_search",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "analyzer": "korean_search"
+    },
+    "address": {
+      "type": "text",
+      "analyzer": "korean_search",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        }
+      }
+    },
+    "imageUrl": {
+      "type": "keyword",
+      "index": false
+    },
+    "capacity": {
+      "type": "integer"
+    },
+    "deposit": {
+      "type": "integer"
+    },
+    "rating": {
+      "type": "float"
+    },
+    "ratingCount": {
+      "type": "integer"
+    },
+    "startTime": {
+      "type": "keyword"
+    },
+    "endTime": {
+      "type": "keyword"
+    },
+    "userId": {
+      "type": "integer",
+      "index": false
+    },
+    "userName": {
+      "type": "keyword"
+    },
+    "categoryId": {
+      "type": "integer",
+      "index": false
+    },
+    "categoryName": {
+      "type": "keyword"
+    }
+  }
+}

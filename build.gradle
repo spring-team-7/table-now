@@ -34,9 +34,14 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
+    // ElasticSearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
     // Redis, cache
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 
     // Redisson
     implementation 'org.redisson:redisson-spring-boot-starter:3.45.1'
@@ -77,6 +82,9 @@ dependencies {
 
     // RabbitMQ
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'

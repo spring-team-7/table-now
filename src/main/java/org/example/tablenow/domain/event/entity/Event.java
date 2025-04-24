@@ -70,6 +70,10 @@ public class Event extends TimeStamped {
         changeStatus(EventStatus.OPENED);
     }
 
+    public void close() {
+        changeStatus(EventStatus.CLOSED);
+    }
+
     public void validateOpenStatus() {
         if (this.status != EventStatus.OPENED) {
             throw new HandledException(ErrorCode.EVENT_NOT_OPENED);

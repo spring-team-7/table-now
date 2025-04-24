@@ -19,17 +19,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class WaitlistServiceTest {
@@ -48,6 +53,9 @@ class WaitlistServiceTest {
 
     @Mock
     private StoreService storeService;
+
+    @Mock
+    private RedissonClient redissonClient;
 
     @Mock
     private User user;
@@ -78,7 +86,8 @@ class WaitlistServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
             given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
-            given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(3L);            given(waitlistRepository.save(any(Waitlist.class)))
+            given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(3L);
+            given(waitlistRepository.save(any(Waitlist.class)))
                 .willAnswer(invocation -> {
                     Waitlist saved = invocation.getArgument(0);
                     ReflectionTestUtils.setField(saved, "id", 1L);
@@ -150,6 +159,73 @@ class WaitlistServiceTest {
             );
 
             assertEquals(ErrorCode.WAITLIST_FULL.getStatus(), exception.getHttpStatus());
+        }
+    }
+
+    @Nested
+    class 대기등록_Redis분산락 {
+        private WaitlistRequestDto requestDto;
+
+        @BeforeEach
+        void setUp() {
+            requestDto = new WaitlistRequestDto();
+            ReflectionTestUtils.setField(requestDto, "storeId", 10L);
+            ReflectionTestUtils.setField(requestDto, "waitDate", testDate);
+        }
+
+        @Test
+        void 레디스락_대기등록_성공() throws Exception {
+            // given
+            String lockKey = String.format("lock:store:10:date:%s", requestDto.getWaitDate().toString());
+            RLock mockLock = mock(RLock.class);
+            given(redissonClient.getLock(lockKey)).willReturn(mockLock);
+            given(mockLock.tryLock(2, 1, TimeUnit.SECONDS)).willReturn(true);
+            given(mockLock.isHeldByCurrentThread()).willReturn(true);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(storeService.getStore(10L)).willReturn(store);
+            given(reservationService.hasVacancyDate(store, testDate)).willReturn(false);
+            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
+            given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(3L);
+            given(waitlistRepository.save(any())).willAnswer(invocation -> {
+                Waitlist waitlist = invocation.getArgument(0);
+                ReflectionTestUtils.setField(waitlist, "id", 1L);
+                return waitlist;
+            });
+            // when
+            WaitlistResponseDto result = waitlistService.registerLockWaitlist(1L, requestDto);
+
+            // then
+            assertEquals(1L, result.getWaitlistId());
+            verify(mockLock).unlock();
+
+        }
+
+        @Test
+        void 레디스락_흭득_실패() throws Exception {
+            // given
+            String lockKey = String.format("lock:store:10:date:%s", requestDto.getWaitDate());
+            RLock mockLock = mock(RLock.class);
+            given(redissonClient.getLock(lockKey)).willReturn(mockLock);
+            given(mockLock.tryLock(2, 1, TimeUnit.SECONDS)).willReturn(false);
+
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.registerLockWaitlist(1L, requestDto)
+            );
+            assertEquals(ErrorCode.WAITLIST_REQUEST_TIMEOUT.getStatus(), exception.getHttpStatus());
+
+        }
+        @Test
+        void 레디스락_인터럽트_발생_예외() throws Exception{
+            String lockKey = String.format("lock:store:10:date:%s", requestDto.getWaitDate());
+            RLock mockLock = mock(RLock.class);
+            given(redissonClient.getLock(lockKey)).willReturn(mockLock);
+            given(mockLock.tryLock(2, 1, TimeUnit.SECONDS)).willThrow(new InterruptedException());
+
+            HandledException exception = assertThrows(HandledException.class, () ->
+                waitlistService.registerLockWaitlist(1L, requestDto)
+            );
+            assertEquals(ErrorCode.WAITLIST_REQUEST_INTERRUPTED.getStatus(), exception.getHttpStatus());
         }
     }
 

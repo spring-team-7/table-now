@@ -1,0 +1,17 @@
+FROM docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+
+# 플러그인 설치
+RUN elasticsearch-plugin install analysis-nori --batch
+
+ENV node.name=es-node \
+    cluster.name=search-cluster \
+    discovery.type=single-node \
+    bootstrap.memory_lock=true \
+    ES_JAVA_OPTS="-Xms1g -Xmx1g" \
+    xpack.security.enabled=false \
+    xpack.security.http.ssl.enabled=false \
+    xpack.security.transport.ssl.enabled=false
+
+VOLUME /usr/share/elasticsearch/data
+
+EXPOSE 9200 9300
