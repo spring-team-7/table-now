@@ -53,6 +53,9 @@ public class SecurityConfig {
                         .requestMatchers("/widget/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v*/stores").permitAll()
+
+                        .requestMatchers("/chat.html", "/ws/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
