@@ -12,12 +12,4 @@ import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByReservationId(Long reservationId);
-
-    @Query("""
-    SELECT p FROM Payment p
-    LEFT JOIN FETCH Settlement s ON s.payment = p
-    WHERE p.status = 'DONE'
-    AND s.id IS NULL
-""")
-    Page<Payment> findUnsettledDonePayments(Pageable pageable);
 }
