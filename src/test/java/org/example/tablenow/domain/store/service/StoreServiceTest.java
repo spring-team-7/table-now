@@ -7,8 +7,9 @@ import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.message.producer.StoreProducer;
 import org.example.tablenow.domain.store.repository.StoreRepository;
-import org.example.tablenow.domain.store.util.StoreRedisKey;
+import org.example.tablenow.domain.store.util.StoreConstant;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
@@ -23,10 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.DefaultTypedTuple;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -50,11 +48,13 @@ public class StoreServiceTest {
     @Mock
     private ImageService imageService;
     @Mock
-    private RedisTemplate<String, String> redisTemplate;
+    private StringRedisTemplate redisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
     @Mock
     private ZSetOperations<String, String> zSetOperations;
+    @Mock
+    private StoreProducer storeProducer;
 
     @InjectMocks
     private StoreService storeService;
@@ -570,7 +570,7 @@ public class StoreServiceTest {
             String sortOrder = "desc";
             String search = "맛있는";
             String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
 
             given(redisTemplate.hasKey(anyString())).willReturn(false);
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
@@ -653,7 +653,7 @@ public class StoreServiceTest {
         @Test
         void 인기_검색어_캐시가_없을_경우_빈_배열_조회_성공() {
             // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
             given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(Collections.emptySet());
@@ -669,7 +669,7 @@ public class StoreServiceTest {
         @Test
         void 시간_집계_키가_없을_경우_현재_시간_기준_조회_성공() {
             // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
             given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(Collections.emptySet());
@@ -685,7 +685,7 @@ public class StoreServiceTest {
         @Test
         void 시간별_단위_집계_인기_검색어_조회_성공() {
             // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             mockResult.add(tuple1);
             mockResult.add(tuple2);
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
@@ -704,7 +704,7 @@ public class StoreServiceTest {
         void 일자별_단위_집계_인기_검색어_조회_성공() {
             // given
             String dayKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + dayKey + "00";
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + dayKey + "00";
             mockResult.add(tuple1);
             mockResult.add(tuple2);
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
