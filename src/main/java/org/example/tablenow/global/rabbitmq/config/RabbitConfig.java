@@ -29,6 +29,7 @@ public class RabbitConfig {
         return BindingBuilder.bind(vacancyQueue()).to(vacancyExchange()).with(VACANCY_ROUTING_KEY);
     }
 
+    // 이벤트 오픈 Queue, Exchange, Binding
     @Bean
     public Queue eventOpenQueue() {
         return new Queue(EVENT_OPEN_QUEUE, true);
@@ -43,6 +44,44 @@ public class RabbitConfig {
     public Binding eventOpenBinding() {
         return BindingBuilder.bind(eventOpenQueue())
                 .to(eventOpenExchange());
+    }
+
+    // 예약 리마인드 등록 Queue, Exchange, Binding
+    @Bean
+    public Queue reminderRegisterQueue() {
+        return new Queue(RESERVATION_REMINDER_REGISTER_QUEUE, true);
+    }
+
+    @Bean
+    public DirectExchange reminderRegisterExchange() {
+        return new DirectExchange(RESERVATION_REMINDER_REGISTER_EXCHANGE);
+    }
+
+    @Bean
+    public Binding reminderRegisterBinding() {
+        return BindingBuilder
+                .bind(reminderRegisterQueue())
+                .to(reminderRegisterExchange())
+                .with(RESERVATION_REMINDER_REGISTER_ROUTING_KEY);
+    }
+
+    // 예약 리마인드 발송 Queue, Exchange, Binding
+    @Bean
+    public DirectExchange reminderSendExchange() {
+        return new DirectExchange(RESERVATION_REMINDER_SEND_EXCHANGE);
+    }
+
+    @Bean
+    public Queue reminderSendQueue() {
+        return new Queue(RESERVATION_REMINDER_SEND_QUEUE, true);
+    }
+
+    @Bean
+    public Binding reminderSendBinding() {
+        return BindingBuilder
+                .bind(reminderSendQueue())
+                .to(reminderSendExchange())
+                .with(RESERVATION_REMINDER_SEND_ROUTING_KEY);
     }
 
     // 공통 설정
