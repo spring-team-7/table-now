@@ -13,7 +13,7 @@ import java.util.Optional;
 
 public interface WaitlistRepository extends JpaRepository<Waitlist, Long> {
     // 한 유저가 동일한 가게 중복 등록 방지
-    boolean existsByUserAndStoreAndIsNotifiedFalse(User user, Store store);
+    boolean existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(User user, Store store, LocalDate waitDate);
 
     // 해당 가게에서 대기 인원 수 조회 (알림 미수신만)
     long countByStoreAndWaitDateAndIsNotifiedFalse(Store store, LocalDate waitDate);

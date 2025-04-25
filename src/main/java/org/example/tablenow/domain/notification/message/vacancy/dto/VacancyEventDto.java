@@ -1,4 +1,4 @@
-package org.example.tablenow.global.rabbitmq.vacancy.dto;
+package org.example.tablenow.domain.notification.message.vacancy.dto;
 
 import lombok.Builder;
 import lombok.Getter;

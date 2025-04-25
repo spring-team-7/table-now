@@ -75,6 +75,7 @@ public enum ErrorCode {
     NOTIFICATION_DISABLED(HttpStatus.FORBIDDEN, "알림 수신을 거부한 사용자입니다."),
     NOTIFICATION_MISMATCH(HttpStatus.FORBIDDEN, "알람을 받은 본인만 읽음 처리를 할 수 있습니다."),
     NOTIFICATION_BAD_REQUEST(HttpStatus.BAD_REQUEST, "가게 아이디 입력 필수입니다."),
+    NOTIFICATION_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, " 알람 처리 중 오류 발생"),
 
     // WAITLIST
     WAITLIST_ALREADY_REGISTERED(HttpStatus.CONFLICT, "이미 대기중인 사용자 입니다."),
@@ -114,7 +115,7 @@ public enum ErrorCode {
     UNPERSISTED_PAYMENT(HttpStatus.BAD_REQUEST, "영속화되지 않은 Payment 객체입니다"),
 
     // CHAT
-    UNAUTHORIZED_CHAT_SENDER(HttpStatus.FORBIDDEN, "채팅에 참여할 수 있는 권한이 없습니다.");
+    INVALID_CHAT_PARTICIPANT(HttpStatus.FORBIDDEN, "채팅에 참여할 수 있는 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String defaultMessage;

@@ -1,9 +1,12 @@
-package org.example.tablenow.global.rabbitmq.constant;
+package org.example.tablenow.global.constant;
 
 public class RabbitConstant {
     public static final String VACANCY_EXCHANGE = "vacancy.direct";
     public static final String VACANCY_QUEUE = "vacancy.queue";
     public static final String VACANCY_ROUTING_KEY = "vacancy.key";
+
+    public static final String VACANCY_DLX = "vacancy.dlx";
+    public static final String VACANCY_DLQ = "vacancy.dlq";
 
     public static final String EVENT_OPEN_EXCHANGE = "event.open.fanout";
     public static final String EVENT_OPEN_QUEUE = "event.open.queue";
@@ -15,4 +18,12 @@ public class RabbitConstant {
     public static final String RESERVATION_REMINDER_SEND_EXCHANGE = "reservation.reminder.send.exchange";
     public static final String RESERVATION_REMINDER_SEND_QUEUE = "reservation.reminder.send.queue";
     public static final String RESERVATION_REMINDER_SEND_ROUTING_KEY = "reservation.reminder.send.key";
+
+    public static final String STORE_EXCHANGE = "store.exchange";
+    public static final String STORE_CREATE = "store.create";
+    public static final String STORE_UPDATE = "store.update";
+    public static final String STORE_DELETE = "store.delete";
+    public static final String STORE_CREATE_QUEUE = "store.create.queue";
+    public static final String STORE_UPDATE_QUEUE = "store.update.queue";
+    public static final String STORE_DELETE_QUEUE = "store.delete.queue";
 }

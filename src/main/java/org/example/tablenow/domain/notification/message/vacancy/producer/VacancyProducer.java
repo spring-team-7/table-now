@@ -1,15 +1,15 @@
-package org.example.tablenow.global.rabbitmq.vacancy.producer;
+package org.example.tablenow.domain.notification.message.vacancy.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.tablenow.global.rabbitmq.vacancy.dto.VacancyEventDto;
+import org.example.tablenow.domain.notification.message.vacancy.dto.VacancyEventDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.VACANCY_EXCHANGE;
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.VACANCY_ROUTING_KEY;
+import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_EXCHANGE;
+import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_ROUTING_KEY;
 
 @Slf4j
 @Component

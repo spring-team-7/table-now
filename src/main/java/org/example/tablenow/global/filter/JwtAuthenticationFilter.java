@@ -16,7 +16,7 @@ import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.security.token.JwtAuthenticationToken;
 import org.example.tablenow.global.util.JwtUtil;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,7 +33,7 @@ import static org.example.tablenow.global.util.JsonResponseUtil.sendErrorRespons
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
