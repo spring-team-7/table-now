@@ -53,7 +53,7 @@ public class SettlementCompleteJobConfig {
                 .<Settlement, Settlement>chunk(100, platformTransactionManager)
                 .reader(readySettlementCursorReader())
                 .processor(settlementStatusUpdater())
-                .writer(settlementJdbcBatchWriter())
+                .writer(settlementCompleteWriter())
                 .build();
     }
 
@@ -88,7 +88,7 @@ public class SettlementCompleteJobConfig {
     }
 
     @Bean
-    public JdbcBatchItemWriter<Settlement> settlementJdbcBatchWriter() {
+    public JdbcBatchItemWriter<Settlement> settlementCompleteWriter() {
         JdbcBatchItemWriter<Settlement> writer = new JdbcBatchItemWriter<>();
         writer.setDataSource(dataDBSource);
         writer.setSql("""
