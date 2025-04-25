@@ -17,7 +17,7 @@ import org.example.tablenow.global.annotation.DistributedLock;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
+import org.example.tablenow.domain.notification.message.vacancy.producer.VacancyProducer;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

@@ -1,8 +1,8 @@
-package org.example.tablenow.global.rabbitmq.vacancy.producer;
+package org.example.tablenow.domain.notification.message.vacancy.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.tablenow.global.rabbitmq.vacancy.dto.VacancyEventDto;
+import org.example.tablenow.domain.notification.message.vacancy.dto.VacancyEventDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
