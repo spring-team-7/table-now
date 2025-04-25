@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -74,12 +73,7 @@ public class ChatMessageService {
         ChatParticipants participants = loadChatParticipants(reservationId);
         validateChatParticipant(userId, participants);
 
-        List<ChatMessage> unreadMessages = chatMessageRepository
-                .findByReservationIdAndSenderIdNotAndIsReadFalse(reservationId, userId);
-
-        unreadMessages.forEach(ChatMessage::changeToRead);
-
-        int changedCount = unreadMessages.size();
+        int changedCount = chatMessageRepository.updateUnreadMessagesAsRead(reservationId, userId);
         String responseMessage = changedCount + "개의 메시지 읽음 처리가 완료되었습니다.";
 
         return ChatReadStatusResponse.builder()
