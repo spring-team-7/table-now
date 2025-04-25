@@ -14,7 +14,13 @@ public class StoreKeyGenerator {
                 categoryId != null ? categoryId : "",
                 keyword != null ? keyword : ""
         );
-        log.info("key stores: {}", key);
+        log.info("[Radis 키 생성] store:search: {}", key);
+        return key;
+    }
+
+    public static String generateStoreKeyByPattern(String header, String parameter, String keyword) {
+        String key = String.format("*%s*%s=%s*", header, parameter, keyword);
+        log.info("[Radis 패턴 생성] {}", key);
         return key;
     }
 }

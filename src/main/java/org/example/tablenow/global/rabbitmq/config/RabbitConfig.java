@@ -84,6 +84,36 @@ public class RabbitConfig {
                 .with(RESERVATION_REMINDER_SEND_ROUTING_KEY);
     }
 
+    // 가게 데이터 변경 (Create/Update/Delete) Queue, Exchange, Binding
+    @Bean
+    public Queue storeCreateQueue() {
+        return new Queue(STORE_CREATE_QUEUE, true);
+    }
+    @Bean
+    public Queue storeUpdateQueue() {
+        return new Queue(STORE_UPDATE_QUEUE, true);
+    }
+    @Bean
+    public Queue storeDeleteQueue() {
+        return new Queue(STORE_DELETE_QUEUE, true);
+    }
+    @Bean
+    public DirectExchange storeExchange(){
+        return new DirectExchange(STORE_EXCHANGE);
+    }
+    @Bean
+    public Binding storeCreateBinding(){
+        return BindingBuilder.bind(storeCreateQueue()).to(storeExchange()).with(STORE_CREATE);
+    }
+    @Bean
+    public Binding storeUpdateBinding(){
+        return BindingBuilder.bind(storeUpdateQueue()).to(storeExchange()).with(STORE_UPDATE);
+    }
+    @Bean
+    public Binding storeDeleteBinding(){
+        return BindingBuilder.bind(storeDeleteQueue()).to(storeExchange()).with(STORE_DELETE);
+    }
+
     // 공통 설정
     @Bean
     public MessageConverter jsonMessageConverter() {

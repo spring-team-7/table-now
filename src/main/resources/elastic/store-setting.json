@@ -1,14 +1,10 @@
 {
   "analysis": {
     "filter": {
-      "nori_readingform": {
-        "type": "nori_readingform"
-      },
       "nori_part_of_speech": {
         "type": "nori_part_of_speech",
         "stoptags": [
-          "EP", "EF", "EC", "ETN", "ETM",
-          "IC",
+          "EP", "EF",
           "JKS", "JKC", "JKO", "JKB", "JKG", "JX", "JC",
           "SP", "SSC", "SSO", "SC"
         ]
@@ -20,28 +16,18 @@
         "generate_word_parts": true,
         "generate_number_parts": true,
         "catenate_all": false
-      },
-      "custom_snowball_filter": {
-        "type": "snowball",
-        "language": "English"
       }
     },
     "analyzer": {
       "korean_search": {
         "type": "custom",
         "tokenizer": "nori_tokenizer",
-        "filter": ["nori_part_of_speech", "nori_readingform", "lowercase"]
+        "filter": ["nori_part_of_speech", "lowercase"]
       },
       "mixed_analyzer": {
         "type": "custom",
         "tokenizer": "nori_tokenizer",
-        "filter": ["nori_part_of_speech", "nori_readingform", "word_delimiter", "lowercase"]
-      }
-    },
-    "normalizer": {
-      "lowercase_normalizer": {
-        "type": "custom",
-        "filter": ["lowercase"]
+        "filter": ["nori_part_of_speech", "word_delimiter", "lowercase"]
       }
     }
   }

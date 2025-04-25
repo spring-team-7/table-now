@@ -4,9 +4,10 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.store.entity.StoreDocument;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
@@ -21,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.example.tablenow.domain.store.util.StoreConstant.STORE_INDEX_NAME;
+
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class StoreElasticRepository {
@@ -52,7 +56,7 @@ public class StoreElasticRepository {
 
             // 실제 쿼리 실행
             SearchResponse<StoreDocument> response = elasticsearchClient.search(s -> s
-                            .index("store") // 인덱스명
+                            .index(STORE_INDEX_NAME) // 인덱스명
                             .query(q -> q.bool(boolQueryBuilder.build()))
                             .from((int) pageable.getOffset())
                             .size(pageable.getPageSize())
@@ -84,5 +88,38 @@ public class StoreElasticRepository {
             ));
         }
         return sortOptions;
+    }
+
+    /**
+     * 인덱스 갱신 또는 생성 (insert, update)
+     */
+    public void updateStoreIndex(StoreDocument storeDocument) {
+        try {
+            IndexRequest indexRequest = IndexRequest.of(i -> i
+                    .index(STORE_INDEX_NAME)
+                    .id(String.valueOf(storeDocument.getId()))
+                    .document(storeDocument)
+            );
+            IndexResponse indexResponse = elasticsearchClient.index(indexRequest);
+            log.info("[ElasticSearch] Index status: {}]", indexResponse.result());
+        } catch (Exception e) {
+            throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_QUERY_FAILED);
+        }
+    }
+
+    /**
+     * 인덱스에서 문서 삭제 (delete)
+     */
+    public void deleteStoreIndex(Long storeId) {
+        try {
+            DeleteRequest request = DeleteRequest.of(i -> i
+                    .index(STORE_INDEX_NAME)
+                    .id(String.valueOf(storeId))
+            );
+            DeleteResponse deleteResponse = elasticsearchClient.delete(request);
+            log.info("[ElasticSearch] Index status: {}]", deleteResponse.result());
+        } catch (Exception e) {
+            throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_QUERY_FAILED);
+        }
     }
 }
