@@ -17,7 +17,7 @@ public class SettlementSchedule {
     private final JobRegistry jobRegistry;
 
     // 정산 등록: 1시간마다
-    @Scheduled(cron = "0/30 * * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     public void runRegisterJob() throws Exception {
 
         System.out.println("▶ 정산 등록 Job 시작");
@@ -26,7 +26,7 @@ public class SettlementSchedule {
     }
 
     // 정산 완료: 매일 자정
-    @Scheduled(cron = "0 0/1 * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void runCompleteJob() throws Exception {
 
         System.out.println("▶ 정산 완료 Job 시작");
