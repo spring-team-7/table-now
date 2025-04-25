@@ -44,7 +44,7 @@ public class Payment extends TimeStamped {
     public Payment() {}
 
     @Builder
-    public Payment(Long id, String paymentKey, String method, Integer price, PaymentStatus status, User user, Reservation reservation) {
+    public Payment(Long id, String paymentKey, String method, int price, PaymentStatus status, User user, Reservation reservation) {
         this.id = id;
         this.paymentKey = paymentKey;
         this.method = method;
