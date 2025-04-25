@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.VACANCY_EXCHANGE;
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.VACANCY_ROUTING_KEY;
+import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_EXCHANGE;
+import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_ROUTING_KEY;
 
 @Slf4j
 @Component

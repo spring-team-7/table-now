@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.List;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.EVENT_OPEN_QUEUE;
+import static org.example.tablenow.global.constant.RabbitConstant.EVENT_OPEN_QUEUE;
 
 @Slf4j
 @Component
