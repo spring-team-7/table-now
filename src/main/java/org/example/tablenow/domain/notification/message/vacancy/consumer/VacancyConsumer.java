@@ -1,4 +1,4 @@
-package org.example.tablenow.global.rabbitmq.vacancy.consumer;
+package org.example.tablenow.domain.notification.message.vacancy.consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,7 @@ import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
-import org.example.tablenow.global.rabbitmq.vacancy.dto.VacancyEventDto;
+import org.example.tablenow.domain.notification.message.vacancy.dto.VacancyEventDto;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +52,7 @@ public class VacancyConsumer {
 
         } catch (Exception e) {
             log.error("[VacancyConsumer] MQ 처리 중 예외 발생", e);
+            throw new RuntimeException(e);
         }
     }
 
