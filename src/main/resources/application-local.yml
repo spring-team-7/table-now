@@ -2,11 +2,24 @@ spring:
   config:
     import: optional:file:.env.local[.properties]
 
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
+
+  datasource-meta:
     driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: ${DB_URL_META}
+    username: ${DB_USER_META}
+    password: ${DB_PASSWORD_META}
+
+  datasource-data:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: ${DB_URL_DATA}
+    username: ${DB_USER_DATA}
+    password: ${DB_PASSWORD_DATA}
 
   cloud:
     aws:
@@ -41,6 +54,6 @@ spring:
     password: ${RABBITMQ_PASSWORD}
 
 redisson:
-  config: |
+  config:
     singleServerConfig:
       address: "redis://localhost:6379"

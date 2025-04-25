@@ -12,8 +12,6 @@ import java.util.List;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
-    List<Settlement> findAllByStatus(SettlementStatus settlementStatus);
-
     @Query("""
     SELECT s FROM Settlement s
     JOIN FETCH s.payment p

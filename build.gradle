@@ -85,6 +85,9 @@ dependencies {
 
     // WebSocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // Spring Batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
 }
 
 def querydslDir = 'src/main/generated'
