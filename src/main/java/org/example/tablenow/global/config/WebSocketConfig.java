@@ -28,7 +28,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     /* 클라이언트가 메시지를 보낼 때의 prefix 설정 */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes(WebSocketConstants.APP_DEST_PREFIX);
-        registry.enableSimpleBroker(WebSocketConstants.TOPIC_PREFIX);
+        registry.setApplicationDestinationPrefixes(WebSocketConstants.APP_DEST_PREFIX); // 클라이언트가 보낼 때 prefix
+        registry.enableSimpleBroker(WebSocketConstants.TOPIC_PREFIX);                   // 서버가 브로드캐스트할 때 prefix
     }
 }
