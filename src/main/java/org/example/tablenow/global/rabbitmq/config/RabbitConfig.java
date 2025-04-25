@@ -54,6 +54,7 @@ public class RabbitConfig {
             .with(VACANCY_DLQ);
     }
 
+    // 이벤트 오픈 Queue, Exchange, Binding
     @Bean
     public Queue eventOpenQueue() {
         return new Queue(EVENT_OPEN_QUEUE, true);
@@ -68,6 +69,74 @@ public class RabbitConfig {
     public Binding eventOpenBinding() {
         return BindingBuilder.bind(eventOpenQueue())
                 .to(eventOpenExchange());
+    }
+
+    // 예약 리마인드 등록 Queue, Exchange, Binding
+    @Bean
+    public Queue reminderRegisterQueue() {
+        return new Queue(RESERVATION_REMINDER_REGISTER_QUEUE, true);
+    }
+
+    @Bean
+    public DirectExchange reminderRegisterExchange() {
+        return new DirectExchange(RESERVATION_REMINDER_REGISTER_EXCHANGE);
+    }
+
+    @Bean
+    public Binding reminderRegisterBinding() {
+        return BindingBuilder
+                .bind(reminderRegisterQueue())
+                .to(reminderRegisterExchange())
+                .with(RESERVATION_REMINDER_REGISTER_ROUTING_KEY);
+    }
+
+    // 예약 리마인드 발송 Queue, Exchange, Binding
+    @Bean
+    public DirectExchange reminderSendExchange() {
+        return new DirectExchange(RESERVATION_REMINDER_SEND_EXCHANGE);
+    }
+
+    @Bean
+    public Queue reminderSendQueue() {
+        return new Queue(RESERVATION_REMINDER_SEND_QUEUE, true);
+    }
+
+    @Bean
+    public Binding reminderSendBinding() {
+        return BindingBuilder
+                .bind(reminderSendQueue())
+                .to(reminderSendExchange())
+                .with(RESERVATION_REMINDER_SEND_ROUTING_KEY);
+    }
+
+    // 가게 데이터 변경 (Create/Update/Delete) Queue, Exchange, Binding
+    @Bean
+    public Queue storeCreateQueue() {
+        return new Queue(STORE_CREATE_QUEUE, true);
+    }
+    @Bean
+    public Queue storeUpdateQueue() {
+        return new Queue(STORE_UPDATE_QUEUE, true);
+    }
+    @Bean
+    public Queue storeDeleteQueue() {
+        return new Queue(STORE_DELETE_QUEUE, true);
+    }
+    @Bean
+    public DirectExchange storeExchange(){
+        return new DirectExchange(STORE_EXCHANGE);
+    }
+    @Bean
+    public Binding storeCreateBinding(){
+        return BindingBuilder.bind(storeCreateQueue()).to(storeExchange()).with(STORE_CREATE);
+    }
+    @Bean
+    public Binding storeUpdateBinding(){
+        return BindingBuilder.bind(storeUpdateQueue()).to(storeExchange()).with(STORE_UPDATE);
+    }
+    @Bean
+    public Binding storeDeleteBinding(){
+        return BindingBuilder.bind(storeDeleteQueue()).to(storeExchange()).with(STORE_DELETE);
     }
 
     // 공통 설정

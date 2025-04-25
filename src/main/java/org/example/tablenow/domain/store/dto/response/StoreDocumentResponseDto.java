@@ -1,14 +1,12 @@
 package org.example.tablenow.domain.store.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.store.entity.StoreDocument;
 
 import java.io.Serializable;
-import java.time.LocalTime;
 
 @Getter
 public class StoreDocumentResponseDto implements Serializable {

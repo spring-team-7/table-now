@@ -8,7 +8,6 @@ import org.example.tablenow.domain.event.repository.EventJoinRepository;
 import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.event.service.EventJoinExecutor;
 import org.example.tablenow.domain.store.entity.Store;
-import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
@@ -20,7 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -37,7 +36,7 @@ import static org.mockito.Mockito.verify;
 public class EventJoinExecutorTest {
 
     @Mock
-    private RedisTemplate<String, String> redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Mock
     private ZSetOperations<String, String> zSetOperations;
@@ -57,7 +56,6 @@ public class EventJoinExecutorTest {
     String zsetKey = "event:join:" + eventId;
 
     AuthUser authUser = new AuthUser(userId, "test@test.com", UserRole.ROLE_USER, "일반회원");
-    User user = User.fromAuthUser(authUser);
 
     Store store;
     Event event;
@@ -172,6 +170,29 @@ public class EventJoinExecutorTest {
             // then
             assertNotNull(response);
             assertEquals(eventId, response.getEventId());
+        }
+
+        @Test
+        void ZSET_랭크가_null이거나_정원초과인_경우_예외발생_및_ZSET_제거() {
+            // given
+            String zsetKey = "event:join:" + eventId;
+
+            given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.add(eq(zsetKey), eq(userId.toString()), anyDouble())).willReturn(true);
+
+            // rank가 null인 경우 (ZSET 내부에 없음)
+            given(zSetOperations.rank(eq(zsetKey), eq(userId.toString()))).willReturn(null);
+
+            // when & then
+            HandledException exception = assertThrows(HandledException.class, () -> {
+                eventJoinExecutor.execute(eventId, authUser);
+            });
+
+            assertEquals(ErrorCode.EVENT_FULL.getDefaultMessage(), exception.getMessage());
+
+            // ZSET에서 제거되었는지 검증
+            verify(zSetOperations).remove(eq(zsetKey), eq(userId.toString()));
         }
     }
 }

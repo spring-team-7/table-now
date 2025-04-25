@@ -1,7 +1,6 @@
 package org.example.tablenow.domain.store.service;
 
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +21,13 @@ public class StoreCreateTest {
 
     static final int TOTAL_STORES = 100_000;
 
-    @Test
+    //@Test
     void 테스트_가게_생성() {
         List<StoreCreateRequestDto> requestDtoList = new ArrayList<>();
 
         for (int i = 0; i < TOTAL_STORES; i++) {
             LocalTime start = LocalTime.of(6, 00).plusHours(random.nextInt(8));
-            LocalTime end = start.plusHours(random.nextInt(8,10));
+            LocalTime end = start.plusHours(random.nextInt(8, 10));
             Long categoryId = Long.valueOf(random.nextInt(1, 16));
             Integer capacity = random.nextInt(1, 50) * 10;
             Integer deposit = random.nextInt(1, 9) * 10000;

@@ -7,6 +7,8 @@ import org.example.tablenow.domain.reservation.dto.response.ReservationResponseD
 import org.example.tablenow.domain.reservation.dto.response.ReservationStatusResponseDto;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.entity.ReservationStatus;
+import org.example.tablenow.domain.reservation.message.dto.ReminderMessage;
+import org.example.tablenow.domain.reservation.message.producer.ReminderRegisterProducer;
 import org.example.tablenow.domain.reservation.repository.ReservationRepository;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.store.entity.Store;
@@ -16,6 +18,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -46,6 +49,12 @@ public class ReservationServiceTest {
 
     @Mock
     private StoreService storeService;
+
+    @Mock
+    private ReminderRegisterProducer reminderRegisterProducer;
+
+    @Mock
+    private VacancyProducer vacancyProducer;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -187,6 +196,20 @@ public class ReservationServiceTest {
             assertNotNull(response);
             assertEquals(response.getReservedAt(), reservedAt);
             assertEquals(response.getStoreId(), storeId);
+        }
+
+        @Test
+        void 예약_생성_시_MQ_메세지_발송() {
+            // given
+            given(storeService.getStore(anyLong())).willReturn(store);
+            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+            // when
+            reservationService.makeReservation(authUser, dto);
+
+            // then
+            verify(reminderRegisterProducer, times(1)).send(any(ReminderMessage.class));
         }
     }
 
@@ -432,6 +455,19 @@ public class ReservationServiceTest {
             // then
             assertNotNull(response);
             assertEquals(ReservationStatus.CANCELED, response.getStatus());
+        }
+
+        @Test
+        void 예약_취소_시_MQ_메세지_발송() {
+            // given
+            given(reservationRepository.findById(eq(1L))).willReturn(Optional.of(reserved1));
+
+            // when
+            reservationService.cancelReservation(authUser, 1L);
+
+            // then
+            verify(vacancyProducer, times(1))
+                    .sendVacancyEvent(eq(storeId), eq(reserved1.getReservedAt().toLocalDate()));
         }
     }
 
