@@ -11,7 +11,7 @@ import org.example.tablenow.domain.user.service.UserService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.RESERVATION_REMINDER_SEND_QUEUE;
+import static org.example.tablenow.global.constant.RabbitConstant.RESERVATION_REMINDER_SEND_QUEUE;
 
 @Slf4j
 @Component
