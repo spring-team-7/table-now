@@ -15,6 +15,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_JOIN_PREFIX;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -23,7 +25,6 @@ public class EventJoinExecutor {
     private final StringRedisTemplate redisTemplate;
     private final EventRepository eventRepository;
     private final EventJoinRepository eventJoinRepository;
-    private static final String EVENT_JOIN_PREFIX = "event:join:";
 
     @Transactional
     public EventJoinResponseDto execute(Long eventId, AuthUser authUser) {

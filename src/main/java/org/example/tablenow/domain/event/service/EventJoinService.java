@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_LOCK_KEY_PREFIX;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,8 +28,6 @@ public class EventJoinService {
     private final EventJoinRepository eventJoinRepository;
     private final EventRepository eventRepository;
     private final EventJoinExecutor eventJoinExecutor;
-
-    private static final String EVENT_LOCK_KEY_PREFIX = "lock:event";
 
     @Transactional
     public EventJoinResponseDto joinEventWithoutLock(Long eventId, AuthUser authUser) {
