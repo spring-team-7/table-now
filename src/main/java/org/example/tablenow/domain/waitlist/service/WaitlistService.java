@@ -47,7 +47,7 @@ public class WaitlistService {
         validateNoVacancy(findStore, requestDto.getWaitDate());
 
         // 해당 가게에 유저가 이미 대기 중인지 확인
-        if (waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(findUser, findStore)) {
+        if (waitlistRepository.existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(findUser, findStore, requestDto.getWaitDate())) {
             throw new HandledException(ErrorCode.WAITLIST_ALREADY_REGISTERED);
         }
 
@@ -88,7 +88,7 @@ public class WaitlistService {
             validateNoVacancy(findStore, requestDto.getWaitDate());
 
             // 해당 가게에 유저가 이미 대기 중인지 확인
-            if (waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(findUser, findStore)) {
+            if (waitlistRepository.existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(findUser, findStore, requestDto.getWaitDate())) {
                 throw new HandledException(ErrorCode.WAITLIST_ALREADY_REGISTERED);
             }
 
