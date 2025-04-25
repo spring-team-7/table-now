@@ -2,7 +2,7 @@ package org.example.tablenow.domain.event.message.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.tablenow.global.rabbitmq.constant.RabbitConstant;
+import org.example.tablenow.global.constant.RabbitConstant;
 import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;

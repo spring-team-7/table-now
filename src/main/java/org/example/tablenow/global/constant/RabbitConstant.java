@@ -1,4 +1,4 @@
-package org.example.tablenow.global.rabbitmq.constant;
+package org.example.tablenow.global.constant;
 
 public class RabbitConstant {
     public static final String VACANCY_EXCHANGE = "vacancy.direct";

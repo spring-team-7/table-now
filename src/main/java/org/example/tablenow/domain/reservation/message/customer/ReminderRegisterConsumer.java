@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
 
+import static org.example.tablenow.global.constant.RabbitConstant.RESERVATION_REMINDER_REGISTER_QUEUE;
 import static org.example.tablenow.global.constant.RedisKeyConstants.REMINDER_ZSET_KEY;
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.RESERVATION_REMINDER_REGISTER_QUEUE;
 
 @Slf4j
 @Component

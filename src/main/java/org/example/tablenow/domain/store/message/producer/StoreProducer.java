@@ -7,7 +7,7 @@ import org.example.tablenow.domain.store.message.dto.StoreEventDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.*;
+import static org.example.tablenow.global.constant.RabbitConstant.*;
 
 
 @Slf4j
