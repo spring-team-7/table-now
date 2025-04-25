@@ -52,6 +52,7 @@ public class VacancyConsumer {
 
         } catch (Exception e) {
             log.error("[VacancyConsumer] MQ 처리 중 예외 발생", e);
+            throw new RuntimeException(e);
         }
     }
 
