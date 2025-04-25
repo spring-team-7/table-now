@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.VACANCY_QUEUE;
+import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_QUEUE;
 
 @Slf4j
 @Component

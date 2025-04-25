@@ -9,7 +9,7 @@ import org.example.tablenow.domain.store.service.StoreSearchService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.*;
+import static org.example.tablenow.global.constant.RabbitConstant.*;
 
 @Slf4j
 @Component

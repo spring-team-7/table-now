@@ -1,4 +1,4 @@
-package org.example.tablenow.global.rabbitmq.config;
+package org.example.tablenow.global.config;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -9,7 +9,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.*;
+import static org.example.tablenow.global.constant.RabbitConstant.*;
 
 @Configuration
 public class RabbitConfig {
