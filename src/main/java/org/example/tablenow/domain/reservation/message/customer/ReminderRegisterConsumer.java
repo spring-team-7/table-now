@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.ZoneOffset;
 
+import static org.example.tablenow.global.constant.RedisKeyConstants.REMINDER_ZSET_KEY;
 import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.RESERVATION_REMINDER_REGISTER_QUEUE;
 
 @Slf4j
@@ -16,7 +17,6 @@ import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.RESER
 @RequiredArgsConstructor
 public class ReminderRegisterConsumer {
     private final StringRedisTemplate redisTemplate;
-    private static final String REMINDER_ZSET_KEY = "reminder:zset";
 
     @RabbitListener(queues = RESERVATION_REMINDER_REGISTER_QUEUE)
     public void handleReminderRegister(ReminderMessage message) {

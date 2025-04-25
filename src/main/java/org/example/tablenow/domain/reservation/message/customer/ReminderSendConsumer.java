@@ -18,9 +18,9 @@ import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.RESER
 @RequiredArgsConstructor
 public class ReminderSendConsumer {
     private final NotificationService notificationService;
+    private final UserService userService;
 
     private static final String RESERVATION_REMINDER_MSG_TEMPLATE = "%s에 %s 예약이 있습니다!";
-    private final UserService userService;
 
     @RabbitListener(queues = RESERVATION_REMINDER_SEND_QUEUE)
     public void consume(ReminderMessage message) {

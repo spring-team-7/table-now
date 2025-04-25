@@ -27,6 +27,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Set;
 
+import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_JOIN_PREFIX;
+import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_OPEN_KEY;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,9 +39,6 @@ public class EventService {
     private final StoreService storeService;
     private final StringRedisTemplate redisTemplate;
     private final EventOpenProducer eventOpenProducer;
-
-    private static final String EVENT_JOIN_PREFIX = "event:join:";
-    public static final String EVENT_OPEN_KEY = "event:open";
 
     @Transactional
     public EventResponseDto createEvent(EventRequestDto request) {
