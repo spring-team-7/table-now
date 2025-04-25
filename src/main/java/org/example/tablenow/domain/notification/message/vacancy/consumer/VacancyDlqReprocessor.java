@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.Map;
 
-import static org.example.tablenow.global.rabbitmq.constant.RabbitConstant.*;
+import static org.example.tablenow.global.constant.RabbitConstant.*;
 
 @Slf4j
 @RequiredArgsConstructor
