@@ -7,8 +7,9 @@ import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.message.producer.StoreProducer;
 import org.example.tablenow.domain.store.repository.StoreRepository;
-import org.example.tablenow.domain.store.util.StoreRedisKey;
+import org.example.tablenow.domain.store.util.StoreConstant;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
@@ -23,10 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.DefaultTypedTuple;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -37,8 +35,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class StoreServiceTest {
@@ -50,11 +47,13 @@ public class StoreServiceTest {
     @Mock
     private ImageService imageService;
     @Mock
-    private RedisTemplate<String, String> redisTemplate;
+    private StringRedisTemplate redisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
     @Mock
     private ZSetOperations<String, String> zSetOperations;
+    @Mock
+    private StoreProducer storeProducer;
 
     @InjectMocks
     private StoreService storeService;
@@ -139,7 +138,7 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 등록_성공() {
+        void 등록_성공_시_MQ_메시지_발송() {
             // given
             given(categoryService.findCategory(anyLong())).willReturn(category);
             given(storeRepository.countActiveStoresByUser(anyLong())).willReturn(0L);
@@ -153,6 +152,7 @@ public class StoreServiceTest {
             assertEquals(response.getName(), dto.getName());
             assertEquals(response.getUserId(), authOwner.getId());
             assertEquals(response.getCategoryId(), category.getId());
+            verify(storeProducer, times(1)).publishStoreCreate(any(Store.class));
         }
     }
 
@@ -353,7 +353,7 @@ public class StoreServiceTest {
         }
 
         @Test
-        void 수정_성공() {
+        void 수정_성공_시_MQ_메시지_발송() {
             // given
             given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
             given(categoryService.findCategory(anyLong())).willReturn(category2);
@@ -370,6 +370,7 @@ public class StoreServiceTest {
                     () -> assertEquals(response.getEndTime(), dto.getEndTime()),
                     () -> assertEquals(response.getCategoryId(), dto.getCategoryId())
             );
+            verify(storeProducer, times(1)).publishStoreUpdate(any(Store.class));
         }
     }
 
@@ -427,6 +428,20 @@ public class StoreServiceTest {
             assertNotNull(response);
             assertEquals(response.getStoreId(), storeId);
             verify(imageService).delete(anyString());
+        }
+
+        @Test
+        void 가게_삭제_시_MQ_메세지_발송() {
+            // given
+            given(storeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(store));
+
+            // when
+            StoreDeleteResponseDto response = storeService.deleteStore(storeId, authOwner);
+
+            // then
+            assertNotNull(response);
+            assertEquals(response.getStoreId(), storeId);
+            verify(storeProducer, times(1)).publishStoreDelete(store.getId());
         }
     }
 
@@ -570,7 +585,7 @@ public class StoreServiceTest {
             String sortOrder = "desc";
             String search = "맛있는";
             String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + hourKey;
 
             given(redisTemplate.hasKey(anyString())).willReturn(false);
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
@@ -653,7 +668,7 @@ public class StoreServiceTest {
         @Test
         void 인기_검색어_캐시가_없을_경우_빈_배열_조회_성공() {
             // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
             given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(Collections.emptySet());
@@ -669,7 +684,7 @@ public class StoreServiceTest {
         @Test
         void 시간_집계_키가_없을_경우_현재_시간_기준_조회_성공() {
             // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
             given(zSetOperations.reverseRangeWithScores(rankKey, 0L, -1))
                     .willReturn(Collections.emptySet());
@@ -685,7 +700,7 @@ public class StoreServiceTest {
         @Test
         void 시간별_단위_집계_인기_검색어_조회_성공() {
             // given
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + timeKey;
             mockResult.add(tuple1);
             mockResult.add(tuple2);
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
@@ -704,7 +719,7 @@ public class StoreServiceTest {
         void 일자별_단위_집계_인기_검색어_조회_성공() {
             // given
             String dayKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            String rankKey = StoreRedisKey.STORE_KEYWORD_RANK_KEY + ":" + dayKey + "00";
+            String rankKey = StoreConstant.STORE_KEYWORD_RANK_KEY + ":" + dayKey + "00";
             mockResult.add(tuple1);
             mockResult.add(tuple2);
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
