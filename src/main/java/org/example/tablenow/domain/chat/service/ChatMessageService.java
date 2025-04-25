@@ -8,7 +8,6 @@ import org.example.tablenow.domain.chat.dto.response.ChatReadStatusResponse;
 import org.example.tablenow.domain.chat.entity.ChatMessage;
 import org.example.tablenow.domain.chat.repository.ChatMessageRepository;
 import org.example.tablenow.domain.reservation.entity.Reservation;
-import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
@@ -52,12 +51,11 @@ public class ChatMessageService {
         loadAndValidateChatParticipants(reservationId, userId);
 
         Reservation reservation = reservationService.getReservation(reservationId);
-        boolean isAvailable = reservation.getStatus() == ReservationStatus.RESERVED;
 
         return ChatAvailabilityResponse.builder()
                 .reservationId(reservationId)
                 .userId(userId)
-                .available(isAvailable)
+                .available(reservation.isChatAvailable())
                 .reason(reservation.getStatus().name())
                 .build();
     }
