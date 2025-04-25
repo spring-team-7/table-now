@@ -55,4 +55,8 @@ public class ChatMessage {
         this.isRead = isRead;
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
     }
+
+    public void changeToRead() {
+        this.isRead = true;
+    }
 }
