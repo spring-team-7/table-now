@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.settlement.batch.config;
+package org.example.tablenow.global.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
