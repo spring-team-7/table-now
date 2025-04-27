@@ -85,7 +85,7 @@ class WaitlistServiceTest {
             given(store.getName()).willReturn("테스트 가게");
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
-            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
+            given(waitlistRepository.existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(user, store, testDate)).willReturn(false);
             given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(3L);
             given(waitlistRepository.save(any(Waitlist.class)))
                 .willAnswer(invocation -> {
@@ -135,7 +135,7 @@ class WaitlistServiceTest {
             // given
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
-            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(true);
+            given(waitlistRepository.existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(user, store, testDate)).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -150,7 +150,7 @@ class WaitlistServiceTest {
             // given
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
-            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
+            given(waitlistRepository.existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(user, store, testDate)).willReturn(false);
             given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(100L);
 
             // when & then
@@ -185,7 +185,7 @@ class WaitlistServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(storeService.getStore(10L)).willReturn(store);
             given(reservationService.hasVacancyDate(store, testDate)).willReturn(false);
-            given(waitlistRepository.existsByUserAndStoreAndIsNotifiedFalse(user, store)).willReturn(false);
+            given(waitlistRepository.existsByUserAndStoreAndWaitDateAndIsNotifiedFalse(user, store, testDate)).willReturn(false);
             given(waitlistRepository.countByStoreAndWaitDateAndIsNotifiedFalse(store, testDate)).willReturn(3L);
             given(waitlistRepository.save(any())).willAnswer(invocation -> {
                 Waitlist waitlist = invocation.getArgument(0);
