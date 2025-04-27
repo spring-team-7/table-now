@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.reservation;
 
+import org.example.tablenow.domain.notification.message.vacancy.producer.VacancyProducer;
 import org.example.tablenow.domain.reservation.dto.request.ReservationRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationStatusChangeRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationUpdateRequestDto;
@@ -18,7 +19,6 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.global.rabbitmq.vacancy.producer.VacancyProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

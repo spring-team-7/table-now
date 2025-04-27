@@ -1,6 +1,7 @@
-package org.example.tablenow.domain.settlement.batch.config;
+package org.example.tablenow.global.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,12 @@ import java.util.HashMap;
 )
 public class DataDBConfig {
 
+    @Value("${spring.jpa-data.hibernate.ddl-auto}")
+    private String ddlAuto;
+
+    @Value("${spring.jpa-data.hibernate.show-sql}")
+    private boolean showSql;
+
     @Bean
     @Qualifier("dataDBSource")
     @ConfigurationProperties(prefix = "spring.datasource-data")
@@ -39,8 +46,8 @@ public class DataDBConfig {
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto", "update");
-        properties.put("hibernate.show_sql", "true");
+        properties.put("hibernate.hbm2ddl.auto", ddlAuto);
+        properties.put("hibernate.show_sql", showSql);
         em.setJpaPropertyMap(properties);
 
         return em;

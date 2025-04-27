@@ -107,7 +107,7 @@ public class PaymentService {
 
     private Payment getVerifiedPayment(AuthUser authUser, Long reservationId, Long paymentId) {
 
-        Payment payment = getVerifiedPaymentById(paymentId);
+        Payment payment = getPayment(paymentId);
 
         if (!Objects.equals(authUser.getId(), payment.getReservation().getUser().getId())) {
             throw new HandledException(ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS);
@@ -120,7 +120,7 @@ public class PaymentService {
         return payment;
     }
 
-    public Payment getVerifiedPaymentById(Long paymentId) {
+    public Payment getPayment(Long paymentId) {
 
         return paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new HandledException(ErrorCode.PAYMENT_NOT_FOUND));
