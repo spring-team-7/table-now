@@ -31,12 +31,6 @@ public class Settlement extends TimeStamped {
     @Enumerated(EnumType.STRING)
     private SettlementStatus status;
 
-    public Settlement(Payment payment, int amount, SettlementStatus status) {
-        this.payment = payment;
-        this.amount = amount;
-        this.status = status;
-    }
-
     @Builder
     public Settlement(Long id, Payment payment, int amount, SettlementStatus status) {
         this.id = id;
@@ -63,14 +57,14 @@ public class Settlement extends TimeStamped {
 
     public static Settlement fromPayment(Payment payment) {
 
-        // payment가 영속 상태인지 확인
-        if (payment.getId() == null) {
-            throw new HandledException(ErrorCode.UNPERSISTED_PAYMENT);
-        }
         return Settlement.builder()
-                .payment(payment)
+                .payment(Payment.builder().id(payment.getId()).build())
                 .amount(payment.getPrice())
                 .status(SettlementStatus.READY)
                 .build();
+    }
+
+    public String getStatusString() {
+        return status.name();
     }
 }
