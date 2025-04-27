@@ -23,12 +23,16 @@ import org.example.tablenow.domain.notification.message.vacancy.producer.Vacancy
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import static org.example.tablenow.global.constant.RedisKeyConstants.REMINDER_ZSET_KEY;
+import static org.example.tablenow.global.constant.RedisKeyConstants.RESERVATION_LOCK_KEY_PREFIX;
 
 @Slf4j
 @Service
@@ -39,8 +43,7 @@ public class ReservationService {
     private final StoreService storeService;
     private final VacancyProducer vacancyProducer;
     private final ReminderRegisterProducer reminderRegisterProducer;
-
-    private static final String RESERVATION_LOCK_KEY_PREFIX = "lock:reservation";
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public ReservationResponseDto makeReservation(AuthUser authUser, ReservationRequestDto request) {
@@ -97,7 +100,9 @@ public class ReservationService {
         Reservation reservation = getReservation(id);
 
         validateUpdatableReservation(user, id, request, reservation);
+        redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, String.valueOf(id));
         reservation.updateReservedAt(request.getReservedAt());
+        reminderRegisterProducer.send(ReminderMessage.fromReservation(reservation));
 
         return ReservationResponseDto.fromReservation(reservation);
     }
@@ -146,7 +151,7 @@ public class ReservationService {
             reservation.getStore().getId(),
             reservation.getReservedAt().toLocalDate()
         );
-
+        redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, String.valueOf(id));
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
@@ -207,12 +212,6 @@ public class ReservationService {
         if (!store.isOpenAt(reservedAt)) {
             throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
         }
-    }
-
-    // TODO: 예약 취소 시 빈자리 이벤트 발생 시킬 예정 (추후 RabbitMQ 발행으로 구조 전환)
-    public boolean hasVacancy(Store store) {
-        long reservedCount = reservationRepository.countReservedTables(store);
-        return store.hasVacancy(reservedCount);
     }
 
     public void validateCreateRating(Long userId, Long storeId) {

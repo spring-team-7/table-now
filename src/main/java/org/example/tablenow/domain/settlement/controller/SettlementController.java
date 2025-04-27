@@ -23,21 +23,6 @@ public class SettlementController {
 
     private final SettlementService settlementService;
 
-    // 결제 완료 되었고, settlement repository에 존재하지 않는 결제들을
-    // READY 상태로 settlement repository에 저장
-    @Secured(UserRole.Authority.ADMIN)
-    @PostMapping("/v1/settlements/pending")
-    public ResponseEntity<SettlementOperationResponseDto> registerPendingSettlements() {
-        return ResponseEntity.ok(settlementService.registerPendingSettlements());
-    }
-
-    // settlement repository에 저장된 결제들의 상태(READY -> DONE)를 변경
-    @Secured(UserRole.Authority.ADMIN)
-    @PatchMapping("/v1/settlements/pending/complete")
-    public ResponseEntity<SettlementOperationResponseDto> completePendingSettlements() {
-        return ResponseEntity.ok(settlementService.completePendingSettlements());
-    }
-
     @Secured(UserRole.Authority.ADMIN)
     @GetMapping("/v1/settlements")
     public ResponseEntity<Page<SettlementResponseDto>> getAllSettlements(

@@ -112,6 +112,7 @@ public enum ErrorCode {
     // SETTLEMENT
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "정산이 존재하지 않습니다."),
     INVALID_SETTLEMENT_STATUS(HttpStatus.BAD_REQUEST, "정산 완료 상태에서만 취소할 수 있습니다."),
+    UNPERSISTED_PAYMENT(HttpStatus.BAD_REQUEST, "영속화되지 않은 Payment 객체입니다"),
 
     // CHAT
     INVALID_CHAT_PARTICIPANT(HttpStatus.FORBIDDEN, "채팅에 참여할 수 있는 권한이 없습니다.");

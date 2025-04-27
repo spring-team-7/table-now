@@ -7,22 +7,22 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.ZoneOffset;
-
 import static org.example.tablenow.global.constant.RabbitConstant.RESERVATION_REMINDER_REGISTER_QUEUE;
+import static org.example.tablenow.global.constant.RedisKeyConstants.REMINDER_ZSET_KEY;
+import static org.example.tablenow.global.constant.TimeConstants.ZONE_ID_ASIA_SEOUL;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReminderRegisterConsumer {
     private final StringRedisTemplate redisTemplate;
-    private static final String REMINDER_ZSET_KEY = "reminder:zset";
 
     @RabbitListener(queues = RESERVATION_REMINDER_REGISTER_QUEUE)
     public void handleReminderRegister(ReminderMessage message) {
         try {
             String reservationId = String.valueOf(message.getReservationId());
-            double score = message.getRemindAt().toEpochSecond(ZoneOffset.UTC);
+            double score = message.getRemindAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
+
 
             redisTemplate.opsForZSet().add(REMINDER_ZSET_KEY, reservationId, score);
 

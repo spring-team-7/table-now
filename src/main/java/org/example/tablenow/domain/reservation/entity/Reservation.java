@@ -62,6 +62,10 @@ public class Reservation extends TimeStamped {
         this.status = newStatus;
     }
 
+    public boolean isChatAvailable() {
+        return this.status == ReservationStatus.RESERVED;
+    }
+
     private void validateUpdatableStatus() {
         if (this.status != ReservationStatus.RESERVED) {
             throw new HandledException(ErrorCode.RESERVATION_STATUS_UPDATE_FORBIDDEN);

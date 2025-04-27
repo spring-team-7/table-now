@@ -8,7 +8,6 @@ import org.example.tablenow.domain.chat.dto.response.ChatReadStatusResponse;
 import org.example.tablenow.domain.chat.entity.ChatMessage;
 import org.example.tablenow.domain.chat.repository.ChatMessageRepository;
 import org.example.tablenow.domain.reservation.entity.Reservation;
-import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -52,12 +50,11 @@ public class ChatMessageService {
         loadAndValidateChatParticipants(reservationId, userId);
 
         Reservation reservation = reservationService.getReservation(reservationId);
-        boolean isAvailable = reservation.getStatus() == ReservationStatus.RESERVED;
 
         return ChatAvailabilityResponse.builder()
                 .reservationId(reservationId)
                 .userId(userId)
-                .available(isAvailable)
+                .available(reservation.isChatAvailable())
                 .reason(reservation.getStatus().name())
                 .build();
     }
@@ -76,12 +73,7 @@ public class ChatMessageService {
         ChatParticipants participants = loadChatParticipants(reservationId);
         validateChatParticipant(userId, participants);
 
-        List<ChatMessage> unreadMessages = chatMessageRepository
-                .findByReservationIdAndSenderIdNotAndIsReadFalse(reservationId, userId);
-
-        unreadMessages.forEach(ChatMessage::changeToRead);
-
-        int changedCount = unreadMessages.size();
+        int changedCount = chatMessageRepository.updateUnreadMessagesAsRead(reservationId, userId);
         String responseMessage = changedCount + "개의 메시지 읽음 처리가 완료되었습니다.";
 
         return ChatReadStatusResponse.builder()

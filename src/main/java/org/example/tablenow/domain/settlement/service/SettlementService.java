@@ -25,32 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SettlementService {
 
-    private final PaymentRepository paymentRepository;
     private final SettlementRepository settlementRepository;
-
-    @Transactional
-    public SettlementOperationResponseDto registerPendingSettlements() {
-
-        List<Settlement> settlements = paymentRepository.findUnsettledDonePayments().stream()
-                .map(Settlement::fromPayment)
-                .toList();
-
-        List<Settlement> readySettlements = settlementRepository.saveAll(settlements);
-
-        return new SettlementOperationResponseDto(readySettlements.size(), SettlementStatus.READY);
-    }
-
-    @Transactional
-    public SettlementOperationResponseDto completePendingSettlements() {
-
-        List<Settlement> readySettlements = settlementRepository.findAllByStatus(SettlementStatus.READY);
-
-        readySettlements.forEach(Settlement::done);
-
-        List<Settlement> doneSettlements = settlementRepository.saveAll(readySettlements);
-
-        return new SettlementOperationResponseDto(doneSettlements.size(), SettlementStatus.DONE);
-    }
 
     @Transactional(readOnly = true)
     public Page<SettlementResponseDto> getAllSettlements(int page, int size) {
