@@ -40,10 +40,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         if ("simple".equalsIgnoreCase(brokerType)) {
             // [SimpleBroker] 서버 메모리 브로커 사용
-            registry.enableSimpleBroker(WebSocketConstants.TOPIC_PREFIX);
+            registry.enableSimpleBroker(WebSocketConstants.TOPIC_PREFIX_SIMPLE);
         } else if ("rabbit".equalsIgnoreCase(brokerType)) {
             // [RabbitMQ Relay] MQ로 relay
-            registry.enableStompBrokerRelay(WebSocketConstants.TOPIC_PREFIX)
+            registry.enableStompBrokerRelay(WebSocketConstants.TOPIC_PREFIX_RELAY)
                     .setRelayHost("localhost")  // RabbitMQ 서버 주소
                     .setRelayPort(61613)        // RabbitMQ STOMP 포트 (TCP)
                     .setSystemLogin(rabbitmqUsername)

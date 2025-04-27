@@ -62,7 +62,7 @@
                 console.log("[WebSocket] Connected: " + frame);
                 const reservationId = document.getElementById("reservationId").value;
                 //const destination = "/topic/chat/" + reservationId;               // SimpleBroker: 성능비교를 위해 유지
-                const destination = "/exchange/amq.topic/chat/" + reservationId;    // RabbitMQ Relay
+                const destination = "/exchange/amq.topic/chat." + reservationId;    // RabbitMQ Relay
                 console.log("[WebSocket] Subscribing to: ", destination);
 
                 stompClient.subscribe(destination, function (message) {

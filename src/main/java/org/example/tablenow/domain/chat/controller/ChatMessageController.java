@@ -8,11 +8,14 @@ import org.example.tablenow.domain.chat.dto.response.ChatMessageResponse;
 import org.example.tablenow.domain.chat.entity.ChatMessage;
 import org.example.tablenow.domain.chat.service.ChatMessageService;
 import org.example.tablenow.global.constant.WebSocketConstants;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -21,16 +24,17 @@ public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     @MessageMapping("/chat/message")
     public void handleMessage(@Payload @Valid ChatMessageRequest request,
                               SimpMessageHeaderAccessor headerAccessor) {
-        Long userId = (Long) headerAccessor.getSessionAttributes().get("userId");
-
-        if (userId == null) {
-            log.warn("[WebSocket] 사용자 정보 없음 (userId 누락)");
+        Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
+        if (sessionAttributes == null || sessionAttributes.get("userId") == null) {
+            log.warn("[WebSocket] 사용자 정보 없음 (sessionAttributes 또는 userId 누락)");
             return;
         }
+        Long userId = (Long) sessionAttributes.get("userId");
 
         // 메시지 저장
         ChatMessage savedMessage = chatMessageService.saveMessage(request, userId);
