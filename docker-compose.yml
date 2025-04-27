@@ -55,9 +55,9 @@ services:
       dockerfile: Dockerfile.logstash
     container_name: logstash
     environment:
-      - DB_URL=${DB_URL}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_URL_DATA=${DB_URL_DATA}
+      - DB_USER_DATA=${DB_USER_DATA}
+      - DB_PASSWORD_DATA=${DB_PASSWORD_DATA}
       - ES_HOST=${ES_HOST}
       - INDEX_NAME=${INDEX_NAME}
       - INDEX_CONFIG_PATH=${INDEX_CONFIG_PATH}
