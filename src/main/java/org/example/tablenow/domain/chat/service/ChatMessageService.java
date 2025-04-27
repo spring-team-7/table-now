@@ -49,7 +49,7 @@ public class ChatMessageService {
     public ChatAvailabilityResponse isChatAvailable(Long reservationId, Long userId) {
         loadAndValidateChatParticipants(reservationId, userId);
 
-        Reservation reservation = reservationService.getReservation(reservationId);
+        Reservation reservation = reservationService.getReservationWithStore(reservationId);
 
         return ChatAvailabilityResponse.builder()
                 .reservationId(reservationId)
@@ -101,7 +101,7 @@ public class ChatMessageService {
             );
         } else {
             // 최초 채팅일 경우 reservation 정보로 참여자 정보 추출
-            Reservation reservation = reservationService.getReservation(reservationId);
+            Reservation reservation = reservationService.getReservationWithStore(reservationId);
             return new ChatParticipants(
                     reservation.getStore().getUser().getId(),
                     reservation.getUser().getId()

@@ -37,7 +37,8 @@ public class ChatMessageController {
 
         // 구독 채널로 메시지 브로드캐스트
         messagingTemplate.convertAndSend(
-                WebSocketConstants.TOPIC_CHAT_PREFIX + savedMessage.getReservationId(),
+                //WebSocketConstants.TOPIC_CHAT_PREFIX_SIMPLE + savedMessage.getReservationId(),    // SimpleBroker: 성능비교를 위해 유지
+                WebSocketConstants.TOPIC_CHAT_PREFIX_RELAY + savedMessage.getReservationId(),       // RabbitMQ Relay
                 ChatMessageResponse.fromChatMessage(savedMessage)
         );
     }

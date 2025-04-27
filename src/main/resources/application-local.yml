@@ -57,3 +57,6 @@ redisson:
   config:
     singleServerConfig:
       address: "redis://localhost:6379"
+
+chat:
+  broker: rabbit  # or simple
