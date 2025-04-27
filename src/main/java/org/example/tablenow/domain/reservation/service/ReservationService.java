@@ -100,7 +100,9 @@ public class ReservationService {
         Reservation reservation = getReservation(id);
 
         validateUpdatableReservation(user, id, request, reservation);
+        redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, String.valueOf(id));
         reservation.updateReservedAt(request.getReservedAt());
+        reminderRegisterProducer.send(ReminderMessage.fromReservation(reservation));
 
         return ReservationResponseDto.fromReservation(reservation);
     }
@@ -149,7 +151,7 @@ public class ReservationService {
             reservation.getStore().getId(),
             reservation.getReservedAt().toLocalDate()
         );
-        redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, id);
+        redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, String.valueOf(id));
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
@@ -210,12 +212,6 @@ public class ReservationService {
         if (!store.isOpenAt(reservedAt)) {
             throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
         }
-    }
-
-    // TODO: 예약 취소 시 빈자리 이벤트 발생 시킬 예정 (추후 RabbitMQ 발행으로 구조 전환)
-    public boolean hasVacancy(Store store) {
-        long reservedCount = reservationRepository.countReservedTables(store);
-        return store.hasVacancy(reservedCount);
     }
 
     public void validateCreateRating(Long userId, Long storeId) {
