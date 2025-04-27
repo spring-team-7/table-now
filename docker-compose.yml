@@ -54,11 +54,22 @@ services:
       context: ./
       dockerfile: Dockerfile.logstash
     container_name: logstash
+    environment:
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - ES_HOST=${ES_HOST}
+      - INDEX_NAME=${INDEX_NAME}
+      - INDEX_CONFIG_PATH=${INDEX_CONFIG_PATH}
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/pipelines/logstash.conf:/usr/share/logstash/pipelines/logstash.conf
+      - ./logstash/mysql-connector-j-9.1.0.jar:/usr/share/logstash/mysql-connector-j-9.1.0.jar
+      - ./logstash/index-config.json:/usr/share/logstash/index-config.json
+      - ./init-index.sh:/usr/share/logstash/init-index.sh
     ports:
       - "9600:9600"
       - "5044:5044"
+    entrypoint: ["/bin/bash", "-c", "./init-index.sh"]
     depends_on:
       - es
 
