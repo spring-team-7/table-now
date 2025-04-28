@@ -21,15 +21,8 @@ public class SettlementSchedule {
     public void runRegisterJob() throws Exception {
 
         System.out.println("▶ 정산 등록 Job 시작");
-
         String date = JobTimeUtil.getNowFormatted();
-
-        JobParameters registerParams = new JobParametersBuilder()
-                .addString("date", date)
-                .addString("type", "register")
-                .toJobParameters();
-
-        jobLauncher.run(jobRegistry.getJob("settlementRegisterJob"), registerParams);
+        runJob("settlementRegisterJob", "register");
     }
 
     // 정산 완료: 매일 자정
@@ -37,14 +30,19 @@ public class SettlementSchedule {
     public void runCompleteJob() throws Exception {
 
         System.out.println("▶ 정산 완료 Job 시작");
-
         String date = JobTimeUtil.getNowFormatted();
+        runJob("settlementCompleteJob", "complete");
+    }
 
-        JobParameters jobParameters = new JobParametersBuilder()
-                .addString("date", date)
-                .addString("type", "complete")
+    private void runJob(String jobName, String type) throws Exception {
+        JobParameters parameters = buildJobParameters(type);
+        jobLauncher.run(jobRegistry.getJob(jobName), parameters);
+    }
+
+    private JobParameters buildJobParameters(String type) {
+        return new JobParametersBuilder()
+                .addString("date", JobTimeUtil.getNowFormatted())
+                .addString("type", type)
                 .toJobParameters();
-
-        jobLauncher.run(jobRegistry.getJob("settlementCompleteJob"), jobParameters);
     }
 }
