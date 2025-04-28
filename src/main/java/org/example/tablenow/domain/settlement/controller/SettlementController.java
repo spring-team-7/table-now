@@ -23,6 +23,16 @@ public class SettlementController {
 
     private final SettlementService settlementService;
 
+    @Secured(UserRole.Authority.OWNER)
+    @GetMapping("/v1/owner/settlements")
+    public ResponseEntity<SettlementSummaryPageDto> getMyStoreSettlements(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Positive @RequestParam(defaultValue = "1") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(settlementService.getMyStoreSettlements(authUser, page, size));
+    }
+
     @Secured(UserRole.Authority.ADMIN)
     @GetMapping("/v1/settlements")
     public ResponseEntity<Page<SettlementResponseDto>> getAllSettlements(
@@ -36,16 +46,6 @@ public class SettlementController {
     @GetMapping("/v1/settlements/{settlementId}")
     public ResponseEntity<SettlementResponseDto> getSettlement(@PathVariable Long settlementId) {
         return ResponseEntity.ok(settlementService.getSettlement(settlementId));
-    }
-
-    @Secured(UserRole.Authority.OWNER)
-    @GetMapping("/v1/owner/settlements")
-    public ResponseEntity<SettlementSummaryPageDto> getMyStoreSettlements(
-            @AuthenticationPrincipal AuthUser authUser,
-            @Positive @RequestParam(defaultValue = "1") int page,
-            @Positive @RequestParam(defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(settlementService.getMyStoreSettlements(authUser, page, size));
     }
 
     @Secured(UserRole.Authority.ADMIN)

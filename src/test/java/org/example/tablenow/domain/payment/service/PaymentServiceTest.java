@@ -113,7 +113,7 @@ public class PaymentServiceTest {
             HandledException exception = assertThrows(HandledException.class, () ->
                     paymentService.confirmPayment(authOtherUser, reservationId, dto)
             );
-            assertEquals(exception.getMessage(), ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS.getDefaultMessage());
+            assertEquals(ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS.getDefaultMessage(), exception.getMessage());
         }
 
         @Test

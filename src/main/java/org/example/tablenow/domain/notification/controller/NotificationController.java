@@ -1,10 +1,10 @@
 package org.example.tablenow.domain.notification.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.notification.dto.request.NotificationAlarmRequestDto;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
+import org.example.tablenow.domain.notification.dto.request.NotificationSearchRequestDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationAlarmResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationResponseDto;
 import org.example.tablenow.domain.notification.dto.response.NotificationUpdateReadResponseDto;
@@ -35,11 +35,10 @@ public class NotificationController {
     @GetMapping("/v1/notifications")
     public ResponseEntity<Page<NotificationResponseDto>> getNotifications(
         @AuthenticationPrincipal AuthUser authUser,
-        @Positive @RequestParam(defaultValue = "1") int page,
-        @Positive @RequestParam(defaultValue = "10") int size,
-        @RequestParam(required = false) Boolean isRead
-    ) {
-        return ResponseEntity.ok(notificationService.findNotifications(authUser.getId(), page, size, isRead));
+        @ModelAttribute NotificationSearchRequestDto requestDto
+        ) {
+        return ResponseEntity.ok(notificationService.findNotifications(authUser.getId(), requestDto.getPage(), requestDto.getSize(), requestDto.getIsRead()
+        ));
     }
 
     // 알림 읽음 처리

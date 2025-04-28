@@ -21,7 +21,6 @@ public class SettlementSchedule {
     public void runRegisterJob() throws Exception {
 
         System.out.println("▶ 정산 등록 Job 시작");
-        String date = JobTimeUtil.getNowFormatted();
         runJob("settlementRegisterJob", "register");
     }
 
@@ -30,7 +29,6 @@ public class SettlementSchedule {
     public void runCompleteJob() throws Exception {
 
         System.out.println("▶ 정산 완료 Job 시작");
-        String date = JobTimeUtil.getNowFormatted();
         runJob("settlementCompleteJob", "complete");
     }
 
