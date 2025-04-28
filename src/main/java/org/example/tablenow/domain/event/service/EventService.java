@@ -9,13 +9,13 @@ import org.example.tablenow.domain.event.dto.response.EventDeleteResponseDto;
 import org.example.tablenow.domain.event.dto.response.EventResponseDto;
 import org.example.tablenow.domain.event.entity.Event;
 import org.example.tablenow.domain.event.enums.EventStatus;
+import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
+import org.example.tablenow.domain.event.message.producer.EventOpenProducer;
 import org.example.tablenow.domain.event.repository.EventRepository;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
-import org.example.tablenow.domain.event.message.producer.EventOpenProducer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +23,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_JOIN_PREFIX;
 import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_OPEN_KEY;
+import static org.example.tablenow.global.constant.TimeConstants.ZONE_ID_ASIA_SEOUL;
 
 @Slf4j
 @Service
@@ -51,7 +51,7 @@ public class EventService {
         Event event = Event.create(store, request);
         Event savedEvent = eventRepository.save(event);
 
-        long openEpoch = savedEvent.getOpenAt().toEpochSecond(ZoneOffset.UTC);
+        long openEpoch = savedEvent.getOpenAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
         redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, String.valueOf(savedEvent.getId()), openEpoch);
 
         return EventResponseDto.fromEvent(savedEvent);
@@ -68,6 +68,9 @@ public class EventService {
                 request.getEventTime(),
                 request.getLimitPeople()
         );
+
+        long openEpoch = event.getOpenAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
+        redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, String.valueOf(event.getId()), openEpoch);
 
         return EventResponseDto.fromEvent(event);
     }
@@ -90,7 +93,7 @@ public class EventService {
         validateReadyStatus(event);
 
         eventRepository.delete(event);
-        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
+        redisTemplate.opsForZSet().remove(EVENT_JOIN_PREFIX, String.valueOf(id));
         return EventDeleteResponseDto.fromEvent(event);
     }
 
@@ -100,13 +103,13 @@ public class EventService {
 
         event.close();
 
-        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
+        redisTemplate.opsForZSet().remove(EVENT_JOIN_PREFIX, String.valueOf(id));
         return EventCloseResponseDto.fromEvent(event);
     }
 
 /*    @Transactional
     public void openEventsIfDue() {
-        LocalDateTime now = LocalDateTime.now();
+        long now = LocalDateTime.now().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
         List<Event> eventsToOpen = eventRepository.findAllByStatusAndOpenAtLessThanEqual(EventStatus.READY, now);
 
         for (Event event : eventsToOpen) {
@@ -120,9 +123,9 @@ public class EventService {
                     notificationService.createNotification(
                             NotificationRequestDto.builder()
                                     .userId(user.getId())
-                                    .storeId(event.getStore().getId())
+                                    .storeId(event.getStoreId())
                                     .type(NotificationType.REMIND)
-                                    .content(event.getStore().getName() + "의 이벤트가 오픈되었습니다!")
+                                    .content(event.getStoreName() + "의 이벤트가 오픈되었습니다!")
                                     .build()
                     );
                 }
@@ -132,7 +135,7 @@ public class EventService {
 
     @Transactional
     public void openEventsIfDue() {
-        long now = Instant.now().getEpochSecond();
+        long now = LocalDateTime.now().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
         Set<String> dueEventIds = redisTemplate.opsForZSet()
                 .rangeByScore(EVENT_OPEN_KEY, 0, now);
         log.info("[Scheduler] Redis ZSET 조회 결과 = {}", dueEventIds);
