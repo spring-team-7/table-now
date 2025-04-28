@@ -25,18 +25,16 @@ public class ReminderScheduler {
 
     @Scheduled(fixedRateString = "60000")
     public void pollAndSend() {
-        long now = LocalDateTime.now()
-                .atZone(ZONE_ID_ASIA_SEOUL)
-                .toEpochSecond();
-        Set<String> due = redisTemplate.opsForZSet().rangeByScore(REMINDER_ZSET_KEY, 0, now);
-        if (due == null || due.isEmpty()) return;
+        long now = LocalDateTime.now().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
+        Set<String> reservationIdsToSend = redisTemplate.opsForZSet().rangeByScore(REMINDER_ZSET_KEY, 0, now);
+        if (reservationIdsToSend == null || reservationIdsToSend.isEmpty()) return;
 
-        for (String id : due) {
+        for (String reservationId : reservationIdsToSend) {
             try {
-                sendProducer.send(buildMessage(id));
-                redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, id);
+                sendProducer.send(buildMessage(reservationId));
+                redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, reservationId);
             } catch (Exception e) {
-                log.error("[ReminderScheduler] 알림 발송 실패 → reservationId={}", id, e);
+                log.error("[ReminderScheduler] 알림 발송 실패 → reservationId={}", reservationId, e);
             }
         }
     }

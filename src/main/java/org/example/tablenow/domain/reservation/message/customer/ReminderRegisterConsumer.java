@@ -23,7 +23,6 @@ public class ReminderRegisterConsumer {
             String reservationId = String.valueOf(message.getReservationId());
             double score = message.getRemindAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
 
-
             redisTemplate.opsForZSet().add(REMINDER_ZSET_KEY, reservationId, score);
 
             log.info("[ReminderRegisterConsumer] 리마인드 알림 등록 완료 → reservationId={}, remindAt={}",

@@ -46,24 +46,36 @@
     }
 
     function openNewConnection() {
-        const reservationId = document.getElementById("reservationId").value;
         const token = document.getElementById("accessToken").value;
 
         const socket = new SockJS("/ws/chat?token=" + encodeURIComponent(token));
         stompClient = Stomp.over(socket);
-
         stompClient.debug = console.log;
 
-        stompClient.connect({ Authorization: token }, function (frame) {
-            console.log("Connected: " + frame);
+        stompClient.connect(
+            {
+                login: "myuser",
+                passcode: "mypassword",
+                Authorization: token
+            },
+            function (frame) {
+                console.log("[WebSocket] Connected: " + frame);
+                const reservationId = document.getElementById("reservationId").value;
+                //const destination = "/topic/chat/" + reservationId;               // SimpleBroker: 성능비교를 위해 유지
+                const destination = "/exchange/amq.topic/chat." + reservationId;    // RabbitMQ Relay
+                console.log("[WebSocket] Subscribing to: ", destination);
 
-            stompClient.subscribe("/topic/chat/" + reservationId, function (message) {
-                const msg = JSON.parse(message.body);
-                const box = document.getElementById("chatBox");
-                box.innerHTML += `<div><b>${msg.senderName}</b>: ${msg.content || '<img src="' + msg.imageUrl + '" width="100"/>'}</div>`;
-                box.scrollTop = box.scrollHeight;
-            });
-        });
+                stompClient.subscribe(destination, function (message) {
+                    const msg = JSON.parse(message.body);
+                    const box = document.getElementById("chatBox");
+                    box.innerHTML += `<div><b>${msg.senderName}</b>: ${msg.content || '<img src="' + msg.imageUrl + '" width="100"/>'}</div>`;
+                    box.scrollTop = box.scrollHeight;
+                });
+            },
+            function (error) {
+                console.error("[WebSocket] 연결 실패: ", error);
+            }
+        );
     }
 
     function sendMessage() {
