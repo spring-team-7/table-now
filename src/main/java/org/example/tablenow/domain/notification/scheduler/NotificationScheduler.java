@@ -6,10 +6,7 @@ import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.repository.ReservationRepository;
-import org.example.tablenow.domain.reservation.service.ReservationService;
-import org.example.tablenow.domain.store.repository.StoreRepository;
 import org.example.tablenow.domain.user.entity.User;
-import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,10 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationScheduler {
     private final ReservationRepository reservationRepository;
-    private final WaitlistRepository waitlistRepository;
     private final NotificationService notificationService;
-    private final StoreRepository storeRepository;
-    private final ReservationService reservationService;
 
     // 예약 24시간전 리마인더 알림전송
     @Scheduled(cron = "0 0,30 * * * *")
@@ -51,9 +45,9 @@ public class NotificationScheduler {
     private void notifyReminder(Reservation reservation) {
         NotificationRequestDto dto = new NotificationRequestDto(
             reservation.getUser().getId(),
-            reservation.getStore().getId(),
+            reservation.getStoreId(),
             NotificationType.REMIND,
-            String.format("내일 %s 가게 방문예정일 입니다.", reservation.getStore().getName())
+            String.format("내일 %s 가게 방문예정일 입니다.", reservation.getStoreName())
         );
         notificationService.createNotification(dto);
     }
