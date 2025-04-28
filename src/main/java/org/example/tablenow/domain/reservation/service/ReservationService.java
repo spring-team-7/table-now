@@ -2,6 +2,7 @@ package org.example.tablenow.domain.reservation.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.tablenow.domain.notification.message.vacancy.producer.VacancyProducer;
 import org.example.tablenow.domain.reservation.dto.request.ReservationRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationStatusChangeRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationUpdateRequestDto;
@@ -19,13 +20,11 @@ import org.example.tablenow.global.annotation.DistributedLock;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.example.tablenow.domain.notification.message.vacancy.producer.VacancyProducer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -71,7 +70,7 @@ public class ReservationService {
             prefix = RESERVATION_LOCK_KEY_PREFIX,
             key = "#request.storeId + ':' + #request.reservedAt.toLocalDate()"
     )
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public ReservationResponseDto makeReservationWithLock(AuthUser authUser, ReservationRequestDto request) {
         return handleReservationCreation(authUser, request);
     }
@@ -166,6 +165,17 @@ public class ReservationService {
                 .orElseThrow(() -> new HandledException(ErrorCode.RESERVATION_NOT_FOUND));
     }
 
+    public void validateCreateRating(Long userId, Long storeId) {
+        if (!reservationRepository.existsReviewableReservation(userId, storeId)) {
+            throw new HandledException(ErrorCode.RATING_RESERVATION_NOT_FOUND);
+        }
+    }
+
+    public boolean hasVacancyDate(Store store, LocalDate date){
+        long reservedCount = reservationRepository.countReservedTablesByDate(store, date);
+        return store.hasVacancy(reservedCount);
+    }
+
     private void validateUpdatableReservation(User user, Long id, ReservationUpdateRequestDto request, Reservation reservation) {
         validateReservationOwner(reservation, user);
         validateReservationTimeDuplicated(id, request, reservation);
@@ -178,7 +188,7 @@ public class ReservationService {
     }
 
     private void validateReservationTimeDuplicated(Long id, ReservationUpdateRequestDto request, Reservation reservation) {
-        boolean isDuplicated = reservationRepository.existsByStoreIdAndReservedAtAndIdNot(
+        boolean isDuplicated = reservationRepository.existsByStore_IdAndReservedAtAndIdNot(
                 reservation.getStore().getId(),
                 request.getReservedAt(),
                 id
@@ -199,7 +209,7 @@ public class ReservationService {
     }
 
     private void validateReservationDuplication(User user, Store store, LocalDateTime reservedAt) {
-        boolean exists = reservationRepository.existsByUserIdAndStoreIdAndReservedAt(
+        boolean exists = reservationRepository.existsByUserIdAndStore_IdAndReservedAt(
                 user.getId(), store.getId(), reservedAt
         );
 
@@ -212,16 +222,5 @@ public class ReservationService {
         if (!store.isOpenAt(reservedAt)) {
             throw new HandledException(ErrorCode.STORE_CLOSED_TIME);
         }
-    }
-
-    public void validateCreateRating(Long userId, Long storeId) {
-        if (!reservationRepository.existsReviewableReservation(userId, storeId)) {
-            throw new HandledException(ErrorCode.RATING_RESERVATION_NOT_FOUND);
-        }
-    }
-
-    public boolean hasVacancyDate(Store store, LocalDate date){
-        long reservedCount = reservationRepository.countReservedTablesByDate(store, date);
-        return store.hasVacancy(reservedCount);
     }
 }
