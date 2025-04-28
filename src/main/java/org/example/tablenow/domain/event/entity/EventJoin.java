@@ -1,17 +1,19 @@
 package org.example.tablenow.domain.event.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.user.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Getter
 @Entity
 @Table(name = "event_join")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EventJoin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +41,27 @@ public class EventJoin {
         this.isNotified = false;
     }
 
-    public void markNotified() {
-        this.isNotified = true;
+    public Long getEventId() {
+        return Optional.ofNullable(this.event)
+                .map(Event::getId)
+                .orElse(null);
+    }
+
+    public Long getStoreId() {
+        return Optional.ofNullable(this.event)
+                .map(Event::getStoreId)
+                .orElse(null);
+    }
+
+    public String getStoreName() {
+        return Optional.ofNullable(this.event)
+                .map(Event::getStoreName)
+                .orElse(null);
+    }
+
+    public LocalDateTime getEventTime() {
+        return Optional.ofNullable(this.event)
+                .map(Event::getEventTime)
+                .orElse(null);
     }
 }

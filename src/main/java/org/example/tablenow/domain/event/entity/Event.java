@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.event.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,11 +13,12 @@ import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Getter
 @Entity
 @Table(name = "event")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Event extends TimeStamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -80,10 +82,6 @@ public class Event extends TimeStamped {
         }
     }
 
-    private void changeStatus(EventStatus status) {
-        this.status = status;
-    }
-
     public static Event create(Store store, EventRequestDto dto) {
         return Event.builder()
                 .store(store)
@@ -95,4 +93,19 @@ public class Event extends TimeStamped {
                 .build();
     }
 
+    public Long getStoreId() {
+        return Optional.ofNullable(this.store)
+                .map(Store::getId)
+                .orElse(null);
+    }
+
+    public String getStoreName() {
+        return Optional.ofNullable(this.store)
+                .map(Store::getName)
+                .orElse(null);
+    }
+
+    private void changeStatus(EventStatus status) {
+        this.status = status;
+    }
 }
