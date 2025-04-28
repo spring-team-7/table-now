@@ -93,7 +93,8 @@ public class EventService {
         validateReadyStatus(event);
 
         eventRepository.delete(event);
-        redisTemplate.opsForZSet().remove(EVENT_JOIN_PREFIX, String.valueOf(id));
+        redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, String.valueOf(id));
+        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
         return EventDeleteResponseDto.fromEvent(event);
     }
 
@@ -103,7 +104,8 @@ public class EventService {
 
         event.close();
 
-        redisTemplate.opsForZSet().remove(EVENT_JOIN_PREFIX, String.valueOf(id));
+        redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, String.valueOf(id));
+        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
         return EventCloseResponseDto.fromEvent(event);
     }
 
