@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.event.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.event.entity.Event;
@@ -13,11 +14,16 @@ public class EventResponseDto {
     private final Long storeId;
     private final String storeName;
     private final String content;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime openAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime endAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime eventTime;
     private final int limitPeople;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime updatedAt;
     private final EventStatus status;
 
@@ -40,8 +46,8 @@ public class EventResponseDto {
     public static EventResponseDto fromEvent(Event event) {
         return EventResponseDto.builder()
                 .eventId(event.getId())
-                .storeId(event.getStore().getId())
-                .storeName(event.getStore().getName())
+                .storeId(event.getStoreId())
+                .storeName(event.getStoreName())
                 .content(event.getContent())
                 .openAt(event.getOpenAt())
                 .endAt(event.getEndAt())

@@ -30,24 +30,24 @@ public class EventController {
     }
 
     @Secured(UserRole.Authority.ADMIN)
-    @PatchMapping("/v1/admin/events/{id}")
+    @PatchMapping("/v1/admin/events/{eventId}")
     public ResponseEntity<EventResponseDto> updateEvent(
-            @PathVariable Long id,
+            @PathVariable Long eventId,
             @Valid @RequestBody EventUpdateRequestDto request
     ) {
-        return ResponseEntity.ok(eventService.updateEvent(id, request));
+        return ResponseEntity.ok(eventService.updateEvent(eventId, request));
     }
 
     @Secured(UserRole.Authority.ADMIN)
-    @DeleteMapping("/v1/admin/events/{id}")
-    public ResponseEntity<EventDeleteResponseDto> deleteEvent(@PathVariable Long id) {
-        return ResponseEntity.ok(eventService.deleteEvent(id));
+    @DeleteMapping("/v1/admin/events/{eventId}")
+    public ResponseEntity<EventDeleteResponseDto> deleteEvent(@PathVariable Long eventId) {
+        return ResponseEntity.ok(eventService.deleteEvent(eventId));
     }
 
     @Secured(UserRole.Authority.ADMIN)
-    @PatchMapping("/v1/admin/events/{id}/close")
-    public ResponseEntity<EventCloseResponseDto> closeEvent(@PathVariable Long id) {
-        return ResponseEntity.ok(eventService.closeEvent(id));
+    @PatchMapping("/v1/admin/events/{eventId}/close")
+    public ResponseEntity<EventCloseResponseDto> closeEvent(@PathVariable Long eventId) {
+        return ResponseEntity.ok(eventService.closeEvent(eventId));
     }
 
     @GetMapping("/v1/events")

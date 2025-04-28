@@ -1,21 +1,23 @@
 package org.example.tablenow.domain.store.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.tablenow.domain.category.entity.Category;
-import org.example.tablenow.domain.user.entity.User;
-import org.springframework.data.elasticsearch.annotations.*;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Mapping;
+import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
 @Document(indexName = "store", writeTypeHint = WriteTypeHint.FALSE)
 @Setting(settingPath = "elastic/store-setting.json")
 @Mapping(mappingPath = "elastic/store-mapping.json")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StoreDocument {
     @Id
     private Long id;
@@ -33,9 +35,10 @@ public class StoreDocument {
     private String userName; // 가게사장 이름 비정규화
     private Long categoryId;
     private String categoryName; // 카테고리 명 비정규화
+    private LocalDateTime deletedAt;
 
     @Builder
-    public StoreDocument(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double rating, Integer ratingCount, String startTime, String endTime, Long userId, String userName, Long categoryId, String categoryName) {
+    public StoreDocument(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double rating, Integer ratingCount, String startTime, String endTime, Long userId, String userName, Long categoryId, String categoryName, LocalDateTime deletedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -51,6 +54,7 @@ public class StoreDocument {
         this.userName = userName;
         this.categoryId = categoryId;
         this.categoryName = categoryName;
+        this.deletedAt = deletedAt;
     }
 
     public static StoreDocument fromStore(Store store) {
@@ -70,6 +74,7 @@ public class StoreDocument {
                 .userName(store.getUser().getName())
                 .categoryId(store.getCategory().getId())
                 .categoryName(store.getCategory().getName())
+                .deletedAt(store.getDeletedAt())
                 .build();
     }
 }

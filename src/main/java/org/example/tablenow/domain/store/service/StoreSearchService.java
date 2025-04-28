@@ -126,7 +126,7 @@ public class StoreSearchService {
 
     private Set<String> scanKeysByKeywordTokens(String storeName) {
         Set<String> keys = new HashSet<>();
-        Set<String> tokens = textAnalyzerService.analyzeText(STORE_INDEX_NAME, STORE_ANALYZER_NAME, storeName);
+        Set<String> tokens = textAnalyzerService.analyzeText(STORE_INDEX, STORE_ANALYZER, storeName);
 
         for (String token : tokens) {
             String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", token);

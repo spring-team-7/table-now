@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.example.tablenow.domain.store.util.StoreConstant.STORE_INDEX_NAME;
+import static org.example.tablenow.domain.store.util.StoreConstant.STORE_INDEX;
 
 @Slf4j
 @Repository
@@ -31,38 +31,21 @@ public class StoreElasticRepository {
 
     private final ElasticsearchClient elasticsearchClient;
 
+    /**
+     * 가게 검색 Elastic 인덱스 조회
+     */
     public Page<StoreDocument> searchByKeywordAndCategoryId(String keyword, Long categoryId, Pageable pageable) {
         try {
             // 동적 bool query 구성
             BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-            if (keyword != null && !keyword.isBlank()) {
-                boolQueryBuilder.must(m -> m
-                        .multiMatch(q -> q
-                                .query(keyword)
-                                .fields("name", "description", "address")
-                        )
-                );
-            }
+            whereDeletedAtIsNull(boolQueryBuilder);
 
-            if (categoryId != null) {
-                boolQueryBuilder.must(m -> m
-                        .term(t -> t
-                                .field("categoryId")
-                                .value(categoryId)
-                        )
-                );
-            }
+            whereKeywordContains(keyword, boolQueryBuilder);
 
-            // 실제 쿼리 실행
-            SearchResponse<StoreDocument> response = elasticsearchClient.search(s -> s
-                            .index(STORE_INDEX_NAME) // 인덱스명
-                            .query(q -> q.bool(boolQueryBuilder.build()))
-                            .from((int) pageable.getOffset())
-                            .size(pageable.getPageSize())
-                            .sort(convertSort(pageable)),
-                    StoreDocument.class
-            );
+            whereCategoryIdEq(categoryId, boolQueryBuilder);
+
+            SearchResponse<StoreDocument> response = getStoreDocumentSearchResponse(pageable, boolQueryBuilder);
 
             List<StoreDocument> results = response.hits().hits().stream()
                     .map(Hit::source)
@@ -77,26 +60,13 @@ public class StoreElasticRepository {
         }
     }
 
-    private List<SortOptions> convertSort(Pageable pageable) {
-        List<SortOptions> sortOptions = new ArrayList<>();
-        for (Sort.Order order : pageable.getSort()) {
-            sortOptions.add(SortOptions.of(s -> s
-                    .field(f -> f
-                            .field(order.getProperty())
-                            .order(order.isAscending() ? SortOrder.Asc : SortOrder.Desc)
-                    )
-            ));
-        }
-        return sortOptions;
-    }
-
     /**
      * 인덱스 갱신 또는 생성 (insert, update)
      */
     public void updateStoreIndex(StoreDocument storeDocument) {
         try {
             IndexRequest indexRequest = IndexRequest.of(i -> i
-                    .index(STORE_INDEX_NAME)
+                    .index(STORE_INDEX)
                     .id(String.valueOf(storeDocument.getId()))
                     .document(storeDocument)
             );
@@ -113,7 +83,7 @@ public class StoreElasticRepository {
     public void deleteStoreIndex(Long storeId) {
         try {
             DeleteRequest request = DeleteRequest.of(i -> i
-                    .index(STORE_INDEX_NAME)
+                    .index(STORE_INDEX)
                     .id(String.valueOf(storeId))
             );
             DeleteResponse deleteResponse = elasticsearchClient.delete(request);
@@ -121,5 +91,66 @@ public class StoreElasticRepository {
         } catch (Exception e) {
             throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_QUERY_FAILED);
         }
+    }
+
+    private void whereDeletedAtIsNull(BoolQuery.Builder boolQueryBuilder) {
+        boolQueryBuilder.mustNot(m -> m
+                .exists(e -> e
+                        .field("deletedAt")
+                )
+        );
+    }
+
+    private void whereKeywordContains(String keyword, BoolQuery.Builder boolQueryBuilder) {
+        if (keyword != null && !keyword.isBlank()) {
+            boolQueryBuilder.must(m -> m
+                    .multiMatch(q -> q
+                            .query(keyword)
+                            .fields("name^2.5",
+                                    "name.keyword^3",
+                                    "name.ngram^1.5",
+                                    "name.edge_ngram^1.5",
+                                    "description^2.5",
+                                    "description.keyword^3",
+                                    "address^2.5", "address.keyword^3")
+                    )
+            );
+        }
+    }
+
+    private void whereCategoryIdEq(Long categoryId, BoolQuery.Builder boolQueryBuilder) {
+        if (categoryId != null) {
+            boolQueryBuilder.must(m -> m
+                    .term(t -> t
+                            .field("categoryId")
+                            .value(categoryId)
+                    )
+            );
+        }
+    }
+
+    private List<SortOptions> convertSort(Pageable pageable) {
+        List<SortOptions> sortOptions = new ArrayList<>();
+        for (Sort.Order order : pageable.getSort()) {
+            sortOptions.add(SortOptions.of(s -> s
+                    .field(f -> f
+                            .field(order.getProperty())
+                            .order(order.isAscending() ? SortOrder.Asc : SortOrder.Desc)
+                    )
+            ));
+        }
+        return sortOptions;
+    }
+
+    private SearchResponse<StoreDocument> getStoreDocumentSearchResponse(Pageable pageable, BoolQuery.Builder boolQueryBuilder) throws IOException {
+        SearchResponse<StoreDocument> response = elasticsearchClient.search(s -> s
+                        .index(STORE_INDEX) // 인덱스명
+                        .query(q -> q.bool(boolQueryBuilder.build()))
+                        .from((int) pageable.getOffset())
+                        .size(pageable.getPageSize())
+                        .sort(convertSort(pageable)),
+                StoreDocument.class
+        );
+        return response;
     }
 }

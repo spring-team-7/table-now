@@ -12,6 +12,6 @@ public class StoreConstant {
     public static final String STORE_CACHE_KEY = "store:cache-keys:";
 
     // ElasticSearch
-    public static final String STORE_INDEX_NAME = "store";
-    public static final String STORE_ANALYZER_NAME = "korean_search";
+    public static final String STORE_INDEX = "store";
+    public static final String STORE_ANALYZER = "ngram_analyzer";
 }

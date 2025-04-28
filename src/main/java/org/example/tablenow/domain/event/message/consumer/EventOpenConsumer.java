@@ -32,11 +32,7 @@ public class EventOpenConsumer {
         List<User> users = getUsers(message.getEventId());
 
         for (User user : users) {
-            if (Boolean.TRUE.equals(user.getIsAlarmEnabled())) {
-                sendNotification(user, message);
-            } else {
-                log.debug("[EventOpenConsumer] 알림 비활성 유저 → userId={}", user.getId());
-            }
+            sendNotification(user, message);
         }
     }
 
