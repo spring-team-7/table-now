@@ -24,8 +24,8 @@ public class EventOpenMessage {
     public static EventOpenMessage fromEvent(Event event) {
         return EventOpenMessage.builder()
                 .eventId(event.getId())
-                .storeId(event.getStore().getId())
-                .storeName(event.getStore().getName())
+                .storeId(event.getStoreId())
+                .storeName(event.getStoreName())
                 .openAt(event.getOpenAt())
                 .build();
     }

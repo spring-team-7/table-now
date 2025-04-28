@@ -5,18 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.global.constant.RabbitConstant;
 import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Async
 public class EventOpenProducer {
     private final RabbitTemplate rabbitTemplate;
 
     public void send(EventOpenMessage message) {
         rabbitTemplate.convertAndSend(
-                RabbitConstant.EVENT_OPEN_EXCHANGE,   // fanout exchange
-                "",                                   // fanout이므로 routingKey는 빈 문자열
+                RabbitConstant.EVENT_OPEN_EXCHANGE,
                 message
         );
 

@@ -30,21 +30,21 @@ public class EventJoinExecutor {
     public EventJoinResponseDto execute(Long eventId, AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
         String userId = String.valueOf(user.getId());
-        String zsetKey = EVENT_JOIN_PREFIX + eventId;
+        String joinKey = EVENT_JOIN_PREFIX + eventId;
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new HandledException(ErrorCode.EVENT_NOT_FOUND));
 
         event.validateOpenStatus();
 
-        Boolean added = redisTemplate.opsForZSet().add(zsetKey, userId, System.currentTimeMillis());
+        Boolean added = redisTemplate.opsForZSet().add(joinKey, userId, System.currentTimeMillis());
         if (Boolean.FALSE.equals(added)) {
             throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
         }
 
-        Long rank = redisTemplate.opsForZSet().rank(zsetKey, userId);
+        Long rank = redisTemplate.opsForZSet().rank(joinKey, userId);
         if (rank == null || rank >= event.getLimitPeople()) {
-            redisTemplate.opsForZSet().remove(zsetKey, userId);
+            redisTemplate.opsForZSet().remove(joinKey, userId);
             throw new HandledException(ErrorCode.EVENT_FULL);
         }
 
@@ -53,7 +53,7 @@ public class EventJoinExecutor {
             log.info("이벤트 신청 성공: eventJoinId={}, user={}, event={}", eventJoin.getId(), user.getEmail(), eventId);
             return EventJoinResponseDto.fromEventJoin(eventJoin);
         } catch (Exception e) {
-            redisTemplate.opsForZSet().remove(zsetKey, String.valueOf(user.getId()));
+            redisTemplate.opsForZSet().remove(joinKey, String.valueOf(user.getId()));
             log.warn("DB insert 실패로 Redis 자리 반환: userId={}, eventId={}", user.getId(), eventId);
             throw e;
         }
