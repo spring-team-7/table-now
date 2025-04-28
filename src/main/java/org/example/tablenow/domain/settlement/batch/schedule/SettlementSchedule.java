@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.settlement.batch.schedule;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.settlement.batch.util.JobTimeUtil;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -9,6 +10,7 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class SettlementSchedule {
@@ -20,7 +22,7 @@ public class SettlementSchedule {
     @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     public void runRegisterJob() throws Exception {
 
-        System.out.println("▶ 정산 등록 Job 시작");
+        log.info("정산 등록 Job 시작");
         runJob("settlementRegisterJob", "register");
     }
 
@@ -28,7 +30,7 @@ public class SettlementSchedule {
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void runCompleteJob() throws Exception {
 
-        System.out.println("▶ 정산 완료 Job 시작");
+        log.info("정산 완료 Job 시작");
         runJob("settlementCompleteJob", "complete");
     }
 

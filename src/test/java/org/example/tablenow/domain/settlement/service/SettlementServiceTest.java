@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -86,10 +87,49 @@ public class SettlementServiceTest {
     }
 
     @Nested
+    class 내_매장_정산_조회 {
+
+        @Test
+        void 로그인_유저의_매장_정산_조회_성공() {
+
+            // given
+            Settlement readySettlement = Settlement.builder()
+                    .id(2L)
+                    .payment(payment)
+                    .amount(5000)
+                    .status(SettlementStatus.READY)
+                    .build();
+
+            Settlement canceledSettlement = Settlement.builder()
+                    .id(3L)
+                    .payment(payment)
+                    .amount(3000)
+                    .status(SettlementStatus.CANCELED)
+                    .build();
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Settlement> page = new PageImpl<>(List.of(settlement, readySettlement, canceledSettlement), pageable, 3);
+            given(settlementRepository.findByStoreOwnerId(ownerId, pageable)).willReturn(page);
+
+            // when
+            SettlementSummaryPageDto summary = settlementService.getMyStoreSettlements(authOwner, 1, 10);
+
+            // then
+            assertAll(
+                    () -> assertThat(summary.getDoneAmount()).isEqualTo(10000),
+                    () -> assertThat(summary.getReadyAmount()).isEqualTo(5000),
+                    () -> assertThat(summary.getCanceledAmount()).isEqualTo(3000),
+                    () -> assertThat(summary.getPage().getTotalElements()).isEqualTo(3)
+            );
+        }
+    }
+
+    @Nested
     class 단건_조회 {
 
         @Test
         void 없는_정산ID_조회시_예외_발생() {
+
             // given
             given(settlementRepository.findById(anyLong())).willReturn(Optional.empty());
 
@@ -103,6 +143,7 @@ public class SettlementServiceTest {
 
         @Test
         void 정산_단건_조회_성공() {
+
             // given
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
@@ -110,9 +151,11 @@ public class SettlementServiceTest {
             SettlementResponseDto response = settlementService.getSettlement(settlementId);
 
             // then
-            assertEquals(settlementId, response.getId());
-            assertEquals(settlement.getAmount(), response.getAmount());
-            assertEquals(settlement.getStatus().name(), response.getStatus());
+            assertAll(
+                    () -> assertThat(response.getId()).isEqualTo(settlementId),
+                    () -> assertThat(response.getAmount()).isEqualTo(settlement.getAmount()),
+                    () -> assertThat(response.getStatus()).isEqualTo(settlement.getStatus().name())
+            );
         }
     }
 
@@ -120,7 +163,8 @@ public class SettlementServiceTest {
     class 전체_조회 {
 
         @Test
-        void 정산_리스트_페이징_조회_성공() {
+        void 정산_페이징_조회_성공() {
+
             // given
             Pageable pageable = PageRequest.of(0, 10);
             Page<Settlement> page = new PageImpl<>(List.of(settlement), pageable, 1);
@@ -130,29 +174,10 @@ public class SettlementServiceTest {
             Page<SettlementResponseDto> result = settlementService.getAllSettlements(1, 10);
 
             // then
-            assertEquals(1, result.getTotalElements());
-            assertEquals(settlement.getId(), result.getContent().get(0).getId());
-        }
-    }
-
-    @Nested
-    class 내_매장_정산_조회 {
-
-        @Test
-        void 로그인_유저의_매장_정산_조회_성공() {
-            // given
-            Pageable pageable = PageRequest.of(0, 10);
-            Page<Settlement> page = new PageImpl<>(List.of(settlement), pageable, 1);
-            given(settlementRepository.findByStoreOwnerId(ownerId, pageable)).willReturn(page);
-
-            // when
-            SettlementSummaryPageDto summary = settlementService.getMyStoreSettlements(authOwner, 1, 10);
-
-            // then
-            assertEquals(10000, summary.getDoneAmount());
-            assertEquals(0, summary.getReadyAmount());
-            assertEquals(0, summary.getCanceledAmount());
-            assertEquals(1, summary.getPage().getTotalElements());
+            assertAll(
+                    () -> assertThat(result.getTotalElements()).isEqualTo(1),
+                    () -> assertThat(result.getContent().get(0).getId()).isEqualTo(settlement.getId())
+            );
         }
     }
 
@@ -161,6 +186,7 @@ public class SettlementServiceTest {
 
         @Test
         void 정산_ID_없을_경우_예외_발생() {
+
             // given
             given(settlementRepository.findById(anyLong())).willReturn(Optional.empty());
 
@@ -174,6 +200,7 @@ public class SettlementServiceTest {
 
         @Test
         void 정산_취소_성공() {
+
             // given
             given(settlementRepository.findById(settlementId)).willReturn(Optional.of(settlement));
 
@@ -181,8 +208,10 @@ public class SettlementServiceTest {
             SettlementOperationResponseDto result = settlementService.cancelSettlement(settlementId);
 
             // then
-            assertEquals(1, result.getCount());
-            assertEquals(SettlementStatus.CANCELED, result.getStatus());
+            assertAll(
+                    () -> assertThat(result.getCount()).isEqualTo(1),
+                    () -> assertThat(result.getStatus()).isEqualTo(SettlementStatus.CANCELED)
+            );
         }
     }
 }

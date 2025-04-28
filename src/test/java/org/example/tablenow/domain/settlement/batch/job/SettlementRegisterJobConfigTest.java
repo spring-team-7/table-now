@@ -16,6 +16,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.mock;
 
 class SettlementRegisterJobConfigTest {
@@ -79,9 +80,11 @@ class SettlementRegisterJobConfigTest {
         Settlement settlement = processor.process(payment);
 
         // then
-        assertThat(settlement.getAmount()).isEqualTo(10000);
-        assertThat(settlement.getPayment().getId()).isEqualTo(1L);
-        assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.READY);
+        assertAll(
+                () -> assertThat(settlement.getAmount()).isEqualTo(10000),
+                () -> assertThat(settlement.getPayment().getId()).isEqualTo(1L),
+                () -> assertThat(settlement.getStatus()).isEqualTo(SettlementStatus.READY)
+        );
     }
 
     @Test

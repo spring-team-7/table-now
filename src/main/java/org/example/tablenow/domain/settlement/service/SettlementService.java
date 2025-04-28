@@ -27,24 +27,6 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
 
     @Transactional(readOnly = true)
-    public Page<SettlementResponseDto> getAllSettlements(int page, int size) {
-
-        Pageable pageable = PageRequest.of(page - 1, size);
-
-        return settlementRepository.findAll(pageable)
-                .map(SettlementResponseDto::fromSettlement);
-    }
-
-    @Transactional(readOnly = true)
-    public SettlementResponseDto getSettlement(Long id) {
-
-        Settlement settlement = settlementRepository.findById(id)
-                .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
-
-        return SettlementResponseDto.fromSettlement(settlement);
-    }
-
-    @Transactional(readOnly = true)
     public SettlementSummaryPageDto getMyStoreSettlements(AuthUser authUser, int page, int size) {
 
         Pageable pageable = PageRequest.of(page - 1, size);
@@ -61,10 +43,28 @@ public class SettlementService {
         return SettlementSummaryPageDto.of(doneAmount, readyAmount, canceledAmount, dtoPage);
     }
 
-    @Transactional
-    public SettlementOperationResponseDto cancelSettlement(Long id) {
+    @Transactional(readOnly = true)
+    public Page<SettlementResponseDto> getAllSettlements(int page, int size) {
 
-        Settlement settlement = settlementRepository.findById(id)
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        return settlementRepository.findAll(pageable)
+                .map(SettlementResponseDto::fromSettlement);
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementResponseDto getSettlement(Long settlementId) {
+
+        Settlement settlement = settlementRepository.findById(settlementId)
+                .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
+
+        return SettlementResponseDto.fromSettlement(settlement);
+    }
+
+    @Transactional
+    public SettlementOperationResponseDto cancelSettlement(Long settlementId) {
+
+        Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         settlement.cancel();

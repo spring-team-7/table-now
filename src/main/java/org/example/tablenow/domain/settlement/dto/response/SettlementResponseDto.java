@@ -31,10 +31,10 @@ public class SettlementResponseDto {
         return new SettlementResponseDto(
                 settlement.getId(),
                 settlement.getAmount(),
-                settlement.getStatus().name(),
-                settlement.getPayment().getId(),
-                settlement.getPayment().getReservation().getStore().getName(),
-                settlement.getPayment().getReservation().getStore().getUser().getName(),
+                settlement.getStatusName(),
+                settlement.getPaymentId(),
+                settlement.getPaymentStoreName(),
+                settlement.getPaymentUserName(),
                 settlement.getCreatedAt()
         );
     }

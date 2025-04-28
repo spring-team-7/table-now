@@ -91,7 +91,7 @@ public class SettlementRegisterJobConfig {
                 .dataSource(dataDBSource)
                 .sql("""
                         INSERT INTO settlement (payment_id, amount, status, createdAt, updatedAt)
-                        VALUES (:payment.id, :amount, :statusString, now(), now())
+                        VALUES (:payment.id, :amount, :statusName, now(), now())
                         """)
                 .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
                 .build();
