@@ -5,10 +5,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.tablenow.domain.payment.entity.Payment;
+import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.settlement.enums.SettlementStatus;
+import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+
+import java.util.Optional;
 
 @Getter
 @Entity
@@ -64,7 +69,30 @@ public class Settlement extends TimeStamped {
                 .build();
     }
 
-    public String getStatusString() {
+    public String getStatusName() {
         return status.name();
+    }
+
+    public Long getPaymentId() {
+        return Optional.ofNullable(this.payment)
+                .map(Payment::getId)
+                .orElse(null);
+    }
+
+    public String getPaymentStoreName() {
+        return Optional.ofNullable(this.payment)
+                .map(Payment::getReservation)
+                .map(Reservation::getStore)
+                .map(Store::getName)
+                .orElse(null);
+    }
+
+    public String getPaymentUserName() {
+        return Optional.ofNullable(this.payment)
+                .map(Payment::getReservation)
+                .map(Reservation::getStore)
+                .map(Store::getUser)
+                .map(User::getName)
+                .orElse(null);
     }
 }

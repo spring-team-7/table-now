@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.settlement.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.tablenow.domain.settlement.dto.request.SettlementPageRequestDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementOperationResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementSummaryPageDto;
@@ -27,9 +28,26 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
 
     @Transactional(readOnly = true)
-    public Page<SettlementResponseDto> getAllSettlements(int page, int size) {
+    public SettlementSummaryPageDto getMyStoreSettlements(AuthUser authUser, SettlementPageRequestDto request) {
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize());
+
+        Page<Settlement> settlements = settlementRepository.findByStoreOwnerId(authUser.getId(), pageable);
+        Page<SettlementResponseDto> dtoPage = settlements.map(SettlementResponseDto::fromSettlement);
+
+        Map<SettlementStatus, Integer> totalAmountByStatus = calculateAmountByStatus(settlements.getContent());
+
+        int doneAmount = totalAmountByStatus.getOrDefault(SettlementStatus.DONE, 0);
+        int readyAmount = totalAmountByStatus.getOrDefault(SettlementStatus.READY, 0);
+        int canceledAmount = totalAmountByStatus.getOrDefault(SettlementStatus.CANCELED, 0);
+
+        return SettlementSummaryPageDto.of(doneAmount, readyAmount, canceledAmount, dtoPage);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SettlementResponseDto> getAllSettlements(SettlementPageRequestDto request) {
+
+        Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize());
 
         return settlementRepository.findAll(pageable)
                 .map(SettlementResponseDto::fromSettlement);
@@ -42,23 +60,6 @@ public class SettlementService {
                 .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         return SettlementResponseDto.fromSettlement(settlement);
-    }
-
-    @Transactional(readOnly = true)
-    public SettlementSummaryPageDto getMyStoreSettlements(AuthUser authUser, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page - 1, size);
-
-        Page<Settlement> settlements = settlementRepository.findByStoreOwnerId(authUser.getId(), pageable);
-        Page<SettlementResponseDto> dtoPage = settlements.map(SettlementResponseDto::fromSettlement);
-
-        Map<SettlementStatus, Integer> totalAmountByStatus = calculateAmountByStatus(settlements.getContent());
-
-        int doneAmount = totalAmountByStatus.getOrDefault(SettlementStatus.DONE, 0);
-        int readyAmount = totalAmountByStatus.getOrDefault(SettlementStatus.READY, 0);
-        int canceledAmount = totalAmountByStatus.getOrDefault(SettlementStatus.CANCELED, 0);
-
-        return SettlementSummaryPageDto.of(doneAmount, readyAmount, canceledAmount, dtoPage);
     }
 
     @Transactional
