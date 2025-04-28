@@ -10,6 +10,8 @@ import org.springframework.data.elasticsearch.annotations.Mapping;
 import org.springframework.data.elasticsearch.annotations.Setting;
 import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 
+import java.time.LocalDateTime;
+
 @Getter
 @NoArgsConstructor
 @Document(indexName = "store", writeTypeHint = WriteTypeHint.FALSE)
@@ -33,10 +35,10 @@ public class StoreDocument {
     private String userName; // 가게사장 이름 비정규화
     private Long categoryId;
     private String categoryName; // 카테고리 명 비정규화
-    private String deletedAt;
+    private LocalDateTime deletedAt;
 
     @Builder
-    public StoreDocument(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double rating, Integer ratingCount, String startTime, String endTime, Long userId, String userName, Long categoryId, String categoryName, String deletedAt) {
+    public StoreDocument(Long id, String name, String description, String address, String imageUrl, Integer capacity, Integer deposit, Double rating, Integer ratingCount, String startTime, String endTime, Long userId, String userName, Long categoryId, String categoryName, LocalDateTime deletedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -72,7 +74,7 @@ public class StoreDocument {
                 .userName(store.getUser().getName())
                 .categoryId(store.getCategory().getId())
                 .categoryName(store.getCategory().getName())
-                .deletedAt(String.valueOf(store.getDeletedAt()))
+                .deletedAt(store.getDeletedAt())
                 .build();
     }
 }

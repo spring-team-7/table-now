@@ -52,10 +52,10 @@
       "type": "integer"
     },
     "startTime": {
-      "type": "date"
+      "type": "keyword"
     },
     "endTime": {
-      "type": "date"
+      "type": "keyword"
     },
     "userId": {
       "type": "integer",
