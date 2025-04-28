@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.notification.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.notification.entity.Notification;
@@ -14,6 +15,7 @@ public class NotificationResponseDto {
     private final NotificationType type;
     private final String content;
     private final Boolean isRead;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime createdAt;
 
     @Builder

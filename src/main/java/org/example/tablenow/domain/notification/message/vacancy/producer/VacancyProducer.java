@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.notification.message.vacancy.dto.VacancyEventDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_ROUTIN
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Async
 // 예약 취소 발생 시, 해당 가게 ID와 날짜 정보를 담은 메시지를 RabbitMQ에 전송
 public class VacancyProducer {
     private final RabbitTemplate rabbitTemplate;
