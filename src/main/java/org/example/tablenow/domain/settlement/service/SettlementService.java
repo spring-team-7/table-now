@@ -54,18 +54,18 @@ public class SettlementService {
     }
 
     @Transactional(readOnly = true)
-    public SettlementResponseDto getSettlement(Long id) {
+    public SettlementResponseDto getSettlement(Long settlementId) {
 
-        Settlement settlement = settlementRepository.findById(id)
+        Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         return SettlementResponseDto.fromSettlement(settlement);
     }
 
     @Transactional
-    public SettlementOperationResponseDto cancelSettlement(Long id) {
+    public SettlementOperationResponseDto cancelSettlement(Long settlementId) {
 
-        Settlement settlement = settlementRepository.findById(id)
+        Settlement settlement = settlementRepository.findById(settlementId)
                 .orElseThrow(() -> new HandledException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         settlement.cancel();
