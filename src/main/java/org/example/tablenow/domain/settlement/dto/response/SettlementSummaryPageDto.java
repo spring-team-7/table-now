@@ -22,10 +22,10 @@ public class SettlementSummaryPageDto {
             Page<SettlementResponseDto> page
     ) {
 
-        int total = doneAmount + readyAmount + canceledAmount;
+        int totalAmount = doneAmount + readyAmount + canceledAmount;
 
         return new SettlementSummaryPageDto(
-                total,
+                totalAmount,
                 doneAmount,
                 readyAmount,
                 canceledAmount,

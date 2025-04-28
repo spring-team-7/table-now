@@ -41,6 +41,7 @@ class SettlementScheduleTest {
 
     @Test
     void 정산_등록_Job_실행_성공() throws Exception {
+
         // given
         given(jobRegistry.getJob("settlementRegisterJob")).willReturn(job);
 
@@ -54,6 +55,7 @@ class SettlementScheduleTest {
 
     @Test
     void 정산_완료_Job_실행_성공() throws Exception {
+
         // given
         given(jobRegistry.getJob("settlementCompleteJob")).willReturn(job);
 
