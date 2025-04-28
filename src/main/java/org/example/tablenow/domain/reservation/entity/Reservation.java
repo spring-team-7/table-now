@@ -51,6 +51,7 @@ public class Reservation extends TimeStamped {
     public void updateReservedAt(LocalDateTime reservedAt) {
         validateUpdatableStatus();
         this.reservedAt = reservedAt;
+        this.remindAt = reservedAt.minusDays(1);
     }
 
     public void tryCancel() {
