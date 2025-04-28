@@ -69,6 +69,7 @@ public class ReservationServiceTest {
 
     private Long userId;
     private Long storeId;
+    private Long reservationId;
     private AuthUser authUser;
     private User user;
     private Store store;
@@ -80,6 +81,7 @@ public class ReservationServiceTest {
     void setUp() {
         userId = 1L;
         storeId = 10L;
+        reservationId = 1L;
         authUser = new AuthUser(userId, "user@test.com", UserRole.ROLE_USER, "일반회원");
         user = User.fromAuthUser(authUser);
 
@@ -110,11 +112,10 @@ public class ReservationServiceTest {
     @Nested
     class 락_기반_예약_생성 {
 
-        ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
-
         @Test
         void 예약_성공() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
             given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(false);
@@ -132,6 +133,7 @@ public class ReservationServiceTest {
         @Test
         void 정원_초과시_예외_발생() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(999L); // 정원 초과
 
@@ -146,6 +148,7 @@ public class ReservationServiceTest {
         @Test
         void 중복_예약시_예외_발생() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
             given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(true);
@@ -162,11 +165,10 @@ public class ReservationServiceTest {
     @Nested
     class 예약_생성 {
 
-        ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
-
         @Test
         void 이미_같은_유저의_예약이_존재하는_경우_예외_발생() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(true);
 
@@ -180,6 +182,7 @@ public class ReservationServiceTest {
         @Test
         void 예약_시간이_가게_영업시간이_아니면_예외_발생() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             ReflectionTestUtils.setField(dto, "reservedAt", LocalDateTime.of(2025, 4, 10, 23, 0));
@@ -194,6 +197,7 @@ public class ReservationServiceTest {
         @Test
         void 예약_성공() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any(Reservation.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -210,6 +214,7 @@ public class ReservationServiceTest {
         @Test
         void 예약_생성_시_MQ_메세지_발송() {
             // given
+            ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
@@ -225,12 +230,10 @@ public class ReservationServiceTest {
     @Nested
     class 예약_날짜_수정 {
 
-        Long reservationId = 1L;
-        ReservationUpdateRequestDto dto = new ReservationUpdateRequestDto(reservedAt);
-
         @Test
         void 예약_당사자가_아닌_경우_예외_발생() {
             // given
+            ReservationUpdateRequestDto dto = new ReservationUpdateRequestDto(reservedAt);
             User otherUser = User.builder().id(999L).build();
             Reservation reservation = createReservation(reservationId, LocalDateTime.of(2025, 4, 10, 10, 0), ReservationStatus.RESERVED);
             ReflectionTestUtils.setField(reservation, "user", otherUser);
@@ -247,6 +250,7 @@ public class ReservationServiceTest {
         @Test
         void 이미_예약이_존재하는_경우_예외_발생() {
             // given
+            ReservationUpdateRequestDto dto = new ReservationUpdateRequestDto(reservedAt);
             Reservation reservation = createReservation(reservationId, LocalDateTime.of(2025, 4, 10, 10, 0), ReservationStatus.RESERVED);
             given(reservationRepository.findById(anyLong())).willReturn(Optional.of(reservation));
             given(reservationRepository.existsByStore_IdAndReservedAtAndIdNot(anyLong(), any(), anyLong())).willReturn(true);
@@ -261,9 +265,11 @@ public class ReservationServiceTest {
         @Test
         void 수정_성공() {
             // given
+            ReservationUpdateRequestDto dto = new ReservationUpdateRequestDto(reservedAt);
             Reservation reservation = createReservation(reservationId, LocalDateTime.of(2025, 4, 10, 10, 0), ReservationStatus.RESERVED);
             given(reservationRepository.findById(anyLong())).willReturn(Optional.of(reservation));
             given(reservationRepository.existsByStore_IdAndReservedAtAndIdNot(anyLong(), any(), anyLong())).willReturn(false);
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
 
             // when
             ReservationResponseDto response = reservationService.updateReservation(authUser, reservationId, dto);
@@ -457,6 +463,7 @@ public class ReservationServiceTest {
         void 예약_취소_성공() {
             // given
             given(reservationRepository.findById(eq(1L))).willReturn(Optional.of(reserved1));
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
 
             // when
             ReservationStatusResponseDto response = reservationService.cancelReservation(authUser, 1L);
@@ -470,6 +477,7 @@ public class ReservationServiceTest {
         void 예약_취소_시_MQ_메세지_발송() {
             // given
             given(reservationRepository.findById(eq(1L))).willReturn(Optional.of(reserved1));
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
 
             // when
             reservationService.cancelReservation(authUser, 1L);
