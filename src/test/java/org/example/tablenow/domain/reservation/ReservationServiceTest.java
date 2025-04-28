@@ -29,6 +29,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
@@ -56,30 +58,42 @@ public class ReservationServiceTest {
     @Mock
     private VacancyProducer vacancyProducer;
 
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ZSetOperations<String, String> zSetOperations;
+
     @InjectMocks
     private ReservationService reservationService;
 
-    Long userId = 1L;
-    Long storeId = 10L;
-    AuthUser authUser = new AuthUser(userId, "user@test.com", UserRole.ROLE_USER, "일반회원");
-    User user = User.fromAuthUser(authUser);
-
-    Store store = Store.builder()
-            .id(storeId)
-            .startTime(LocalTime.of(9, 0))
-            .endTime(LocalTime.of(22, 0))
-            .capacity(20)
-            .build();
-
-    LocalDateTime reservedAt = LocalDateTime.of(2025, 4, 10, 10, 0);
-
-    Reservation reserved1;
-    Reservation reserved2;
+    private Long userId;
+    private Long storeId;
+    private AuthUser authUser;
+    private User user;
+    private Store store;
+    private LocalDateTime reservedAt;
+    private Reservation reserved1;
+    private Reservation reserved2;
 
     @BeforeEach
     void setUp() {
-        reserved1 = createReservation(1L, LocalDateTime.of(2025, 4, 10, 10, 0), ReservationStatus.RESERVED);
-        reserved2 = createReservation(2L, LocalDateTime.of(2025, 4, 11, 11, 30), ReservationStatus.RESERVED);
+        userId = 1L;
+        storeId = 10L;
+        authUser = new AuthUser(userId, "user@test.com", UserRole.ROLE_USER, "일반회원");
+        user = User.fromAuthUser(authUser);
+
+        store = Store.builder()
+                .id(storeId)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(22, 0))
+                .capacity(20)
+                .build();
+
+        reservedAt = LocalDateTime.of(2025, 4, 10, 10, 0);
+
+        reserved1 = createReservation(1L, reservedAt, ReservationStatus.RESERVED);
+        reserved2 = createReservation(2L, reservedAt.plusDays(1), ReservationStatus.RESERVED);
     }
 
     private Reservation createReservation(Long id, LocalDateTime time, ReservationStatus status) {
@@ -96,17 +110,14 @@ public class ReservationServiceTest {
     @Nested
     class 락_기반_예약_생성 {
 
-        ReservationRequestDto dto = ReservationRequestDto.builder()
-                .storeId(storeId)
-                .reservedAt(reservedAt)
-                .build();
+        ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
 
         @Test
         void 예약_성공() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
-            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), anyLong(), any())).willReturn(false);
+            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(false);
             given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -137,7 +148,7 @@ public class ReservationServiceTest {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
-            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), anyLong(), any())).willReturn(true);
+            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -150,16 +161,14 @@ public class ReservationServiceTest {
 
     @Nested
     class 예약_생성 {
-        ReservationRequestDto dto = ReservationRequestDto.builder()
-                .storeId(storeId)
-                .reservedAt(reservedAt)
-                .build();
+
+        ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
 
         @Test
         void 이미_같은_유저의_예약이_존재하는_경우_예외_발생() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(true);
+            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -172,7 +181,7 @@ public class ReservationServiceTest {
         void 예약_시간이_가게_영업시간이_아니면_예외_발생() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             ReflectionTestUtils.setField(dto, "reservedAt", LocalDateTime.of(2025, 4, 10, 23, 0));
 
             // when & then
@@ -186,7 +195,7 @@ public class ReservationServiceTest {
         void 예약_성공() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any(Reservation.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -202,7 +211,7 @@ public class ReservationServiceTest {
         void 예약_생성_시_MQ_메세지_발송() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStoreIdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -215,11 +224,9 @@ public class ReservationServiceTest {
 
     @Nested
     class 예약_날짜_수정 {
-        Long reservationId = 1L;
 
-        ReservationUpdateRequestDto dto = ReservationUpdateRequestDto.builder()
-                .reservedAt(reservedAt)
-                .build();
+        Long reservationId = 1L;
+        ReservationUpdateRequestDto dto = new ReservationUpdateRequestDto(reservedAt);
 
         @Test
         void 예약_당사자가_아닌_경우_예외_발생() {
@@ -242,7 +249,7 @@ public class ReservationServiceTest {
             // given
             Reservation reservation = createReservation(reservationId, LocalDateTime.of(2025, 4, 10, 10, 0), ReservationStatus.RESERVED);
             given(reservationRepository.findById(anyLong())).willReturn(Optional.of(reservation));
-            given(reservationRepository.existsByStoreIdAndReservedAtAndIdNot(anyLong(), any(), anyLong())).willReturn(true);
+            given(reservationRepository.existsByStore_IdAndReservedAtAndIdNot(anyLong(), any(), anyLong())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -256,7 +263,7 @@ public class ReservationServiceTest {
             // given
             Reservation reservation = createReservation(reservationId, LocalDateTime.of(2025, 4, 10, 10, 0), ReservationStatus.RESERVED);
             given(reservationRepository.findById(anyLong())).willReturn(Optional.of(reservation));
-            given(reservationRepository.existsByStoreIdAndReservedAtAndIdNot(anyLong(), any(), anyLong())).willReturn(false);
+            given(reservationRepository.existsByStore_IdAndReservedAtAndIdNot(anyLong(), any(), anyLong())).willReturn(false);
 
             // when
             ReservationResponseDto response = reservationService.updateReservation(authUser, reservationId, dto);
@@ -269,6 +276,7 @@ public class ReservationServiceTest {
 
     @Nested
     class 내_예약_목록_조회 {
+
         int page = 1;
         int size = 10;
 
@@ -339,6 +347,7 @@ public class ReservationServiceTest {
 
     @Nested
     class 내_가게_예약_목록_조회 {
+
         int page = 1;
         int size = 10;
 
@@ -489,9 +498,7 @@ public class ReservationServiceTest {
                     reservationService.completeReservation(
                             otherAuthUser,
                             1L,
-                            ReservationStatusChangeRequestDto.builder()
-                                    .status(ReservationStatus.COMPLETED)
-                                    .build()
+                            new ReservationStatusChangeRequestDto(ReservationStatus.COMPLETED)
                     )
             );
 
@@ -508,9 +515,7 @@ public class ReservationServiceTest {
             ReservationStatusResponseDto response = reservationService.completeReservation(
                     authUser,
                     1L,
-                    ReservationStatusChangeRequestDto.builder()
-                            .status(ReservationStatus.COMPLETED)
-                            .build()
+                    new ReservationStatusChangeRequestDto(ReservationStatus.COMPLETED)
             );
 
             // then
