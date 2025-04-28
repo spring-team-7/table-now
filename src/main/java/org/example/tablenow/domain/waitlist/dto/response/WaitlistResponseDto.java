@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.waitlist.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
@@ -12,6 +13,7 @@ public class WaitlistResponseDto {
     private final Long storeId;
     private final String storeName;
     private final boolean isNotified;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime createdAt;
 
     @Builder

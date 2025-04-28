@@ -88,6 +88,10 @@ dependencies {
 
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+    // Shedlock
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:6.4.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:6.4.0'
 }
 
 def querydslDir = 'src/main/generated'
