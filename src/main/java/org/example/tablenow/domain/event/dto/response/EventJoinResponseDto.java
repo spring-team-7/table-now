@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.event.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.event.entity.EventJoin;
@@ -12,7 +13,9 @@ public class EventJoinResponseDto {
     private final Long eventId;
     private final Long storeId;
     private final String storeName;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime eventTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime joinedAt;
     private final String message;
 
@@ -31,10 +34,10 @@ public class EventJoinResponseDto {
     public static EventJoinResponseDto fromEventJoin(EventJoin eventJoin) {
         return EventJoinResponseDto.builder()
                 .eventJoinId(eventJoin.getId())
-                .eventId(eventJoin.getEvent().getId())
-                .storeId(eventJoin.getEvent().getStore().getId())
-                .storeName(eventJoin.getEvent().getStore().getName())
-                .eventTime(eventJoin.getEvent().getEventTime())
+                .eventId(eventJoin.getEventId())
+                .storeId(eventJoin.getStoreId())
+                .storeName(eventJoin.getStoreName())
+                .eventTime(eventJoin.getEventTime())
                 .joinedAt(eventJoin.getJoinedAt())
                 .message("이벤트 예약에 성공했습니다.")
                 .build();
