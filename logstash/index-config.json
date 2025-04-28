@@ -1,0 +1,166 @@
+{
+  "settings": {
+    "analysis": {
+      "tokenizer": {
+        "ngram_tokenizer": {
+          "type": "ngram",
+          "min_gram": 2,
+          "max_gram": 3,
+          "token_chars": [
+            "letter",
+            "digit",
+            "whitespace"
+          ]
+        },
+        "edge_ngram_tokenizer": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 10,
+          "token_chars": [
+            "letter",
+            "digit",
+            "whitespace"
+          ]
+        }
+      },
+      "filter": {
+        "nori_part_of_speech": {
+          "type": "nori_part_of_speech",
+          "stoptags": [
+            "EP",
+            "EF",
+            "JKS",
+            "JKC",
+            "JKO",
+            "JKB",
+            "JKG",
+            "JX",
+            "JC",
+            "SP",
+            "SSC",
+            "SSO",
+            "SC"
+          ]
+        },
+        "word_delimiter": {
+          "type": "word_delimiter",
+          "split_on_case_change": true,
+          "split_on_numerics": true,
+          "generate_word_parts": true,
+          "generate_number_parts": true,
+          "catenate_all": false
+        }
+      },
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer",
+          "filter": [
+            "nori_part_of_speech",
+            "lowercase"
+          ]
+        },
+        "mixed_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer",
+          "filter": [
+            "nori_part_of_speech",
+            "word_delimiter",
+            "lowercase"
+          ]
+        },
+        "ngram_analyzer": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "edge_ngram_analyzer": {
+          "type": "custom",
+          "tokenizer": "edge_ngram_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "long"
+      },
+      "name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          },
+          "ngram": {
+            "type": "text",
+            "analyzer": "ngram_analyzer"
+          },
+          "edge_ngram": {
+            "type": "text",
+            "analyzer": "edge_ngram_analyzer"
+          }
+        }
+      },
+      "description": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "address": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "imageUrl": {
+        "type": "keyword",
+        "index": false
+      },
+      "capacity": {
+        "type": "integer"
+      },
+      "deposit": {
+        "type": "integer"
+      },
+      "rating": {
+        "type": "float"
+      },
+      "ratingCount": {
+        "type": "integer"
+      },
+      "startTime": {
+        "type": "keyword"
+      },
+      "endTime": {
+        "type": "keyword"
+      },
+      "userId": {
+        "type": "integer",
+        "index": false
+      },
+      "userName": {
+        "type": "keyword"
+      },
+      "categoryId": {
+        "type": "integer"
+      },
+      "categoryName": {
+        "type": "keyword"
+      },
+      "deletedAt": {
+        "type": "date"
+      }
+    }
+  }
+}
