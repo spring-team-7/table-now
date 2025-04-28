@@ -37,8 +37,8 @@ public class PaymentResponseDto {
     public static PaymentResponseDto fromPayment(Payment payment) {
         return PaymentResponseDto.builder()
                 .paymentId(payment.getId())
-                .reservationId(payment.getReservation().getId())
-                .userId(payment.getUser().getId())
+                .reservationId(payment.getReservationId())
+                .userId(payment.getUserId())
                 .paymentKey(payment.getPaymentKey())
                 .method(payment.getMethod())
                 .price(payment.getPrice())
