@@ -72,8 +72,12 @@ class NotificationServiceTest {
 
         @BeforeEach
         void setUp() {
-            dto = new NotificationRequestDto(1L, null, NotificationType.REMIND, "예약 알림");
-
+            dto = NotificationRequestDto.builder()
+                .userId(1L)
+                .storeId(null)
+                .type(NotificationType.REMIND)
+                .content("예약 알림")
+                .build();
         }
 
         @Test
@@ -107,8 +111,12 @@ class NotificationServiceTest {
 
         @BeforeEach
         void setUp() {
-            dto = new NotificationRequestDto(1L, null, NotificationType.VACANCY, "빈자리 알림");
-
+            dto = NotificationRequestDto.builder()
+                .userId(1L)
+                .storeId(null)
+                .type(NotificationType.VACANCY)
+                .content("빈자리 알림")
+                .build();
         }
 
         @Test
