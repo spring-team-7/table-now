@@ -13,5 +13,5 @@ public class StoreConstant {
 
     // ElasticSearch
     public static final String STORE_INDEX = "store";
-    public static final String STORE_ANALYZER = "nori_analyzer";
+    public static final String STORE_ANALYZER = "ngram_analyzer";
 }
