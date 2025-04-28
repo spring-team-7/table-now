@@ -139,6 +139,25 @@ public class RabbitConfig {
         return BindingBuilder.bind(storeDeleteQueue()).to(storeExchange()).with(STORE_DELETE);
     }
 
+    // 채팅 알림 Queue, Exchange, Binding
+    @Bean
+    public Queue chatQueue() {
+        return new Queue(CHAT_QUEUE, true);
+    }
+
+    @Bean
+    public DirectExchange chatExchange() {
+        return new DirectExchange(CHAT_EXCHANGE);
+    }
+
+    @Bean
+    public Binding chatBinding() {
+        return BindingBuilder
+                .bind(chatQueue())
+                .to(chatExchange())
+                .with(CHAT_ROUTING_KEY);
+    }
+
     // 공통 설정
     @Bean
     public MessageConverter jsonMessageConverter() {
