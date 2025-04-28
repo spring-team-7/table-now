@@ -46,53 +46,16 @@ public class NotificationScheduler {
         }
     }
 
-//    //  빈자리 체크 알림 전송
-//    @Scheduled(cron = "0 * * * * *")
-//    @Transactional
-//    public void sendVacancyNotifications() {
-//        List<Store> stores = storeRepository.findAll();
-//        List<LocalDate> waitDates = waitlistRepository.findDistinctWaitDates();
-//
-//        for (Store store : stores) {
-//            for (LocalDate waitDate : waitDates) {
-//                if (reservationService.hasVacancyDate(store, waitDate)) {
-//                    List<Waitlist> waitlists = waitlistRepository.findAllWithUserByStoreAndWaitDateAndIsNotifiedFalse(store, waitDate);
-//
-//                    for (Waitlist waitlist : waitlists) {
-//                        User user = waitlist.getUser();
-//                        if (Boolean.TRUE.equals(user.getIsAlarmEnabled())) {
-//                            notifyVacancy(store, waitlist);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     //  예약 리마인더 알림 생성
     private void notifyReminder(Reservation reservation) {
-        NotificationRequestDto dto = NotificationRequestDto.builder()
-            .userId(reservation.getUser().getId())
-            .storeId(reservation.getStore().getId())
-            .type(NotificationType.REMIND)
-            .content(String.format("내일 %s 가게 방문예정일 입니다.", reservation.getStore().getName()))
-            .build();
-
+        NotificationRequestDto dto = new NotificationRequestDto(
+            reservation.getUser().getId(),
+            reservation.getStore().getId(),
+            NotificationType.REMIND,
+            String.format("내일 %s 가게 방문예정일 입니다.", reservation.getStore().getName())
+        );
         notificationService.createNotification(dto);
     }
 
-//    //  빈자리 알림 생성
-//    private void notifyVacancy(Store store, Waitlist waitlist) {
-//        NotificationRequestDto dto = NotificationRequestDto.builder()
-//            .userId(waitlist.getUser().getId())
-//            .storeId(store.getId())
-//            .type(NotificationType.VACANCY)
-//            .content(String.format("%s가게에서 %s에 빈자리가 생겼습니다.",
-//                store.getName(),
-//                waitlist.getWaitDate().toString()))
-//            .build();
-//
-//        notificationService.createNotification(dto);
-//
-//    }
 }
