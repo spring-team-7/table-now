@@ -27,11 +27,10 @@ public class ChatMessageController {
     public void handleMessage(@Payload @Valid ChatMessageRequest request,
                               SimpMessageHeaderAccessor headerAccessor) {
         Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
-        if (sessionAttributes == null || sessionAttributes.get("userId") == null) {
+        if (sessionAttributes == null || !(sessionAttributes.get("userId") instanceof Long userId)) {
             log.warn("[WebSocket] 사용자 정보 없음 (sessionAttributes 또는 userId 누락)");
             return;
         }
-        Long userId = (Long) sessionAttributes.get("userId");
 
         // 메시지 저장 + 알림 발행
         ChatMessageResponse savedMessage = chatMessageService.saveMessageAndNotify(request, userId);

@@ -6,6 +6,8 @@ import org.example.tablenow.domain.chat.dto.response.ChatMessageResponse;
 import org.example.tablenow.domain.notification.dto.request.NotificationRequestDto;
 import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -50,6 +52,10 @@ public class ChatConsumer {
     private Long determineReceiver(ChatMessageResponse chatMessage) {
         // 채팅방 소유자(ownerId)와 예약자(reservationUserId) 중
         // 메시지 보낸 사람(senderId)을 제외한 사람이 수신자
+        if (chatMessage.getSenderId() == null || chatMessage.getOwnerId() == null || chatMessage.getReservationUserId() == null) {
+            throw new HandledException(ErrorCode.INVALID_CHAT_MESSAGE_USER);
+        }
+
         if (chatMessage.getSenderId().equals(chatMessage.getOwnerId())) {
             return chatMessage.getReservationUserId();
         } else {
