@@ -2,6 +2,3 @@ FROM rabbitmq:3-management
 
 # STOMP (TCP)
 RUN rabbitmq-plugins enable --offline rabbitmq_stomp
-
-# Web STOMP (WebSocket)
-RUN rabbitmq-plugins enable --offline rabbitmq_web_stomp
