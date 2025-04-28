@@ -1,7 +1,6 @@
 package org.example.tablenow.domain.settlement.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.tablenow.domain.payment.repository.PaymentRepository;
 import org.example.tablenow.domain.settlement.dto.response.SettlementOperationResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementSummaryPageDto;
