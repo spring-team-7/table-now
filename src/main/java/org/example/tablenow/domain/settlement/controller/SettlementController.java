@@ -1,7 +1,7 @@
 package org.example.tablenow.domain.settlement.controller;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.example.tablenow.domain.settlement.dto.request.SettlementPageRequestDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementOperationResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementSummaryPageDto;
@@ -27,17 +27,19 @@ public class SettlementController {
     @GetMapping("/v1/owner/settlements")
     public ResponseEntity<SettlementSummaryPageDto> getMyStoreSettlements(
             @AuthenticationPrincipal AuthUser authUser,
-            @ModelAttribute SettlementPageRequestDto request
+            @Positive @RequestParam(defaultValue = "1") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(settlementService.getMyStoreSettlements(authUser, request));
+        return ResponseEntity.ok(settlementService.getMyStoreSettlements(authUser, page, size));
     }
 
     @Secured(UserRole.Authority.ADMIN)
     @GetMapping("/v1/settlements")
     public ResponseEntity<Page<SettlementResponseDto>> getAllSettlements(
-            @ModelAttribute SettlementPageRequestDto request
+            @Positive @RequestParam(defaultValue = "1") int page,
+            @Positive @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(settlementService.getAllSettlements(request));
+        return ResponseEntity.ok(settlementService.getAllSettlements(page, size));
     }
 
     @Secured(UserRole.Authority.ADMIN)

@@ -3,7 +3,6 @@ package org.example.tablenow.domain.settlement.service;
 import org.example.tablenow.domain.payment.entity.Payment;
 import org.example.tablenow.domain.payment.enums.PaymentStatus;
 import org.example.tablenow.domain.reservation.entity.Reservation;
-import org.example.tablenow.domain.settlement.dto.request.SettlementPageRequestDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementOperationResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementResponseDto;
 import org.example.tablenow.domain.settlement.dto.response.SettlementSummaryPageDto;
@@ -29,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -107,22 +107,20 @@ public class SettlementServiceTest {
                     .status(SettlementStatus.CANCELED)
                     .build();
 
-            SettlementPageRequestDto request = new SettlementPageRequestDto();
-            request.setPage(1);
-            request.setSize(10);
-
-            Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize());
+            Pageable pageable = PageRequest.of(0, 10);
             Page<Settlement> page = new PageImpl<>(List.of(settlement, readySettlement, canceledSettlement), pageable, 3);
             given(settlementRepository.findByStoreOwnerId(ownerId, pageable)).willReturn(page);
 
             // when
-            SettlementSummaryPageDto summary = settlementService.getMyStoreSettlements(authOwner, request);
+            SettlementSummaryPageDto summary = settlementService.getMyStoreSettlements(authOwner, 1, 10);
 
             // then
-            assertEquals(10000, summary.getDoneAmount());
-            assertEquals(5000, summary.getReadyAmount());
-            assertEquals(3000, summary.getCanceledAmount());
-            assertEquals(3, summary.getPage().getTotalElements());
+            assertAll(
+                    () -> assertThat(summary.getDoneAmount()).isEqualTo(10000),
+                    () -> assertThat(summary.getReadyAmount()).isEqualTo(5000),
+                    () -> assertThat(summary.getCanceledAmount()).isEqualTo(3000),
+                    () -> assertThat(summary.getPage().getTotalElements()).isEqualTo(3)
+            );
         }
     }
 
@@ -153,9 +151,11 @@ public class SettlementServiceTest {
             SettlementResponseDto response = settlementService.getSettlement(settlementId);
 
             // then
-            assertEquals(settlementId, response.getId());
-            assertEquals(settlement.getAmount(), response.getAmount());
-            assertEquals(settlement.getStatus().name(), response.getStatus());
+            assertAll(
+                    () -> assertThat(response.getId()).isEqualTo(settlementId),
+                    () -> assertThat(response.getAmount()).isEqualTo(settlement.getAmount()),
+                    () -> assertThat(response.getStatus()).isEqualTo(settlement.getStatus().name())
+            );
         }
     }
 
@@ -166,20 +166,18 @@ public class SettlementServiceTest {
         void 정산_페이징_조회_성공() {
 
             // given
-            SettlementPageRequestDto request = new SettlementPageRequestDto();
-            request.setPage(1);
-            request.setSize(10);
-
-            Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize());
+            Pageable pageable = PageRequest.of(0, 10);
             Page<Settlement> page = new PageImpl<>(List.of(settlement), pageable, 1);
             given(settlementRepository.findAll(any(Pageable.class))).willReturn(page);
 
             // when
-            Page<SettlementResponseDto> result = settlementService.getAllSettlements(request);
+            Page<SettlementResponseDto> result = settlementService.getAllSettlements(1, 10);
 
             // then
-            assertEquals(1, result.getTotalElements());
-            assertEquals(settlement.getId(), result.getContent().get(0).getId());
+            assertAll(
+                    () -> assertThat(result.getTotalElements()).isEqualTo(1),
+                    () -> assertThat(result.getContent().get(0).getId()).isEqualTo(settlement.getId())
+            );
         }
     }
 
@@ -210,8 +208,10 @@ public class SettlementServiceTest {
             SettlementOperationResponseDto result = settlementService.cancelSettlement(settlementId);
 
             // then
-            assertEquals(1, result.getCount());
-            assertEquals(SettlementStatus.CANCELED, result.getStatus());
+            assertAll(
+                    () -> assertThat(result.getCount()).isEqualTo(1),
+                    () -> assertThat(result.getStatus()).isEqualTo(SettlementStatus.CANCELED)
+            );
         }
     }
 }

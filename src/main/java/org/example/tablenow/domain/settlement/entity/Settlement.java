@@ -82,16 +82,13 @@ public class Settlement extends TimeStamped {
     public String getPaymentStoreName() {
         return Optional.ofNullable(this.payment)
                 .map(Payment::getReservation)
-                .map(Reservation::getStore)
-                .map(Store::getName)
+                .map(Reservation::getStoreName)
                 .orElse(null);
     }
 
     public String getPaymentUserName() {
         return Optional.ofNullable(this.payment)
-                .map(Payment::getReservation)
-                .map(Reservation::getStore)
-                .map(Store::getUser)
+                .map(Payment::getUser)
                 .map(User::getName)
                 .orElse(null);
     }
