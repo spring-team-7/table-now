@@ -13,6 +13,7 @@ import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.example.tablenow.global.constant.RabbitConstant.CHAT_EXCHANGE;
+import static org.example.tablenow.global.constant.RabbitConstant.CHAT_ROUTING_KEY;
+
 @Service
 @RequiredArgsConstructor
 public class ChatMessageService {
@@ -28,28 +32,39 @@ public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final ReservationService reservationService;
     private final UserService userService;
+    private final RabbitTemplate rabbitTemplate;
 
     // 참여자 정보 전달용 내부 record
     private record ChatParticipants(Long ownerId, Long reservationUserId) {}
 
     @Transactional
-    public ChatMessage saveMessage(ChatMessageRequest request, Long senderId) {
+    public ChatMessageResponse saveMessageAndNotify(ChatMessageRequest request, Long senderId) {
         ChatParticipants participants = loadChatParticipants(request.getReservationId());
         validateChatParticipant(senderId, participants);
 
-        return chatMessageRepository.save(buildChatMessage(
+        ChatMessage savedMessage = chatMessageRepository.save(buildChatMessage(
                 request,
                 senderId,
                 participants.ownerId(),
                 participants.reservationUserId()
         ));
+
+        ChatMessageResponse response = ChatMessageResponse.fromChatMessage(savedMessage);
+
+        rabbitTemplate.convertAndSend(
+                CHAT_EXCHANGE,
+                CHAT_ROUTING_KEY,
+                response
+        );
+
+        return response;
     }
 
     @Transactional(readOnly = true)
     public ChatAvailabilityResponse isChatAvailable(Long reservationId, Long userId) {
         loadAndValidateChatParticipants(reservationId, userId);
 
-        Reservation reservation = reservationService.getReservation(reservationId);
+        Reservation reservation = reservationService.getReservationWithStore(reservationId);
 
         return ChatAvailabilityResponse.builder()
                 .reservationId(reservationId)
@@ -101,7 +116,7 @@ public class ChatMessageService {
             );
         } else {
             // 최초 채팅일 경우 reservation 정보로 참여자 정보 추출
-            Reservation reservation = reservationService.getReservation(reservationId);
+            Reservation reservation = reservationService.getReservationWithStore(reservationId);
             return new ChatParticipants(
                     reservation.getStore().getUser().getId(),
                     reservation.getUser().getId()

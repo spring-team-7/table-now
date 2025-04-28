@@ -26,4 +26,8 @@ public class RabbitConstant {
     public static final String STORE_CREATE_QUEUE = "store.create.queue";
     public static final String STORE_UPDATE_QUEUE = "store.update.queue";
     public static final String STORE_DELETE_QUEUE = "store.delete.queue";
+
+    public static final String CHAT_EXCHANGE = "chat.exchange";
+    public static final String CHAT_QUEUE = "chat.queue";
+    public static final String CHAT_ROUTING_KEY = "chat.key";
 }

@@ -21,6 +21,10 @@ public class ChatMessageResponse {
     @JsonProperty("isRead")
     private final boolean read;
 
+    private final Long reservationId;
+    private Long ownerId;
+    private Long reservationUserId;
+
     public static ChatMessageResponse fromChatMessage(ChatMessage chatMessage) {
         return ChatMessageResponse.builder()
                 .id(chatMessage.getId())
@@ -30,6 +34,9 @@ public class ChatMessageResponse {
                 .imageUrl(chatMessage.getImageUrl())
                 .createdAt(chatMessage.getCreatedAt())
                 .read(chatMessage.isRead())
+                .reservationId(chatMessage.getReservationId())
+                .ownerId(chatMessage.getOwnerId())
+                .reservationUserId(chatMessage.getReservationUserId())
                 .build();
     }
 }
