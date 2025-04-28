@@ -15,15 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    @Query("""
-        select count(r) > 0 from Reservation r
-        where r.store.id = :storeId
-          and r.reservedAt = :reservedAt
-          and r.status <> 'CANCELED'
-        """)
-    boolean isReservedStatusInUse(Long storeId, LocalDateTime reservedAt);
-    boolean existsByUserIdAndStoreIdAndReservedAt(Long userId, Long storeId, LocalDateTime reservedAt);
-    boolean existsByStoreIdAndReservedAtAndIdNot(Long storeId, LocalDateTime reservedAt, Long id);
+    boolean existsByUserIdAndStore_IdAndReservedAt(Long userId, Long storeId, LocalDateTime reservedAt);
+    boolean existsByStore_IdAndReservedAtAndIdNot(Long storeId, LocalDateTime reservedAt, Long id);
 
     @Query("""
         SELECT r FROM Reservation r

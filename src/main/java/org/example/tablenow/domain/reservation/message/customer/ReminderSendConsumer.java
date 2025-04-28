@@ -25,14 +25,7 @@ public class ReminderSendConsumer {
     @RabbitListener(queues = RESERVATION_REMINDER_SEND_QUEUE)
     public void consume(ReminderMessage message) {
         if (!isValid(message)) return;
-
         User user = userService.getUser(message.getUserId());
-
-        if (user == null) {
-            log.warn("[ReminderSendConsumer] 유저를 찾을 수 없음 → userId={}", message.getUserId());
-            return;
-        }
-
         sendNotification(user, message);
         log.info("[ReminderSendConsumer] 리마인드 알림 전송 완료 → reservationId={}", message.getReservationId());
     }

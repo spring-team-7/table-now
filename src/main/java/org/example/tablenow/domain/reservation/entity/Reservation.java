@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.reservation.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,11 +12,12 @@ import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Getter
 @Entity
 @Table(name = "reservation")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Reservation extends TimeStamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +33,7 @@ public class Reservation extends TimeStamped {
 
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
-
+    @Column(nullable = false)
     private LocalDateTime reservedAt;
     private LocalDateTime remindAt;
     private LocalDateTime deletedAt;
@@ -49,6 +51,7 @@ public class Reservation extends TimeStamped {
     public void updateReservedAt(LocalDateTime reservedAt) {
         validateUpdatableStatus();
         this.reservedAt = reservedAt;
+        this.remindAt = reservedAt.minusDays(1);
     }
 
     public void tryCancel() {
@@ -71,4 +74,17 @@ public class Reservation extends TimeStamped {
             throw new HandledException(ErrorCode.RESERVATION_STATUS_UPDATE_FORBIDDEN);
         }
     }
+
+    public Long getStoreId() {
+        return Optional.ofNullable(this.store)
+                .map(Store::getId)
+                .orElse(null);
+    }
+
+    public String getStoreName() {
+        return Optional.ofNullable(this.store)
+                .map(Store::getName)
+                .orElse(null);
+    }
+
 }

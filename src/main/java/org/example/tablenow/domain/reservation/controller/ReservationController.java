@@ -1,14 +1,13 @@
 package org.example.tablenow.domain.reservation.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.reservation.dto.request.ReservationRequestDto;
+import org.example.tablenow.domain.reservation.dto.request.ReservationSearchRequest;
 import org.example.tablenow.domain.reservation.dto.request.ReservationStatusChangeRequestDto;
 import org.example.tablenow.domain.reservation.dto.request.ReservationUpdateRequestDto;
 import org.example.tablenow.domain.reservation.dto.response.ReservationResponseDto;
 import org.example.tablenow.domain.reservation.dto.response.ReservationStatusResponseDto;
-import org.example.tablenow.domain.reservation.entity.ReservationStatus;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
@@ -55,11 +54,11 @@ public class ReservationController {
     @GetMapping("/v1/reservations")
     public ResponseEntity<Page<ReservationResponseDto>> getReservations(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(required = false) ReservationStatus status,
-            @Positive @RequestParam(defaultValue = "1") int page,
-            @Positive @RequestParam(defaultValue = "10") int size
+            @ModelAttribute ReservationSearchRequest request
     ) {
-        return ResponseEntity.ok(reservationService.getReservations(authUser, status, page, size));
+        return ResponseEntity.ok(
+                reservationService.getReservations(authUser, request.getStatus(), request.getPage(), request.getSize())
+        );
     }
 
     @Secured(UserRole.Authority.OWNER)
@@ -67,11 +66,9 @@ public class ReservationController {
     public ResponseEntity<Page<ReservationResponseDto>> getStoreReservations(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long storeId,
-            @RequestParam(required = false) ReservationStatus status,
-            @Positive @RequestParam(defaultValue = "1") int page,
-            @Positive @RequestParam(defaultValue = "10") int size
+            @ModelAttribute ReservationSearchRequest request
     ) {
-        return ResponseEntity.ok(reservationService.getStoreReservations(authUser, storeId, status, page, size));
+        return ResponseEntity.ok(reservationService.getStoreReservations(authUser, storeId, request.getStatus(), request.getPage(), request.getSize()));
     }
 
     @Secured(UserRole.Authority.OWNER)
