@@ -2,6 +2,7 @@ package org.example.tablenow.domain.reservation.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.reservation.message.dto.ReminderMessage;
 import org.example.tablenow.domain.reservation.message.producer.ReminderSendProducer;
@@ -23,6 +24,7 @@ public class ReminderScheduler {
     private final ReminderSendProducer sendProducer;
     private final ReservationService reservationService;
 
+    @SchedulerLock(name = "ReminderScheduler.pollAndSend")
     @Scheduled(fixedRateString = "60000")
     public void pollAndSend() {
         long now = LocalDateTime.now().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
