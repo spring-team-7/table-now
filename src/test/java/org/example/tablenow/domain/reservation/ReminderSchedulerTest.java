@@ -98,7 +98,7 @@ public class ReminderSchedulerTest {
 
             // then
             verify(sendProducer).send(any(ReminderMessage.class));
-            verify(redisTemplate.opsForZSet()).remove("reminder:zset", reservationId);
+            verify(redisTemplate.opsForZSet()).remove("reservation:reminder:zset", reservationId);
         }
 
         @Test
