@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.reservation.message.dto.ReminderMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import static org.example.tablenow.global.constant.RabbitConstant.*;
@@ -11,6 +12,7 @@ import static org.example.tablenow.global.constant.RabbitConstant.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Async
 public class ReminderSendProducer {
     private final RabbitTemplate rabbitTemplate;
 

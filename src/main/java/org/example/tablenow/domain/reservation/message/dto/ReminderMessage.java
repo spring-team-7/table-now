@@ -29,8 +29,8 @@ public class ReminderMessage {
         return ReminderMessage.builder()
                 .reservationId(reservation.getId())
                 .userId(reservation.getUser().getId())
-                .storeId(reservation.getStore().getId())
-                .storeName(reservation.getStore().getName())
+                .storeId(reservation.getStoreId())
+                .storeName(reservation.getStoreName())
                 .reservedAt(reservation.getReservedAt())
                 .remindAt(reservation.getRemindAt())
                 .build();
