@@ -25,8 +25,6 @@ services:
       context: ./
       dockerfile: Dockerfile.elasticsearch
     container_name: es
-    environment:
-      - discovery.type=single-node
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9200/_cluster/health" ]
       interval: 10s
