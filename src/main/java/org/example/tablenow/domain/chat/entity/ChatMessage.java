@@ -45,7 +45,9 @@ public class ChatMessage {
     private LocalDateTime createdAt;
 
     @Builder
-    public ChatMessage(Long reservationId, User sender, Long ownerId, Long reservationUserId, String content, String imageUrl, boolean isRead, LocalDateTime createdAt) {
+    private ChatMessage(Long id, Long reservationId, User sender, Long ownerId, Long reservationUserId,
+                       String content, String imageUrl, boolean isRead, LocalDateTime createdAt) {
+        this.id = id;
         this.reservationId = reservationId;
         this.sender = sender;
         this.ownerId = ownerId;
@@ -54,9 +56,5 @@ public class ChatMessage {
         this.imageUrl = imageUrl;
         this.isRead = isRead;
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
-    }
-
-    public void changeToRead() {
-        this.isRead = true;
     }
 }
