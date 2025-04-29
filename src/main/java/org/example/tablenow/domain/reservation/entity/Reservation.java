@@ -87,4 +87,27 @@ public class Reservation extends TimeStamped {
                 .orElse(null);
     }
 
+    public int getStoreDeposit() {
+        return Optional.ofNullable(this.store)
+                .map(Store::getDeposit)
+                .orElse(0);
+    }
+
+    public Long getUserId() {
+        return Optional.ofNullable(this.user)
+                .map(User::getId)
+                .orElse(null);
+    }
+
+    public String getUserEmail() {
+        return Optional.ofNullable(this.user)
+                .map(User::getEmail)
+                .orElse(null);
+    }
+
+    public String getUserName() {
+        return Optional.ofNullable(this.user)
+                .map(User::getName)
+                .orElse(null);
+    }
 }
