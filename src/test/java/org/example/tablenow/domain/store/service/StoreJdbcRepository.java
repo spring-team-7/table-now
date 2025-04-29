@@ -1,10 +1,12 @@
 package org.example.tablenow.domain.store.service;
 
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -14,10 +16,11 @@ import java.util.Random;
 @Repository
 public class StoreJdbcRepository {
     private final JdbcTemplate jdbcTemplate;
+
     private static final int BATCH_SIZE = 5000;
 
-    public StoreJdbcRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public StoreJdbcRepository(@Qualifier("dataDBSource") DataSource dataDBSource) {
+        this.jdbcTemplate = new JdbcTemplate(dataDBSource);
     }
 
     public void insertBatch(List<StoreCreateRequestDto> dto) {
