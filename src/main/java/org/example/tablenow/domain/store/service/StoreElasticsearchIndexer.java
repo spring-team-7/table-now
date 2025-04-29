@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.entity.StoreDocument;
 import org.example.tablenow.domain.store.repository.StoreRepository;
+import org.example.tablenow.global.exception.ErrorCode;
+import org.example.tablenow.global.exception.HandledException;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Service;
@@ -39,7 +41,8 @@ public class StoreElasticsearchIndexer {
             try {
                 operations.save(batch);
             } catch (Exception e) {
-                log.error("ES 인덱스 생성 예외 발생", e.getMessage());
+                log.error("[ElasticSearch] 인덱스 생성 예외 발생", e.getMessage());
+                throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_INDEX_FAILED);
             }
         }
     }
