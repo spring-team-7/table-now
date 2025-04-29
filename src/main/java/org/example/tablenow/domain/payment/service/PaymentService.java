@@ -105,6 +105,12 @@ public class PaymentService {
         return PaymentResponseDto.fromPayment(savedPayment);
     }
 
+    public Payment getPayment(Long paymentId) {
+
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new HandledException(ErrorCode.PAYMENT_NOT_FOUND));
+    }
+
     private Payment getVerifiedPayment(AuthUser authUser, Long reservationId, Long paymentId) {
 
         Payment payment = getPayment(paymentId);
@@ -118,11 +124,5 @@ public class PaymentService {
         }
 
         return payment;
-    }
-
-    public Payment getPayment(Long paymentId) {
-
-        return paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new HandledException(ErrorCode.PAYMENT_NOT_FOUND));
     }
 }

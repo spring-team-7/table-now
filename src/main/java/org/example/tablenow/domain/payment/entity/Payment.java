@@ -11,6 +11,8 @@ import org.example.tablenow.domain.reservation.entity.Reservation;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 
+import java.util.Optional;
+
 @Getter
 @Entity
 @Table(name = "payment")
@@ -64,5 +66,17 @@ public class Payment extends TimeStamped {
 
     public boolean isCanceled() {
         return this.status == PaymentStatus.CANCELED;
+    }
+
+    public Long getReservationId() {
+        return Optional.ofNullable(this.reservation)
+                .map(Reservation::getId)
+                .orElse(null);
+    }
+
+    public Long getUserId() {
+        return Optional.ofNullable(this.user)
+                .map(User::getId)
+                .orElse(null);
     }
 }
