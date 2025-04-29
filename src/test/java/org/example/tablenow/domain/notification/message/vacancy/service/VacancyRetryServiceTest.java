@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.notification.message.vacancy.service;
 
 import org.example.tablenow.domain.notification.message.vacancy.dto.VacancyEventDto;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,13 +30,19 @@ class VacancyRetryServiceTest {
     @Nested
     class DLQ_재처리 {
 
-        MessageProperties props = new MessageProperties();
-        Message message = mock(Message.class);
+        private MessageProperties props;
+        private Message message;
+        private VacancyEventDto dto;
 
-        VacancyEventDto dto = VacancyEventDto.builder()
-            .storeId(1L)
-            .waitDate(LocalDate.of(2025, 4, 25))
-            .build();
+        @BeforeEach
+        void setUp(){
+            props = new MessageProperties();
+            message = mock(Message.class);
+            dto = VacancyEventDto.builder()
+                .storeId(1L)
+                .waitDate(LocalDate.of(2025, 5, 20))
+                .build();
+        }
 
         @Test
         void 최대_재시도_초과시_메시지_재전송_안함() {
@@ -51,11 +58,8 @@ class VacancyRetryServiceTest {
             vacancyRetryService.process(message);
 
             // then
-            verify(rabbitTemplate).send(
-                eq("vacancy.exchange"),
-                eq("vacancy.routing.key"),
-                any(Message.class)
-            );
+            verify(rabbitTemplate, never()).send(anyString(), anyString(), any(Message.class));
+
         }
 
         @Test
@@ -73,7 +77,7 @@ class VacancyRetryServiceTest {
             vacancyRetryService.process(message);
 
             // then
-            verify(rabbitTemplate).send(eq("vacancy.exchange"), eq("vacancy.routing.key"), any());
+            verify(rabbitTemplate).send(eq("vacancy.direct"), eq("vacancy.key"), any(Message.class)); // ← 정상
         }
     }
 }
