@@ -15,6 +15,7 @@ import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,45 +59,48 @@ public class StoreServiceTest {
     @InjectMocks
     private StoreService storeService;
 
-    Long userId = 1L;
-    Long ownerId = 2L;
-    AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
-    User user = User.fromAuthUser(authUser);
-    AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
-    User owner = User.fromAuthUser(authOwner);
-
-    Long categoryId = 1L;
-    Category category = Category.builder().id(categoryId).name("한식").build();
-
-    Long storeId = 1L;
-    Store store = Store.builder()
-            .id(storeId)
-            .name("맛있는 가게")
-            .description("가게 설명입니다.")
-            .address("서울특별시 강남구 테헤란로11길 1 1층")
-            .imageUrl(null)
-            .capacity(100)
-            .startTime(LocalTime.of(9, 00))
-            .endTime(LocalTime.of(21, 00))
-            .deposit(10000)
-            .user(owner)
-            .category(category)
-            .rating(4.5)
-            .ratingCount(100)
-            .build();
-
     @Nested
     class 가게_등록 {
-        StoreCreateRequestDto dto = StoreCreateRequestDto.builder()
+        StoreCreateRequestDto dto = new StoreCreateRequestDto();
+
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
                 .name("맛있는 가게")
                 .description("가게 설명입니다.")
                 .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
                 .capacity(100)
                 .startTime(LocalTime.of(9, 00))
                 .endTime(LocalTime.of(21, 00))
                 .deposit(10000)
-                .categoryId(categoryId)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
                 .build();
+
+        @BeforeEach
+        void setUp() {
+            ReflectionTestUtils.setField(dto, "name", "맛있는 가게");
+            ReflectionTestUtils.setField(dto, "description", "가게 설명입니다.");
+            ReflectionTestUtils.setField(dto, "address", "서울특별시 강남구 테헤란로11길 1 1층");
+            ReflectionTestUtils.setField(dto, "capacity", 100);
+            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(9, 00));
+            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(21, 00));
+            ReflectionTestUtils.setField(dto, "deposit", 10000);
+            ReflectionTestUtils.setField(dto, "categoryId", categoryId);
+        }
 
         @Test
         void 존재하지_않는_카테고리_조회_시_예외_발생() {
@@ -158,6 +162,33 @@ public class StoreServiceTest {
 
     @Nested
     class 내_가게_목록_조회 {
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
+                .build();
+
         Long storeId1 = 1L;
         Store store1 = Store.builder()
                 .id(storeId1)
@@ -195,18 +226,48 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_수정 {
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
+                .build();
+
         Long categoryId2 = 2L;
         Category category2 = Category.builder().id(categoryId2).name("분식").build();
-        StoreUpdateRequestDto dto = StoreUpdateRequestDto.builder()
-                .name("더 맛있는 가게")
-                .description("더 맛있는 가게 설명입니다.")
-                .address("서울특별시 강남구 테헤란로22길 2 2층")
-                .capacity(200)
-                .startTime(LocalTime.of(8, 00))
-                .endTime(LocalTime.of(22, 00))
-                .deposit(20000)
-                .categoryId(categoryId2)
-                .build();
+        StoreUpdateRequestDto dto = new StoreUpdateRequestDto();
+
+        @BeforeEach
+        void setUp() {
+            ReflectionTestUtils.setField(dto, "name", "더 맛있는 가게");
+            ReflectionTestUtils.setField(dto, "description", "더 맛있는 가게 설명입니다.");
+            ReflectionTestUtils.setField(dto, "address", "서울특별시 강남구 테헤란로22길 2 2층");
+            ReflectionTestUtils.setField(dto, "capacity", 200);
+            ReflectionTestUtils.setField(dto, "startTime", LocalTime.of(8, 00));
+            ReflectionTestUtils.setField(dto, "endTime", LocalTime.of(22, 00));
+            ReflectionTestUtils.setField(dto, "deposit", 20000);
+            ReflectionTestUtils.setField(dto, "categoryId", categoryId2);
+        }
 
         @Test
         void 존재하지_않는_가게_조회_시_예외_발생() {
@@ -376,6 +437,33 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_삭제 {
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
+                .build();
+
         @Test
         void 존재하지_않는_가게_조회_시_예외_발생() {
             // given
@@ -446,7 +534,34 @@ public class StoreServiceTest {
     }
 
     @Nested
-    class 가게_목록_조회 {
+    class 가게_검색 {
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
+                .build();
+
         @Nested
         class 정렬_기준_예외 {
             @Test
@@ -612,6 +727,33 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_상세_조회 {
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
+                .build();
+
         @Test
         void 존재하지_않는_가게_조회_시_예외_발생() {
             // given
@@ -645,6 +787,33 @@ public class StoreServiceTest {
 
     @Nested
     class 가게_인기_검색_랭킹_조회 {
+        Long userId = 1L;
+        Long ownerId = 2L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
+        User user = User.fromAuthUser(authUser);
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Long categoryId = 1L;
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        Long storeId = 1L;
+        Store store = Store.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime(LocalTime.of(9, 00))
+                .endTime(LocalTime.of(21, 00))
+                .deposit(10000)
+                .user(owner)
+                .category(category)
+                .rating(4.5)
+                .ratingCount(100)
+                .build();
+
         int limit = 10;
         String timeKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
 

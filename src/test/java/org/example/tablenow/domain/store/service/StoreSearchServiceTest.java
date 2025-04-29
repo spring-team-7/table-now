@@ -47,7 +47,7 @@ public class StoreSearchServiceTest {
     @Mock
     private StoreElasticRepository storeElasticRepository;
     @Mock
-    private TextAnalyzerService textAnalyzerService;
+    private StoreTextAnalyzerService storeTextAnalyzerService;
     @Mock
     private StoreService storeService;
 
@@ -203,7 +203,7 @@ public class StoreSearchServiceTest {
         void 가게명_기준_예상_검색어_호출_실패_삭제_키_없음() {
             // given
             Set<String> analyzeResult = new HashSet<>();
-            given(textAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(analyzeResult);
+            given(storeTextAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(analyzeResult);
             given(stringRedisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
 
             // when
@@ -224,7 +224,7 @@ public class StoreSearchServiceTest {
             String serializedKey2 = new StringRedisSerializer().deserialize(key2.getBytes());
             Set<String> scanResult = Set.of(serializedKey1, serializedKey2);
 
-            given(textAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(analyzeResult);
+            given(storeTextAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(analyzeResult);
 
             given(stringRedisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
             given(redisConnectionFactory.getConnection()).willReturn(redisConnection);
@@ -249,7 +249,7 @@ public class StoreSearchServiceTest {
             String serializedKey2 = new StringRedisSerializer().deserialize(key2.getBytes());
             Set<String> scanResult = Set.of(serializedKey1, serializedKey2);
 
-            given(textAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(Collections.emptySet());
+            given(storeTextAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(Collections.emptySet());
 
             given(stringRedisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
             given(redisConnectionFactory.getConnection()).willReturn(redisConnection);

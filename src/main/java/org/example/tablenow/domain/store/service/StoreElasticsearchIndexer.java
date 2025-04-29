@@ -15,13 +15,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StoreBulkIndexer {
+public class StoreElasticsearchIndexer {
 
     private final StoreRepository storeRepository;
     private final ElasticsearchOperations operations;
     public static int INDEX_BATCH_SIZE = 1000;
 
-    public void bulkIndex() {
+    public void reindexAllStores() {
         IndexOperations indexOperations = operations.indexOps(StoreDocument.class);
         if (indexOperations.exists()) {
             indexOperations.delete();

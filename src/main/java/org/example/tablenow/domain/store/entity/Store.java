@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.store.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,11 +13,12 @@ import org.example.tablenow.global.exception.HandledException;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Optional;
 
 @Getter
 @Entity
 @Table(name = "store")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Store extends TimeStamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -145,5 +147,29 @@ public class Store extends TimeStamped {
 
         Double resultRating = ((this.rating * this.ratingCount) - oldRating + newRating) / this.ratingCount;
         this.rating = resultRating;
+    }
+
+    public Long getUserId() {
+        return Optional.ofNullable(this.user)
+                .map(User::getId)
+                .orElse(null);
+    }
+
+    public String getUserName() {
+        return Optional.ofNullable(this.user)
+                .map(User::getName)
+                .orElse(null);
+    }
+
+    public Long getCategoryId() {
+        return Optional.ofNullable(this.category)
+                .map(Category::getId)
+                .orElse(null);
+    }
+
+    public String getCategoryName() {
+        return Optional.ofNullable(this.category)
+                .map(Category::getName)
+                .orElse(null);
     }
 }

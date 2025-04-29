@@ -71,7 +71,7 @@ public class StoreElasticRepository {
                     .document(storeDocument)
             );
             IndexResponse indexResponse = elasticsearchClient.index(indexRequest);
-            log.info("[ElasticSearch] Index status: {}]", indexResponse.result());
+            log.info("[ElasticSearch] Index 상태: {}]", indexResponse.result());
         } catch (Exception e) {
             throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_QUERY_FAILED);
         }
@@ -87,7 +87,7 @@ public class StoreElasticRepository {
                     .id(String.valueOf(storeId))
             );
             DeleteResponse deleteResponse = elasticsearchClient.delete(request);
-            log.info("[ElasticSearch] Index status: {}]", deleteResponse.result());
+            log.info("[ElasticSearch] Index 상태: {}]", deleteResponse.result());
         } catch (Exception e) {
             throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_QUERY_FAILED);
         }
