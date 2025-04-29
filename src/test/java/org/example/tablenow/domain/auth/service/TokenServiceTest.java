@@ -3,7 +3,7 @@ package org.example.tablenow.domain.auth.service;
 import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
-import org.example.tablenow.global.constant.SecurityConstants;
+import org.example.tablenow.global.constant.RedisKeyConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.example.tablenow.global.util.JwtUtil;
@@ -99,7 +99,7 @@ class TokenServiceTest {
             // given
             willThrow(new RedisConnectionFailureException("Redis 연결 중 오류 발생"))
                     .given(ops)
-                    .set(startsWith(SecurityConstants.REFRESH_TOKEN_KEY_PREFIX), eq(USER_ID.toString()), anyLong(), eq(TimeUnit.SECONDS));
+                    .set(startsWith(RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX), eq(USER_ID.toString()), anyLong(), eq(TimeUnit.SECONDS));
 
             // when & then
             assertThatThrownBy(() -> tokenService.createRefreshToken(user))
@@ -114,7 +114,7 @@ class TokenServiceTest {
 
             // then
             verify(redisTemplate.opsForValue())
-                    .set(startsWith(SecurityConstants.REFRESH_TOKEN_KEY_PREFIX), eq(USER_ID.toString()), anyLong(), eq(TimeUnit.SECONDS));
+                    .set(startsWith(RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX), eq(USER_ID.toString()), anyLong(), eq(TimeUnit.SECONDS));
             assertThat(refreshToken).isNotNull();
         }
     }
@@ -127,7 +127,7 @@ class TokenServiceTest {
         void Redis에_존재하지_않는_토큰으로_검증_시_예외처리() {
             // given
             String token = "invalid";
-            given(ops.get(SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + token)).willReturn(null);
+            given(ops.get(RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + token)).willReturn(null);
 
             // when & then
             assertThatThrownBy(() -> tokenService.validateRefreshToken(token, USER_ID))
@@ -139,7 +139,7 @@ class TokenServiceTest {
         void Redis에_저장된_userId와_다른_사용자가_요청시_예외처리() {
             // given
             String token = UUID.randomUUID().toString();
-            String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + token;
+            String redisKey = RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + token;
             given(ops.get(redisKey)).willReturn("999");
 
             // when & then
@@ -165,7 +165,7 @@ class TokenServiceTest {
         void Redis에_저장된_토큰으로_검증_시_RefreshToken_반환_성공() {
             // given
             String token = UUID.randomUUID().toString();
-            String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + token;
+            String redisKey = RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + token;
             given(ops.get(redisKey)).willReturn(USER_ID.toString());
 
             // when
@@ -186,7 +186,7 @@ class TokenServiceTest {
         void Redis에서_리프레시_토큰_삭제_성공() {
             // given
             String token = UUID.randomUUID().toString();
-            String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + token;
+            String redisKey = RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + token;
 
             // when
             tokenService.deleteRefreshToken(token);

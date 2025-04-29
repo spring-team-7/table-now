@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.auth.dto.token.RefreshToken;
 import org.example.tablenow.domain.user.entity.User;
+import org.example.tablenow.global.constant.RedisKeyConstants;
 import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
@@ -36,7 +37,7 @@ public class TokenService {
 
     public String createRefreshToken(User user) {
         String refreshToken = UUID.randomUUID().toString();
-        String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
+        String redisKey = RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
 
         try {
             // userId를 값으로 Redis에 저장
@@ -55,7 +56,7 @@ public class TokenService {
     }
 
     public RefreshToken validateRefreshToken(String refreshToken, Long userId) {
-        String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
+        String redisKey = RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
 
         try {
             String userIdValue = redisTemplate.opsForValue().get(redisKey);
@@ -78,7 +79,7 @@ public class TokenService {
     }
 
     public void deleteRefreshToken(String refreshToken) {
-        String redisKey = SecurityConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
+        String redisKey = RedisKeyConstants.REFRESH_TOKEN_KEY_PREFIX + refreshToken;
 
         try {
             Boolean deleted = redisTemplate.delete(redisKey);
@@ -93,7 +94,7 @@ public class TokenService {
     public void addToBlacklist(String accessToken, Long userId, BlacklistReason reason) {
         try {
             String jwt = jwtUtil.substringToken(accessToken);
-            String redisKey = SecurityConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
+            String redisKey = RedisKeyConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
             long ttl = jwtUtil.getRemainingTokenTime(jwt);
             String value = String.format("%s:userId=%d", reason.getValue(), userId);
 
