@@ -2,5 +2,3 @@ FROM docker.elastic.co/logstash/logstash:8.7.1
 
 EXPOSE 5044
 EXPOSE 9600
-
-CMD ["logstash", "-f", "/usr/share/logstash/pipeline/logstash.conf"]
