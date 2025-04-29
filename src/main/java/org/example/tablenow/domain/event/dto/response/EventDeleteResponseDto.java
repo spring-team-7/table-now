@@ -22,8 +22,8 @@ public class EventDeleteResponseDto {
     public static EventDeleteResponseDto fromEvent(Event event) {
         return EventDeleteResponseDto.builder()
                 .eventId(event.getId())
-                .storeId(event.getStore().getId())
-                .storeName(event.getStore().getName())
+                .storeId(event.getStoreId())
+                .storeName(event.getStoreName())
                 .message("이벤트 삭제에 성공했습니다.")
                 .build();
     }

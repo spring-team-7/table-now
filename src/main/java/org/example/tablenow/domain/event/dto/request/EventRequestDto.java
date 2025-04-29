@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class EventRequestDto {
     @NotNull(message = "storeId는 필수입니다.")
     private Long storeId;
@@ -29,15 +30,4 @@ public class EventRequestDto {
     @NotNull
     @Min(value = 1, message = "최소 인원은 1명 이상이어야 합니다.")
     private Integer limitPeople;
-
-    @Builder
-    public EventRequestDto(Long storeId, String content, LocalDateTime openAt, LocalDateTime endAt,
-                           LocalDateTime eventTime, Integer limitPeople) {
-        this.storeId = storeId;
-        this.content = content;
-        this.openAt = openAt;
-        this.endAt = endAt;
-        this.eventTime = eventTime;
-        this.limitPeople = limitPeople;
-    }
 }

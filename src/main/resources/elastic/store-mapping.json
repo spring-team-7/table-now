@@ -5,20 +5,30 @@
     },
     "name": {
       "type": "text",
-      "analyzer": "korean_search",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        },
+        "ngram": {
+          "type": "text",
+          "analyzer": "ngram_analyzer"
+        },
+        "edge_ngram": {
+          "type": "text",
+          "analyzer": "edge_ngram_analyzer"
+        }
+      }
+    },
+    "description": {
+      "type": "text",
       "fields": {
         "keyword": {
           "type": "keyword"
         }
       }
     },
-    "description": {
-      "type": "text",
-      "analyzer": "korean_search"
-    },
     "address": {
       "type": "text",
-      "analyzer": "korean_search",
       "fields": {
         "keyword": {
           "type": "keyword"
@@ -55,11 +65,13 @@
       "type": "keyword"
     },
     "categoryId": {
-      "type": "integer",
-      "index": false
+      "type": "integer"
     },
     "categoryName": {
       "type": "keyword"
+    },
+    "deletedAt": {
+      "type": "date"
     }
   }
 }

@@ -48,6 +48,7 @@ public class DataDBConfig {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", ddlAuto);
         properties.put("hibernate.show_sql", showSql);
+        properties.put("hibernate.physical_naming_strategy", "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
         em.setJpaPropertyMap(properties);
 
         return em;

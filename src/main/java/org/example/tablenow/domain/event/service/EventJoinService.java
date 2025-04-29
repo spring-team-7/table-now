@@ -13,23 +13,20 @@ import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 import static org.example.tablenow.global.constant.RedisKeyConstants.EVENT_LOCK_KEY_PREFIX;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class EventJoinService {
 
     private final EventJoinRepository eventJoinRepository;
     private final EventRepository eventRepository;
     private final EventJoinExecutor eventJoinExecutor;
 
-    @Transactional
     public EventJoinResponseDto joinEventWithoutLock(Long eventId, AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
         Event event = eventRepository.findById(eventId)
@@ -54,7 +51,6 @@ public class EventJoinService {
         return EventJoinResponseDto.fromEventJoin(eventJoin);
     }
 
-    @Transactional
     public EventJoinResponseDto joinEventWithDBLock(Long eventId, AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
         Event event = eventRepository.findByIdForUpdate(eventId)
@@ -83,12 +79,7 @@ public class EventJoinService {
             prefix = EVENT_LOCK_KEY_PREFIX,
             key = "#eventId"
     )
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EventJoinResponseDto joinEventWithRedissonLock(Long eventId, AuthUser authUser) {
         return eventJoinExecutor.execute(eventId, authUser);
-    }
-
-    public List<User> getUsersByEventId(Long id) {
-        return eventJoinRepository.findUsersByEventId(id);
     }
 }
