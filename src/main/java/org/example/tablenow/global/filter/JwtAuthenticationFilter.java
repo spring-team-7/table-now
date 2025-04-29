@@ -12,6 +12,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.user.enums.UserRole;
+import org.example.tablenow.global.constant.RedisKeyConstants;
 import org.example.tablenow.global.constant.SecurityConstants;
 import org.example.tablenow.global.dto.AuthUser;
 import org.example.tablenow.global.security.token.JwtAuthenticationToken;
@@ -44,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = jwtUtil.substringToken(authorizationHeader);
 
             // AccessToken 블랙리스트 검증
-            String blacklistKey = SecurityConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
+            String blacklistKey = RedisKeyConstants.BLACKLIST_TOKEN_KEY_PREFIX + jwt;
             Boolean isBlacklisted = redisTemplate.hasKey(blacklistKey);
             if (isBlacklisted) {
                 String message = "블랙리스트에 등록된 JWT 토큰입니다.";

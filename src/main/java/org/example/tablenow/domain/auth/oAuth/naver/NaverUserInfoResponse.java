@@ -1,10 +1,11 @@
 package org.example.tablenow.domain.auth.oAuth.naver;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NaverUserInfoResponse {
 
     private String resultcode;
@@ -12,7 +13,7 @@ public class NaverUserInfoResponse {
     private Response response;
 
     @Getter
-    @NoArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Response {
         private String id;
         private String name;
