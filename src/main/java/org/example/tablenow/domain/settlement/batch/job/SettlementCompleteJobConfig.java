@@ -94,7 +94,7 @@ public class SettlementCompleteJobConfig {
         writer.setSql("""
                 UPDATE `table-now`.settlement
                 SET status = :statusString,
-                    updatedAt = NOW()
+                    updated_at = NOW()
                 WHERE id = :id
                 """);
         writer.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>());
