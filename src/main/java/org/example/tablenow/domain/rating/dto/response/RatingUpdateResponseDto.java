@@ -17,7 +17,7 @@ public class RatingUpdateResponseDto {
     private final LocalDateTime updatedAt;
 
     @Builder
-    public RatingUpdateResponseDto(Long ratingId, Long userId, Long storeId, Integer rating, LocalDateTime updatedAt) {
+    private RatingUpdateResponseDto(Long ratingId, Long userId, Long storeId, Integer rating, LocalDateTime updatedAt) {
         this.ratingId = ratingId;
         this.userId = userId;
         this.storeId = storeId;
@@ -28,8 +28,8 @@ public class RatingUpdateResponseDto {
     public static RatingUpdateResponseDto fromRating(Rating rating) {
         return RatingUpdateResponseDto.builder()
                 .ratingId(rating.getId())
-                .userId(rating.getUser().getId())
-                .storeId(rating.getStore().getId())
+                .userId(rating.getUserId())
+                .storeId(rating.getStoreId())
                 .rating(rating.getRating())
                 .updatedAt(rating.getUpdatedAt())
                 .build();

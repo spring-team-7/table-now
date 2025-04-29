@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.rating.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,11 +9,12 @@ import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.entity.TimeStamped;
 
+import java.util.Optional;
+
 @Getter
-@Builder
 @Entity
 @Table(name = "rating")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Rating extends TimeStamped {
 
     @Id
@@ -30,7 +32,8 @@ public class Rating extends TimeStamped {
     @Column(nullable = false)
     private Integer rating;
 
-    public Rating(Long id, User user, Store store, Integer rating) {
+    @Builder
+    private Rating(Long id, User user, Store store, Integer rating) {
         this.id = id;
         this.user = user;
         this.store = store;
@@ -39,5 +42,17 @@ public class Rating extends TimeStamped {
 
     public void updateRating(Integer rating) {
         this.rating = rating;
+    }
+
+    public Long getUserId() {
+        return Optional.ofNullable(this.user)
+                .map(User::getId)
+                .orElse(null);
+    }
+
+    public Long getStoreId() {
+        return Optional.ofNullable(this.store)
+                .map(Store::getId)
+                .orElse(null);
     }
 }

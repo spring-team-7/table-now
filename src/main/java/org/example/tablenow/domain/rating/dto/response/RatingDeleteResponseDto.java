@@ -9,7 +9,7 @@ public class RatingDeleteResponseDto {
     private final String message;
 
     @Builder
-    public RatingDeleteResponseDto(Long ratingId, String message) {
+    private RatingDeleteResponseDto(Long ratingId, String message) {
         this.ratingId = ratingId;
         this.message = message;
     }
