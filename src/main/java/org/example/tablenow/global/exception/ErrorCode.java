@@ -116,7 +116,8 @@ public enum ErrorCode {
 
     // CHAT
     INVALID_CHAT_PARTICIPANT(HttpStatus.FORBIDDEN, "채팅에 참여할 수 있는 권한이 없습니다."),
-    INVALID_CHAT_MESSAGE_USER(HttpStatus.FORBIDDEN, "채팅 메시지 수신자 정보를 확인할 수 없습니다.");
+    INVALID_CHAT_MESSAGE_USER(HttpStatus.FORBIDDEN, "채팅 메시지 수신자 정보를 확인할 수 없습니다."),
+    UNSUPPORTED_CHAT_BROKER_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "지원하지 않는 채팅 브로커 타입입니다.");
 
     private final HttpStatus status;
     private final String defaultMessage;
