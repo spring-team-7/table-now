@@ -39,7 +39,7 @@ import static org.example.tablenow.domain.store.util.StoreConstant.*;
 public class StoreSearchService {
 
     private final StoreElasticRepository storeElasticRepository;
-    private final TextAnalyzerService textAnalyzerService;
+    private final StoreTextAnalyzerService storeTextAnalyzerService;
     private final StoreService storeService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
@@ -54,15 +54,36 @@ public class StoreSearchService {
         Pageable pageable = resolvePageable(page, size, sort, direction);
         String cacheKey = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(page, size, sort, direction, categoryId, keyword);
 
+        // 인기 검색어 저장
+        storeService.savePopularKeyword(authUser, keyword);
+
         // Redis 캐시 조회
         PageResponse<StoreDocumentResponseDto> cached = getFromCache(cacheKey);
         if (cached != null) return cached;
 
-        // 인기 검색어 저장
-        storeService.savePopularKeyword(authUser, keyword);
-
         // ElasticSearch 조회
         return fetchFromElasticAndCache(categoryId, keyword, pageable, cacheKey);
+    }
+
+    public void evictSearchCacheForNewStore(StoreDocument storeDocument) {
+        Set<String> keysToDelete = new HashSet<>();
+        keysToDelete.addAll(scanKeysByKeywordTokens(storeDocument.getName()));
+        keysToDelete.addAll(scanKeysByCategoryId(storeDocument.getCategoryId()));
+
+        if (!keysToDelete.isEmpty()) {
+            stringRedisTemplate.delete(keysToDelete);
+            log.info("[Cache Evict] 삭제된 키 수: {}", keysToDelete.size());
+        }
+    }
+
+    public void evictSearchCacheByStoreId(Long storeId) {
+        String indexKey = STORE_CACHE_KEY + storeId;
+        Set<String> cacheKeys = stringRedisTemplate.opsForSet().members(indexKey);
+        if (!cacheKeys.isEmpty()) {
+            stringRedisTemplate.delete(cacheKeys);
+            stringRedisTemplate.delete(indexKey);
+            log.info("[Cache Evict] storeId {} 관련 {}개 키 삭제", storeId, cacheKeys.size());
+        }
     }
 
     private Pageable resolvePageable(int page, int size, String sort, String direction) {
@@ -113,20 +134,9 @@ public class StoreSearchService {
         }
     }
 
-    public void evictSearchCacheForNewStore(StoreDocument storeDocument) {
-        Set<String> keysToDelete = new HashSet<>();
-        keysToDelete.addAll(scanKeysByKeywordTokens(storeDocument.getName()));
-        keysToDelete.addAll(scanKeysByCategoryId(storeDocument.getCategoryId()));
-
-        if (!keysToDelete.isEmpty()) {
-            stringRedisTemplate.delete(keysToDelete);
-            log.info("[Cache Evict] 삭제된 키 수: {}", keysToDelete.size());
-        }
-    }
-
     private Set<String> scanKeysByKeywordTokens(String storeName) {
         Set<String> keys = new HashSet<>();
-        Set<String> tokens = textAnalyzerService.analyzeText(STORE_INDEX, STORE_ANALYZER, storeName);
+        Set<String> tokens = storeTextAnalyzerService.analyzeText(STORE_INDEX, STORE_ANALYZER, storeName);
 
         for (String token : tokens) {
             String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", token);
@@ -161,16 +171,5 @@ public class StoreSearchService {
         }
 
         return keys;
-    }
-
-
-    public void evictSearchCacheByStoreId(Long storeId) {
-        String indexKey = STORE_CACHE_KEY + storeId;
-        Set<String> cacheKeys = stringRedisTemplate.opsForSet().members(indexKey);
-        if (!cacheKeys.isEmpty()) {
-            stringRedisTemplate.delete(cacheKeys);
-            stringRedisTemplate.delete(indexKey);
-            log.info("[Cache Evict] storeId {} 관련 {}개 키 삭제", storeId, cacheKeys.size());
-        }
     }
 }

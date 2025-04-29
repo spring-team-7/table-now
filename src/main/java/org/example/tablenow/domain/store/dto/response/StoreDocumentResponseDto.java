@@ -1,6 +1,7 @@
 package org.example.tablenow.domain.store.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +16,9 @@ public class StoreDocumentResponseDto implements Serializable {
     private final Long categoryId;
     private final String categoryName;
     private final String imageUrl;
+    @JsonFormat(pattern = "HH:mm")
     private final String startTime;
+    @JsonFormat(pattern = "HH:mm")
     private final String endTime;
     private final Double rating;
     private final Integer ratingCount;

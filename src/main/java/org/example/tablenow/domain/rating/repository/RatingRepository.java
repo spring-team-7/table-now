@@ -1,9 +1,6 @@
 package org.example.tablenow.domain.rating.repository;
 
 import org.example.tablenow.domain.rating.entity.Rating;
-import org.example.tablenow.domain.store.entity.Store;
-import org.example.tablenow.domain.user.entity.User;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
@@ -19,5 +16,5 @@ public interface RatingRepository extends CrudRepository<Rating, Long> {
             """)
     boolean existsByUserAndStore(Long userId, Long storeId);
 
-    Optional<Rating> findByUserIdAndStoreId(Long userId, Long storeId);
+    Optional<Rating> findByUser_IdAndStore_Id(Long userId, Long storeId);
 }

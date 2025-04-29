@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.message.dto.StoreEventDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import static org.example.tablenow.global.constant.RabbitConstant.*;
@@ -13,6 +14,7 @@ import static org.example.tablenow.global.constant.RabbitConstant.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Async
 public class StoreProducer {
     private final RabbitTemplate rabbitTemplate;
 
