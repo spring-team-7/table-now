@@ -38,16 +38,6 @@ public class UserService {
     private final KakaoAuthService kakaoAuthService;
     private final TokenService tokenService;
 
-    public User getUser(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
-    }
-
     @Transactional
     public SimpleUserResponse deleteUser(AuthUser authUser, UserDeleteRequest request, String refreshToken, String accessToken) {
         User user = getUser(authUser.getId());
@@ -140,13 +130,23 @@ public class UserService {
         return UserProfileResponse.fromUser(user);
     }
 
-    private void validatePassword(User user, String rawPassword) {
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new HandledException(ErrorCode.INCORRECT_PASSWORD);
-        }
+    public User getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new HandledException(ErrorCode.USER_NOT_FOUND));
     }
 
     public List<User> getUsersWithAlarmEnabled() {
         return userRepository.findAllByIsAlarmEnabledTrue();
+    }
+
+    private void validatePassword(User user, String rawPassword) {
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new HandledException(ErrorCode.INCORRECT_PASSWORD);
+        }
     }
 }
