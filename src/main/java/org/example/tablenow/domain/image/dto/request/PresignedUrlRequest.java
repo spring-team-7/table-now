@@ -3,12 +3,12 @@ package org.example.tablenow.domain.image.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.example.tablenow.domain.image.enums.FileType;
 import org.example.tablenow.global.constant.RegexConstants;
 
-@Builder
+@AllArgsConstructor
 @Getter
 public class PresignedUrlRequest {
 

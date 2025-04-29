@@ -55,10 +55,10 @@ class ImageServiceTest {
         @Test
         void presignedUrl_발급_성공() throws Exception {
             // given
-            PresignedUrlRequest request = PresignedUrlRequest.builder()
-                    .fileName("test.png")
-                    .fileType(FileType.PNG)
-                    .build();
+            PresignedUrlRequest request = new PresignedUrlRequest(
+                    "test.png",
+                    FileType.PNG
+            );
 
             PresignedPutObjectRequest presignedRequest = mock(PresignedPutObjectRequest.class);
 
