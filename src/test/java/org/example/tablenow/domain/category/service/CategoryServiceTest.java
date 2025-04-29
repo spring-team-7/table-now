@@ -32,15 +32,12 @@ public class CategoryServiceTest {
     @InjectMocks
     private CategoryService categoryService;
 
-
     @Nested
     class 카테고리_등록 {
-        String categoryName = "한식";
-        CategoryRequestDto dto = new CategoryRequestDto(categoryName);
-
         @Test
         void 중복_카테고리_등록_시_예외_발생() {
             // given
+            CategoryRequestDto dto = new CategoryRequestDto("한식");
             given(categoryRepository.existsByName(anyString())).willReturn(true);
 
             // when & then
@@ -53,6 +50,9 @@ public class CategoryServiceTest {
         @Test
         void 등록_성공() {
             // given
+            String categoryName = "한식";
+            CategoryRequestDto dto = new CategoryRequestDto(categoryName);
+
             given(categoryRepository.existsByName(anyString())).willReturn(false);
             given(categoryRepository.save(any(Category.class))).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -67,13 +67,12 @@ public class CategoryServiceTest {
 
     @Nested
     class 카테고리_수정 {
-        Long categoryId = 1L;
-        Category category = Category.builder().id(categoryId).name("한식").build();
-        CategoryRequestDto dto = new CategoryRequestDto();
-
         @Test
         void 존재하지_않는_카테고리_조회_시_예외_발생() {
             // given
+            Long categoryId = 1L;
+            CategoryRequestDto dto = new CategoryRequestDto();
+
             given(categoryRepository.findById(anyLong())).willReturn(Optional.empty());
 
             // when & then
@@ -86,6 +85,10 @@ public class CategoryServiceTest {
         @Test
         void 중복_카테고리_등록_시_예외_발생() {
             // given
+            Long categoryId = 1L;
+            Category category = Category.builder().id(categoryId).name("한식").build();
+            CategoryRequestDto dto = new CategoryRequestDto();
+
             ReflectionTestUtils.setField(dto, "name", "한식");
             given(categoryRepository.findById(anyLong())).willReturn(Optional.of(category));
             given(categoryRepository.existsByName(anyString())).willReturn(true);
@@ -100,6 +103,10 @@ public class CategoryServiceTest {
         @Test
         void 수정_성공() {
             // given
+            Long categoryId = 1L;
+            Category category = Category.builder().id(categoryId).name("한식").build();
+            CategoryRequestDto dto = new CategoryRequestDto();
+
             String requestName = "분식";
             ReflectionTestUtils.setField(dto, "name", requestName);
             given(categoryRepository.findById(anyLong())).willReturn(Optional.of(category));
@@ -116,12 +123,10 @@ public class CategoryServiceTest {
 
     @Nested
     class 카테고리_삭제 {
-        Long categoryId = 1L;
-        Category category = Category.builder().id(categoryId).name("한식").build();
-
         @Test
         void 존재하지_않는_카테고리_조회_시_예외_발생() {
             // given
+            Long categoryId = 1L;
             given(categoryRepository.findById(anyLong())).willReturn(Optional.empty());
 
             // when & then
@@ -134,6 +139,9 @@ public class CategoryServiceTest {
         @Test
         void 삭제_성공() {
             // given
+            Long categoryId = 1L;
+            Category category = Category.builder().id(categoryId).name("한식").build();
+
             given(categoryRepository.findById(anyLong())).willReturn(Optional.of(category));
 
             // when
@@ -147,14 +155,14 @@ public class CategoryServiceTest {
 
     @Nested
     class 카테고리_목록_조회 {
-        Category category1 = Category.builder().id(1L).name("한식").build();
-        Category category2 = Category.builder().id(2L).name("중식").build();
-        Category category3 = Category.builder().id(3L).name("일식").build();
-        List<Category> categories = List.of(category1, category2, category3);
-
         @Test
         void 조회_성공() {
             // given
+            Category category1 = Category.builder().id(1L).name("한식").build();
+            Category category2 = Category.builder().id(2L).name("중식").build();
+            Category category3 = Category.builder().id(3L).name("일식").build();
+            List<Category> categories = List.of(category1, category2, category3);
+
             given(categoryRepository.findAll(any(Sort.class))).willReturn(categories);
 
             // when

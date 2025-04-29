@@ -70,43 +70,15 @@ public class StoreSearchServiceTest {
     @InjectMocks
     private StoreSearchService storeSearchService;
 
-    Long userId = 1L;
-    Long ownerId = 2L;
-    AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반회원");
-    User user = User.fromAuthUser(authUser);
-    AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
-    User owner = User.fromAuthUser(authOwner);
-
-    Long categoryId = 1L;
-    Category category = Category.builder().id(categoryId).name("한식").build();
-
-    Long storeId = 1L;
-    StoreDocument storeDocument = StoreDocument.builder()
-            .id(storeId)
-            .name("맛있는 가게")
-            .description("가게 설명입니다.")
-            .address("서울특별시 강남구 테헤란로11길 1 1층")
-            .imageUrl(null)
-            .capacity(100)
-            .startTime("09:00")
-            .endTime("21:00")
-            .deposit(10000)
-            .rating(4.5)
-            .ratingCount(100)
-            .userId(userId)
-            .userName(user.getName())
-            .categoryId(categoryId)
-            .categoryName(category.getName())
-            .build();
+    private final Long STORE_ID = 1L;
+    private final Long USER_ID = 1L;
+    private final Long OWNER_ID = 2L;
+    private final Long CATEGORY_ID = 1L;
 
     @Nested
     class 가게_검색_v3 {
         int page = 1;
         int size = 10;
-        String sortField = "ratingCount";
-        String sortOrder = "desc";
-        Sort sortOption = Sort.by(Sort.Direction.fromString(sortOrder), StoreSortField.fromString(sortField));
-        Pageable pageable = PageRequest.of(page - 1, size, sortOption);
 
         @Nested
         class 정렬_기준_예외 {
@@ -115,6 +87,7 @@ public class StoreSearchServiceTest {
                 // given
                 String sortField = "name";
                 String sortOrder = "average";
+                AuthUser authUser = new AuthUser(USER_ID, "user@a.com", UserRole.ROLE_USER, "일반회원");
 
                 // when & then
                 HandledException exception = assertThrows(HandledException.class, () ->
@@ -128,7 +101,7 @@ public class StoreSearchServiceTest {
                 // given
                 String sortField = "description";
                 String sortOrder = "asc";
-
+                AuthUser authUser = new AuthUser(USER_ID, "user@a.com", UserRole.ROLE_USER, "일반회원");
                 // when & then
                 HandledException exception = assertThrows(HandledException.class, () ->
                         storeSearchService.getStoresV3(authUser, 1, 10, sortField, sortOrder, null, null)
@@ -140,6 +113,12 @@ public class StoreSearchServiceTest {
         @Test
         void 가게_검색_cache_hit_시_Redis_캐시값을_파싱하여_반환_성공() throws JsonProcessingException {
             // given
+            String sortField = "ratingCount";
+            String sortOrder = "desc";
+
+            AuthUser authUser = new AuthUser(USER_ID, "user@a.com", UserRole.ROLE_USER, "일반회원");
+            StoreDocument storeDocument = mockStoreDocument(STORE_ID, OWNER_ID, CATEGORY_ID);
+
             PageResponse<StoreDocumentResponseDto> expectedResponse = new PageResponse<>(new PageImpl<>(List.of(StoreDocumentResponseDto.fromStoreDocument(storeDocument))));
             // template.opsForValue().get(key) 결과
             String cachedJson = "{\"content\":[{\"storeId\":1,\"name\":\"맛있는 가게\",\"categoryId\":1,\"categoryName\":\"한식\",\"imageUrl\":null,\"startTime\":\"09:00\",\"endTime\":\"21:30\",\"rating\":4.5,\"ratingCount\":100}],\"totalElements\":1}";
@@ -154,13 +133,17 @@ public class StoreSearchServiceTest {
             // then
             assertAll(
                     () -> assertNotNull(response),
-                    () -> assertEquals(response.getContent().get(0).getStoreId(), storeId)
+                    () -> assertEquals(response.getContent().get(0).getStoreId(), STORE_ID)
             );
         }
 
         @Test
         void 가게_검색_cache_miss_시_elastic_search_조회_결과_없음() {
             // given
+            String sortField = "ratingCount";
+            String sortOrder = "desc";
+            AuthUser authUser = new AuthUser(USER_ID, "user@a.com", UserRole.ROLE_USER, "일반회원");
+
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
 
             Page<StoreDocument> result = new PageImpl<>(Collections.emptyList());
@@ -177,6 +160,14 @@ public class StoreSearchServiceTest {
         @Test
         void 가게_검색_cache_miss_시_elastic_search_조회_및_캐시_저장() {
             // given
+            String sortField = "ratingCount";
+            String sortOrder = "desc";
+            Sort sortOption = Sort.by(Sort.Direction.fromString(sortOrder), StoreSortField.fromString(sortField));
+            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+
+            AuthUser authUser = new AuthUser(USER_ID, "user@a.com", UserRole.ROLE_USER, "일반회원");
+            StoreDocument storeDocument = mockStoreDocument(STORE_ID, OWNER_ID, CATEGORY_ID);
+
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
             given(stringRedisTemplate.opsForSet()).willReturn(setOperations);
 
@@ -189,7 +180,7 @@ public class StoreSearchServiceTest {
             // then
             assertAll(
                     () -> assertNotNull(response),
-                    () -> assertEquals(response.getContent().get(0).getStoreId(), storeId)
+                    () -> assertEquals(response.getContent().get(0).getStoreId(), STORE_ID)
             );
             verify(stringRedisTemplate.opsForValue()).set(anyString(), isNull(), anyLong(), any(TimeUnit.class));
             verify(stringRedisTemplate.opsForSet()).add(anyString(), anyString());
@@ -199,9 +190,12 @@ public class StoreSearchServiceTest {
 
     @Nested
     class 가게_등록_시_캐시_무효화 {
+
         @Test
         void 가게명_기준_예상_검색어_호출_실패_삭제_키_없음() {
             // given
+            StoreDocument storeDocument = mockStoreDocument(STORE_ID, OWNER_ID, CATEGORY_ID);
+
             Set<String> analyzeResult = new HashSet<>();
             given(storeTextAnalyzerService.analyzeText(anyString(), anyString(), anyString())).willReturn(analyzeResult);
             given(stringRedisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
@@ -216,6 +210,8 @@ public class StoreSearchServiceTest {
         @Test
         void 가게명_기준_예상_검색어_호출_키_삭제_성공() {
             // given
+            StoreDocument storeDocument = mockStoreDocument(STORE_ID, OWNER_ID, CATEGORY_ID);
+
             Set<String> analyzeResult = Set.of("맛있", "는");
             String key1 = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(1, 10, "ratingCount", "desc", null, "맛있");
             String key2 = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(1, 10, "ratingCount", "desc", null, "는");
@@ -242,6 +238,8 @@ public class StoreSearchServiceTest {
         @Test
         void 카테고리_ID_기준_키_삭제_성공() {
             // given
+            StoreDocument storeDocument = mockStoreDocument(STORE_ID, OWNER_ID, CATEGORY_ID);
+
             String key1 = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(1, 10, "ratingCount", "desc", 1L, null);
             String key2 = STORE_SEARCH_KEY + StoreKeyGenerator.generateStoreListKey(1, 10, "rating", "desc", 1L, null);
 
@@ -267,17 +265,18 @@ public class StoreSearchServiceTest {
 
     @Nested
     class 가게_수정_또는_삭제_시_캐시_무효화 {
-        String invertedIndexKey = STORE_CACHE_KEY + storeId;
 
         @Test
         void 역인덱스_캐시_키가_없을_경우_무효화_작업_스킵() {
             // given
+            String invertedIndexKey = STORE_CACHE_KEY + STORE_ID;
+
             Set<String> cacheResult = new HashSet<>();
             given(stringRedisTemplate.opsForSet()).willReturn(setOperations);
             given(setOperations.members(anyString())).willReturn(cacheResult);
 
             // when
-            storeSearchService.evictSearchCacheByStoreId(storeId);
+            storeSearchService.evictSearchCacheByStoreId(STORE_ID);
 
             // then
             verify(stringRedisTemplate, never()).delete(cacheResult);
@@ -287,6 +286,7 @@ public class StoreSearchServiceTest {
         @Test
         void 역인덱스_캐시_키_조회_캐시_무효화_및_역인덱스_삭제() {
             // given
+            String invertedIndexKey = STORE_CACHE_KEY + STORE_ID;
             String cachedKey = "store:search:page=1:size=10:sort=rating:direction=desc:categoryId=1:keyword=";
 
             Set<String> cacheResult = Set.of(cachedKey);
@@ -295,12 +295,36 @@ public class StoreSearchServiceTest {
             given(setOperations.members(anyString())).willReturn(cacheResult);
 
             // when
-            storeSearchService.evictSearchCacheByStoreId(storeId);
+            storeSearchService.evictSearchCacheByStoreId(STORE_ID);
 
             // then
             verify(stringRedisTemplate).delete(cacheResult);
             verify(stringRedisTemplate).delete(invertedIndexKey);
         }
+    }
 
+    private StoreDocument mockStoreDocument(Long storeId, Long ownerId, Long categoryId) {
+        AuthUser authOwner = new AuthUser(ownerId, "owner@a.com", UserRole.ROLE_OWNER, "가게");
+        User owner = User.fromAuthUser(authOwner);
+
+        Category category = Category.builder().id(categoryId).name("한식").build();
+
+        return StoreDocument.builder()
+                .id(storeId)
+                .name("맛있는 가게")
+                .description("가게 설명입니다.")
+                .address("서울특별시 강남구 테헤란로11길 1 1층")
+                .imageUrl(null)
+                .capacity(100)
+                .startTime("09:00")
+                .endTime("21:00")
+                .deposit(10000)
+                .rating(4.5)
+                .ratingCount(100)
+                .userId(ownerId)
+                .userName(owner.getName())
+                .categoryId(categoryId)
+                .categoryName(category.getName())
+                .build();
     }
 }

@@ -44,18 +44,15 @@ public class RatingServiceTest {
 
     @Nested
     class 평점_등록 {
-        RatingRequestDto dto = new RatingRequestDto(4);
-        Long userId = 1L;
-        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
-
-        Long storeId = 1L;
-        Double storeRating = 5.0;
-        Integer ratingCount = 2;
-        Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
 
         @Test
         void 존재하지_않는_가게의_평점_등록_시_예외_발생() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+
             given(storeService.getStore(anyLong())).willThrow(new HandledException(ErrorCode.STORE_NOT_FOUND));
 
             // when & then
@@ -69,6 +66,12 @@ public class RatingServiceTest {
         @Test
         void 평점_중복_등록_시_예외_발생() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+            Store store = Store.builder().id(storeId).rating(5.0).ratingCount(2).build();
+
             given(storeService.getStore(anyLong())).willReturn(store);
             given(ratingRepository.existsByUserAndStore(anyLong(), anyLong())).willReturn(true);
 
@@ -83,6 +86,12 @@ public class RatingServiceTest {
         @Test
         void 해당_가게에_유저가_등록한_완료_예약이_없을_시_예외_발생() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+            Store store = Store.builder().id(storeId).rating(5.0).ratingCount(2).build();
+
             given(storeService.getStore(anyLong())).willReturn(store);
             given(ratingRepository.existsByUserAndStore(anyLong(), anyLong())).willReturn(false);
             willThrow(new HandledException(ErrorCode.RATING_RESERVATION_NOT_FOUND))
@@ -99,6 +108,14 @@ public class RatingServiceTest {
         @Test
         void 등록_성공() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+            Double storeRating = 5.0;
+            Integer ratingCount = 2;
+            Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
+
             given(storeService.getStore(anyLong())).willReturn(store);
             given(ratingRepository.existsByUserAndStore(anyLong(), anyLong())).willReturn(false);
             given(ratingRepository.save(any(Rating.class))).willAnswer(invocation -> invocation.getArgument(0));
