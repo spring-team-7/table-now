@@ -29,7 +29,6 @@ class VacancyRetryServiceTest {
 
     @Nested
     class DLQ_재처리 {
-
         private MessageProperties props;
         private Message message;
         private VacancyEventDto dto;
@@ -77,7 +76,7 @@ class VacancyRetryServiceTest {
             vacancyRetryService.process(message);
 
             // then
-            verify(rabbitTemplate).send(eq("vacancy.direct"), eq("vacancy.key"), any(Message.class)); // ← 정상
+            verify(rabbitTemplate).send(eq("vacancy.direct"), eq("vacancy.key"), any(Message.class));
         }
     }
 }

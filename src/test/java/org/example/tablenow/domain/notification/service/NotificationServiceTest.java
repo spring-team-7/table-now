@@ -35,7 +35,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
@@ -62,7 +61,6 @@ class NotificationServiceTest {
 
     @InjectMocks
     private NotificationService notificationService;
-
 
     @Nested
     class 알림_생성 {
