@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.event;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
 import org.example.tablenow.domain.event.dto.request.EventUpdateRequestDto;
 import org.example.tablenow.domain.event.dto.response.EventCloseResponseDto;
@@ -10,14 +12,11 @@ import org.example.tablenow.domain.event.enums.EventStatus;
 import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
 import org.example.tablenow.domain.event.message.producer.EventOpenProducer;
 import org.example.tablenow.domain.event.repository.EventRepository;
-import org.example.tablenow.domain.event.service.EventJoinService;
 import org.example.tablenow.domain.event.service.EventService;
-import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,16 +46,10 @@ import static org.mockito.Mockito.*;
 public class EventServiceTest {
 
     @Mock
-    private EventJoinService eventJoinService;
-
-    @Mock
     private EventRepository eventRepository;
 
     @Mock
     private StoreService storeService;
-
-    @Mock
-    private NotificationService notificationService;
 
     @Mock
     private StringRedisTemplate redisTemplate;
@@ -67,34 +60,25 @@ public class EventServiceTest {
     @Mock
     private EventOpenProducer eventOpenProducer;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     @InjectMocks
     private EventService eventService;
 
-    Long eventId = 1L;
-    Long storeId = 1L;
+    private final LocalDateTime baseTime = LocalDateTime.of(2025, 4, 30, 0, 0);
 
-    Store store;
-    LocalDateTime openAt;
-    LocalDateTime eventTime;
+    private Event createEvent(Long id, Store store, EventStatus status,
+                              LocalDateTime openAt, LocalDateTime eventTime) {
 
-    @BeforeEach
-    void setUp() {
-        store = Store.builder()
-                .id(storeId)
-                .name("이벤트 가게")
-                .build();
-
-        openAt = LocalDateTime.of(2025, 4, 30, 10, 0);
-        eventTime = LocalDateTime.of(2025, 4, 30, 18, 0);
-    }
-
-    private Event createEvent(Long id, EventStatus status) {
-        EventRequestDto dto = EventRequestDto.builder()
-                .storeId(storeId)
-                .openAt(openAt)
-                .eventTime(eventTime)
-                .limitPeople(10)
-                .build();
+        EventRequestDto dto = new EventRequestDto(
+                store.getId(),
+                "테스트 이벤트",
+                openAt.minusDays(1),
+                openAt,
+                eventTime,
+                10
+        );
 
         Event event = Event.create(store, dto);
         ReflectionTestUtils.setField(event, "id", id);
@@ -102,20 +86,35 @@ public class EventServiceTest {
         return event;
     }
 
+    private Store createStore(Long id, String name) {
+        return Store.builder()
+                .id(id)
+                .name(name)
+                .build();
+    }
+
     @Nested
     class 이벤트_생성 {
-        EventRequestDto dto = EventRequestDto.builder()
-                .storeId(storeId)
-                .openAt(openAt)
-                .eventTime(eventTime)
-                .limitPeople(10)
-                .build();
+
+        private EventRequestDto createEventRequestDto(Long storeId, LocalDateTime openAt, LocalDateTime eventTime) {
+            return new EventRequestDto(
+                    storeId,
+                    "content",
+                    openAt.minusDays(1),
+                    openAt,
+                    eventTime,
+                    10
+            );
+        }
 
         @Test
         void 동일한_이벤트가_있는_경우_예외_발생() {
             // given
+            Store store = createStore(1L, "테스트가게");
+            EventRequestDto dto = createEventRequestDto(store.getId(), baseTime.plusHours(10), baseTime.plusHours(18));
+
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(eventRepository.existsByStoreIdAndEventTime(anyLong(), any())).willReturn(true);
+            given(eventRepository.existsByStore_IdAndEventTime(anyLong(), any())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -125,45 +124,48 @@ public class EventServiceTest {
         }
 
         @Test
-        void 이벤트_생성_성공() {
+        void 이벤트_생성_성공() throws JsonProcessingException {
             // given
+            Store store = createStore(1L, "테스트가게");
+            EventRequestDto dto = createEventRequestDto(store.getId(), baseTime.plusHours(10), baseTime.plusHours(18));
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(eventRepository.existsByStoreIdAndEventTime(anyLong(), any())).willReturn(false);
+            given(eventRepository.existsByStore_IdAndEventTime(anyLong(), any())).willReturn(false);
             given(eventRepository.save(any(Event.class))).willAnswer(invocation -> {
                 Event e = invocation.getArgument(0);
                 ReflectionTestUtils.setField(e, "openAt", LocalDateTime.of(2025, 4, 30, 10, 0));
                 return e;
             });
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(objectMapper.writeValueAsString(any())).willReturn("{\"eventId\":1}");
 
             // when
             EventResponseDto response = eventService.createEvent(dto);
 
             // then
             assertNotNull(response);
-            assertEquals(storeId, response.getStoreId());
+            assertEquals(store.getId(), response.getStoreId());
             assertEquals(dto.getLimitPeople(), response.getLimitPeople());
-            verify(zSetOperations).add(eq("event:open"), anyString(), anyDouble());
+            verify(zSetOperations).add(eq("event:open:zset"), anyString(), anyDouble());
         }
     }
 
     @Nested
     class 이벤트_수정 {
-        EventUpdateRequestDto dto;
-
-        @BeforeEach
-        void setUp() {
-            dto = EventUpdateRequestDto.builder()
-                    .openAt(openAt.plusDays(1))
-                    .eventTime(eventTime.plusDays(1))
-                    .limitPeople(20)
-                    .build();
-        }
 
         @Test
         void 이벤트_상태가_READY가_아닐_경우_예외_발생() {
             // given
-            Event event = createEvent(eventId, EventStatus.OPENED);
+            Long eventId = 1L;
+            Store store = createStore(10L, "수정불가 매장");
+            LocalDateTime openAt = baseTime.plusHours(10);
+            LocalDateTime eventTime = baseTime.plusHours(18);
+            Event event = createEvent(eventId, store, EventStatus.CLOSED, openAt, eventTime);
+
+            EventUpdateRequestDto dto = new EventUpdateRequestDto(
+                    openAt.plusDays(1),
+                    eventTime.plusDays(1),
+                    20
+            );
             given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
 
             // when & then
@@ -175,10 +177,24 @@ public class EventServiceTest {
         }
 
         @Test
-        void 이벤트_수정_성공() {
+        void 이벤트_수정_성공() throws JsonProcessingException {
             // given
-            Event event = createEvent(eventId, EventStatus.READY);
+            Long eventId = 2L;
+            Store store = createStore(20L, "정상 수정 매장");
+            LocalDateTime openAt = baseTime.plusHours(10);
+            LocalDateTime eventTime = baseTime.plusHours(18);
+            Event event = createEvent(eventId, store, EventStatus.READY, openAt, eventTime);
+
+            EventUpdateRequestDto dto = new EventUpdateRequestDto(
+                    openAt.plusDays(1),
+                    eventTime.plusDays(1),
+                    20
+            );
+
             given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(zSetOperations.add(anyString(), anyString(), anyDouble())).willReturn(true);
+            given(objectMapper.writeValueAsString(any())).willReturn("{\"eventId\":1}");
 
             // when
             EventResponseDto response = eventService.updateEvent(eventId, dto);
@@ -188,6 +204,7 @@ public class EventServiceTest {
             assertEquals(dto.getOpenAt(), response.getOpenAt());
             assertEquals(dto.getEventTime(), response.getEventTime());
             assertEquals(dto.getLimitPeople(), response.getLimitPeople());
+            verify(zSetOperations).add(anyString(), anyString(), anyDouble());
         }
     }
 
@@ -199,7 +216,11 @@ public class EventServiceTest {
         @Test
         void 상태값이_있는_경우_조회_성공() {
             // given
-            Event event = createEvent(1L, EventStatus.READY);
+            Store store = createStore(1L, "조회 가게");
+            LocalDateTime openAt = baseTime.plusHours(10);
+            LocalDateTime eventTime = baseTime.plusHours(18);
+            Event event = createEvent(1L, store, EventStatus.READY, openAt, eventTime);
+
             Page<Event> result = new PageImpl<>(List.of(event));
 
             given(eventRepository.findByStatus(eq(EventStatus.READY), any(Pageable.class)))
@@ -215,7 +236,7 @@ public class EventServiceTest {
             EventResponseDto dto = response.getContent().get(0);
             assertAll(
                     () -> assertEquals(event.getId(), dto.getEventId()),
-                    () -> assertEquals(storeId, dto.getStoreId()),
+                    () -> assertEquals(store.getId(), dto.getStoreId()),
                     () -> assertEquals(event.getEventTime(), dto.getEventTime()),
                     () -> assertEquals(event.getOpenAt(), dto.getOpenAt()),
                     () -> assertEquals(event.getLimitPeople(), dto.getLimitPeople()),
@@ -226,7 +247,11 @@ public class EventServiceTest {
         @Test
         void 상태값이_없는_경우_조회_성공() {
             // given
-            Event event = createEvent(1L, EventStatus.READY);
+            Store store = createStore(2L, "조회 가게 2");
+            LocalDateTime openAt = baseTime.plusHours(11);
+            LocalDateTime eventTime = baseTime.plusHours(19);
+            Event event = createEvent(2L, store, EventStatus.READY, openAt, eventTime);
+
             Page<Event> result = new PageImpl<>(List.of(event));
 
             given(eventRepository.findAll(any(Pageable.class))).willReturn(result);
@@ -241,7 +266,7 @@ public class EventServiceTest {
             EventResponseDto dto = response.getContent().get(0);
             assertAll(
                     () -> assertEquals(event.getId(), dto.getEventId()),
-                    () -> assertEquals(storeId, dto.getStoreId()),
+                    () -> assertEquals(store.getId(), dto.getStoreId()),
                     () -> assertEquals(event.getEventTime(), dto.getEventTime()),
                     () -> assertEquals(event.getOpenAt(), dto.getOpenAt()),
                     () -> assertEquals(event.getLimitPeople(), dto.getLimitPeople()),
@@ -256,7 +281,11 @@ public class EventServiceTest {
         @Test
         void 이벤트_상태가_READY가_아닐_경우_예외_발생() {
             // given
-            Event event = createEvent(eventId, EventStatus.OPENED);
+            Long eventId = 1L;
+            Store store = createStore(1L, "삭제불가 가게");
+            Event event = createEvent(eventId, store, EventStatus.OPENED,
+                    baseTime.plusHours(10), baseTime.plusHours(18));
+
             given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
 
             // when & then
@@ -268,11 +297,17 @@ public class EventServiceTest {
         }
 
         @Test
-        void 이벤트_삭제_성공() {
+        void 이벤트_삭제_성공() throws JsonProcessingException {
             // given
-            Event event = createEvent(eventId, EventStatus.READY);
+            Long eventId = 2L;
+            Store store = createStore(2L, "삭제가능 가게");
+            Event event = createEvent(eventId, store, EventStatus.READY,
+                    baseTime.plusHours(10), baseTime.plusHours(18));
+
             given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
             willDoNothing().given(eventRepository).delete(eq(event));
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(objectMapper.writeValueAsString(any())).willReturn("{\"eventId\":2}");
 
             // when
             EventDeleteResponseDto response = eventService.deleteEvent(eventId);
@@ -281,82 +316,40 @@ public class EventServiceTest {
             assertNotNull(response);
             assertAll(
                     () -> assertEquals(event.getId(), response.getEventId()),
-                    () -> assertEquals(storeId, response.getStoreId()),
+                    () -> assertEquals(store.getId(), response.getStoreId()),
                     () -> assertEquals("이벤트 삭제에 성공했습니다.", response.getMessage())
             );
             verify(redisTemplate).delete("event:join:" + eventId);
+            verify(zSetOperations).remove(eq("event:open:zset"), anyString());
             verify(eventRepository).delete(event);
         }
     }
-
-/*    @Nested
-    class 이벤트_오픈_처리 {
-
-        @Test
-        void 이벤트_오픈_성공() {
-            // given
-            Event event1 = createEvent(1L, EventStatus.READY);
-            Event event2 = createEvent(2L, EventStatus.READY);
-            List<Event> events = List.of(event1, event2);
-
-            given(eventRepository.findAllByStatusAndOpenAtLessThanEqual(
-                    eq(EventStatus.READY), any(LocalDateTime.class))
-            ).willReturn(events);
-
-            given(eventJoinService.getUsersByEventId(anyLong())).willReturn(List.of());
-
-            // when
-            eventService.openEventsIfDue();
-
-            // then
-            assertAll(
-                    () -> assertEquals(EventStatus.OPENED, event1.getStatus()),
-                    () -> assertEquals(EventStatus.OPENED, event2.getStatus())
-            );
-        }
-
-        @Test
-        void 알림_받는_유저가_있을_때_알림_전송됨() {
-            // given
-            Event event = createEvent(eventId, EventStatus.READY);
-            given(eventRepository.findAllByStatusAndOpenAtLessThanEqual(eq(EventStatus.READY), any(LocalDateTime.class)))
-                    .willReturn(List.of(event));
-
-            User user1 = User.builder().id(1L).build();
-            User user2 = User.builder().id(2L).build();
-            ReflectionTestUtils.setField(user1, "isAlarmEnabled", true);
-            ReflectionTestUtils.setField(user2, "isAlarmEnabled", false);
-            given(eventJoinService.getUsersByEventId(eq(eventId))).willReturn(List.of(user1, user2));
-
-            // when
-            eventService.openEventsIfDue();
-
-            // then
-            assertEquals(EventStatus.OPENED, event.getStatus());
-            verify(eventJoinService).getUsersByEventId(eq(eventId));
-            verify(notificationService).createNotification(argThat(req ->
-                    req.getUserId().equals(user1.getId()) &&
-                            req.getStoreId().equals(event.getStore().getId()) &&
-                            req.getType() == NotificationType.REMIND
-            ));
-            verify(notificationService, never()).createNotification(argThat(req ->
-                    req.getUserId().equals(user2.getId())
-            ));
-        }
-    }*/
 
     @Nested
     class 이벤트_오픈_처리 {
 
         @Test
-        void 이벤트_오픈_성공() {
+        void 이벤트_오픈_성공() throws JsonProcessingException {
             // given
-            Event event1 = createEvent(1L, EventStatus.READY);
-            Event event2 = createEvent(2L, EventStatus.READY);
+            Store store = createStore(1L, "가게A");
+            LocalDateTime openAt = baseTime.plusHours(10);
+            LocalDateTime eventTime = baseTime.plusHours(18);
+
+            Event event1 = createEvent(1L, store, EventStatus.READY, openAt, eventTime);
+            Event event2 = createEvent(2L, store, EventStatus.READY, openAt, eventTime);
+
+            EventOpenMessage message1 = EventOpenMessage.fromEvent(event1);
+            EventOpenMessage message2 = EventOpenMessage.fromEvent(event2);
+
+            String json1 = "{\"eventId\":1}";
+            String json2 = "{\"eventId\":2}";
 
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble()))
-                    .willReturn(Set.of("1", "2"));
+            given(zSetOperations.rangeByScore(eq("event:open:zset"), anyDouble(), anyDouble()))
+                    .willReturn(Set.of(json1, json2));
+            given(objectMapper.readValue(eq(json1), eq(EventOpenMessage.class))).willReturn(message1);
+            given(objectMapper.readValue(eq(json2), eq(EventOpenMessage.class))).willReturn(message2);
+
             given(eventRepository.findById(1L)).willReturn(Optional.of(event1));
             given(eventRepository.findById(2L)).willReturn(Optional.of(event2));
 
@@ -370,20 +363,25 @@ public class EventServiceTest {
             );
 
             verify(eventOpenProducer, times(2)).send(any(EventOpenMessage.class));
-            verify(zSetOperations, times(2)).remove(eq("event:open"), anyString());
-            verify(zSetOperations, times(2)).remove(eq("event:open"), anyString());
+            verify(zSetOperations, times(1)).remove("event:open:zset", json1);
+            verify(zSetOperations, times(1)).remove("event:open:zset", json2);
         }
 
         @Test
-        void 상태가_READY가_아닌_이벤트는_오픈되지_않음() {
+        void 상태가_READY가_아닌_이벤트는_오픈되지_않음() throws JsonProcessingException {
             // given
-            Long notReadyEventId = 1L;
-            Event notReadyEvent = createEvent(notReadyEventId, EventStatus.CLOSED); // 상태 READY 아님
+            Store store = createStore(2L, "가게B");
+            Event notReadyEvent = createEvent(3L, store, EventStatus.CLOSED,
+                    baseTime.plusHours(10), baseTime.plusHours(18));
+
+            String json = "{\"eventId\":3}";
+            EventOpenMessage message = EventOpenMessage.fromEvent(notReadyEvent);
 
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble()))
-                    .willReturn(Set.of(String.valueOf(notReadyEventId)));
-            given(eventRepository.findById(notReadyEventId)).willReturn(Optional.of(notReadyEvent));
+            given(zSetOperations.rangeByScore(eq("event:open:zset"), anyDouble(), anyDouble()))
+                    .willReturn(Set.of(json));
+            given(objectMapper.readValue(eq(json), eq(EventOpenMessage.class))).willReturn(message);
+            given(eventRepository.findById(3L)).willReturn(Optional.of(notReadyEvent));
 
             // when
             eventService.openEventsIfDue();
@@ -399,8 +397,8 @@ public class EventServiceTest {
         void 오픈시간_도래한_이벤트가_비어있으면_아무작업도_하지_않음() {
             // given
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble()))
-                    .willReturn(Collections.emptySet()); // 또는 null
+            given(zSetOperations.rangeByScore(eq("event:open:zset"), anyDouble(), anyDouble()))
+                    .willReturn(Collections.emptySet());
 
             // when
             eventService.openEventsIfDue();
@@ -415,7 +413,7 @@ public class EventServiceTest {
         void 오픈시간_도래한_이벤트가_null이면_아무작업도_하지_않음() {
             // given
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
-            given(zSetOperations.rangeByScore(eq("event:open"), anyDouble(), anyDouble())).willReturn(null);
+            given(zSetOperations.rangeByScore(eq("event:open:zset"), anyDouble(), anyDouble())).willReturn(null);
 
             // when
             eventService.openEventsIfDue();
@@ -431,10 +429,16 @@ public class EventServiceTest {
     class 이벤트_마감 {
 
         @Test
-        void 이벤트_마감_성공() {
+        void 이벤트_마감_성공() throws JsonProcessingException {
             // given
-            Event event = createEvent(eventId, EventStatus.OPENED);
+            Long eventId = 1L;
+            Store store = createStore(1L, "마감 가게");
+            Event event = createEvent(eventId, store, EventStatus.OPENED,
+                    baseTime.plusHours(10), baseTime.plusHours(18));
+
             given(eventRepository.findById(eq(eventId))).willReturn(Optional.of(event));
+            given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
+            given(objectMapper.writeValueAsString(any())).willReturn("{\"eventId\":1}");
 
             // when
             EventCloseResponseDto response = eventService.closeEvent(eventId);
@@ -444,6 +448,7 @@ public class EventServiceTest {
             assertEquals(EventStatus.CLOSED, event.getStatus());
             assertEquals(eventId, response.getEventId());
             verify(redisTemplate).delete("event:join:" + eventId);
+            verify(zSetOperations).remove(anyString(), anyString());
         }
     }
 
