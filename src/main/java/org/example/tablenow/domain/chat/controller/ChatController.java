@@ -2,11 +2,11 @@ package org.example.tablenow.domain.chat.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.chat.dto.response.ChatAvailabilityResponse;
-import org.example.tablenow.domain.chat.dto.response.ChatMessagePageResponse;
 import org.example.tablenow.domain.chat.dto.response.ChatMessageResponse;
 import org.example.tablenow.domain.chat.dto.response.ChatReadStatusResponse;
 import org.example.tablenow.domain.chat.service.ChatMessageService;
 import org.example.tablenow.global.dto.AuthUser;
+import org.example.tablenow.global.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,13 +31,13 @@ public class ChatController {
     }
 
     @GetMapping("/v1/chats/{reservationId}")
-    public ResponseEntity<ChatMessagePageResponse> getChatMessages(
+    public ResponseEntity<PageResponse<ChatMessageResponse>> getChatMessages(
             @PathVariable Long reservationId,
             @AuthenticationPrincipal AuthUser authUser,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<ChatMessageResponse> page = chatMessageService.getMessages(reservationId, authUser.getId(), pageable);
-        return ResponseEntity.ok(ChatMessagePageResponse.fromChatMessageResponsePage(page));
+        return ResponseEntity.ok(new PageResponse<>(page));
     }
 
     @PatchMapping("/v1/chats/{reservationId}/read")
