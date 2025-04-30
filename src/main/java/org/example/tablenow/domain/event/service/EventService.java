@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.event.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.event.dto.request.EventRequestDto;
@@ -40,11 +42,13 @@ public class EventService {
     private final StringRedisTemplate redisTemplate;
     private final EventOpenProducer eventOpenProducer;
 
+    private final ObjectMapper objectMapper;
+
     @Transactional
     public EventResponseDto createEvent(EventRequestDto request) {
         Store store = storeService.getStore(request.getStoreId());
 
-        if (eventRepository.existsByStoreIdAndEventTime(store.getId(), request.getEventTime())) {
+        if (eventRepository.existsByStore_IdAndEventTime(store.getId(), request.getEventTime())) {
             throw new HandledException(ErrorCode.EVENT_ALREADY_EXISTS);
         }
 
@@ -52,7 +56,13 @@ public class EventService {
         Event savedEvent = eventRepository.save(event);
 
         long openEpoch = savedEvent.getOpenAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
-        redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, String.valueOf(savedEvent.getId()), openEpoch);
+        EventOpenMessage message = EventOpenMessage.fromEvent(savedEvent);
+        try {
+            String messageJson = objectMapper.writeValueAsString(message);
+            redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, messageJson, openEpoch);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize EventOpenMessage", e);
+        }
 
         return EventResponseDto.fromEvent(savedEvent);
     }
@@ -109,62 +119,35 @@ public class EventService {
         return EventCloseResponseDto.fromEvent(event);
     }
 
-/*    @Transactional
-    public void openEventsIfDue() {
-        long now = LocalDateTime.now().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
-        List<Event> eventsToOpen = eventRepository.findAllByStatusAndOpenAtLessThanEqual(EventStatus.READY, now);
-
-        for (Event event : eventsToOpen) {
-            event.open();
-            log.info("이벤트 오픈됨: eventId={}, storeName={}, openAt={}", event.getId(), event.getStore().getName(), event.getOpenAt());
-
-            List<User> usersToNotify = eventJoinService.getUsersByEventId(event.getId());
-
-            for (User user : usersToNotify) {
-                if (user.getIsAlarmEnabled()) {
-                    notificationService.createNotification(
-                            NotificationRequestDto.builder()
-                                    .userId(user.getId())
-                                    .storeId(event.getStoreId())
-                                    .type(NotificationType.REMIND)
-                                    .content(event.getStoreName() + "의 이벤트가 오픈되었습니다!")
-                                    .build()
-                    );
-                }
-            }
-        }
-    }*/
-
     @Transactional
     public void openEventsIfDue() {
         long now = LocalDateTime.now().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
-        Set<String> dueEventIds = redisTemplate.opsForZSet()
+        Set<String> dueMessages = redisTemplate.opsForZSet()
                 .rangeByScore(EVENT_OPEN_KEY, 0, now);
-        log.info("[Scheduler] Redis ZSET 조회 결과 = {}", dueEventIds);
+        log.info("[Scheduler] Redis ZSET 조회 결과 = {}", dueMessages);
 
-        if (dueEventIds == null || dueEventIds.isEmpty()) return;
+        if (dueMessages == null || dueMessages.isEmpty()) return;
 
-        for (String eventIdStr : dueEventIds) {
-            Long eventId = Long.valueOf(eventIdStr);
-
+        for (String messageJson : dueMessages) {
             try {
-                Event event = getEvent(eventId);
+                EventOpenMessage message = objectMapper.readValue(messageJson, EventOpenMessage.class);
+
+                Event event = getEvent(message.getEventId());
                 if (!event.isReady()) continue;
 
                 event.open();
 
                 // MQ 발행
-                EventOpenMessage message = EventOpenMessage.fromEvent(event);
                 eventOpenProducer.send(message);
 
                 log.info("[EventOpenSuccess]: eventId={}, store={}, openAt={}",
                         event.getId(), event.getStore().getName(), event.getOpenAt());
 
                 // ZSet에서 제거
-                redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, eventIdStr);
+                redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, messageJson);
 
             } catch (Exception e) {
-                log.error("이벤트 오픈 처리 실패: eventId={}", eventIdStr, e);
+                log.error("이벤트 오픈 처리 실패: eventId={}", messageJson, e);
             }
         }
     }
