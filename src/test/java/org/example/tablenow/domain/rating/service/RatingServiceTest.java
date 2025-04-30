@@ -42,25 +42,17 @@ public class RatingServiceTest {
     @InjectMocks
     private RatingService ratingService;
 
-    Long userId = 1L;
-    AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
-    User user = User.fromAuthUser(authUser);
-
-    Long storeId = 1L;
-    Double storeRating = 5.0;
-    Integer ratingCount = 2;
-    Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
-
-    Long ratingId = 1L;
-    Rating rating = Rating.builder().id(1L).user(user).store(store).rating(4).build();
-
     @Nested
     class 평점_등록 {
-        RatingRequestDto dto = new RatingRequestDto(4);
 
         @Test
         void 존재하지_않는_가게의_평점_등록_시_예외_발생() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+
             given(storeService.getStore(anyLong())).willThrow(new HandledException(ErrorCode.STORE_NOT_FOUND));
 
             // when & then
@@ -74,6 +66,12 @@ public class RatingServiceTest {
         @Test
         void 평점_중복_등록_시_예외_발생() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+            Store store = Store.builder().id(storeId).rating(5.0).ratingCount(2).build();
+
             given(storeService.getStore(anyLong())).willReturn(store);
             given(ratingRepository.existsByUserAndStore(anyLong(), anyLong())).willReturn(true);
 
@@ -88,6 +86,12 @@ public class RatingServiceTest {
         @Test
         void 해당_가게에_유저가_등록한_완료_예약이_없을_시_예외_발생() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+            Store store = Store.builder().id(storeId).rating(5.0).ratingCount(2).build();
+
             given(storeService.getStore(anyLong())).willReturn(store);
             given(ratingRepository.existsByUserAndStore(anyLong(), anyLong())).willReturn(false);
             willThrow(new HandledException(ErrorCode.RATING_RESERVATION_NOT_FOUND))
@@ -104,6 +108,14 @@ public class RatingServiceTest {
         @Test
         void 등록_성공() {
             // given
+            RatingRequestDto dto = new RatingRequestDto(4);
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+            Long storeId = 1L;
+            Double storeRating = 5.0;
+            Integer ratingCount = 2;
+            Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
+
             given(storeService.getStore(anyLong())).willReturn(store);
             given(ratingRepository.existsByUserAndStore(anyLong(), anyLong())).willReturn(false);
             given(ratingRepository.save(any(Rating.class))).willAnswer(invocation -> invocation.getArgument(0));
@@ -127,8 +139,19 @@ public class RatingServiceTest {
 
     @Nested
     class 평점_수정 {
-
         RatingRequestDto dto = new RatingRequestDto(4);
+
+        Long userId = 1L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+        User user = User.fromAuthUser(authUser);
+
+        Long storeId = 1L;
+        Double storeRating = 5.0;
+        Integer ratingCount = 2;
+        Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
+
+        Long ratingId = 1L;
+        Rating rating = Rating.builder().id(ratingId).user(user).store(store).rating(4).build();
 
         @Test
         void 존재하지_않는_가게의_평점_수정_시_예외_발생() {
@@ -148,7 +171,7 @@ public class RatingServiceTest {
         void 존재하지_않는_평점_수정_시_예외_발생() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(ratingRepository.findByUserIdAndStoreId(anyLong(), anyLong())).willReturn(Optional.empty());
+            given(ratingRepository.findByUser_IdAndStore_Id(anyLong(), anyLong())).willReturn(Optional.empty());
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () -> {
@@ -163,7 +186,7 @@ public class RatingServiceTest {
             // given
             ReflectionTestUtils.setField(store, "ratingCount", 0);
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(ratingRepository.findByUserIdAndStoreId(anyLong(), anyLong())).willReturn(Optional.of(rating));
+            given(ratingRepository.findByUser_IdAndStore_Id(anyLong(), anyLong())).willReturn(Optional.of(rating));
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () -> {
@@ -177,7 +200,7 @@ public class RatingServiceTest {
         void 수정_성공() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(ratingRepository.findByUserIdAndStoreId(anyLong(), anyLong())).willReturn(Optional.of(rating));
+            given(ratingRepository.findByUser_IdAndStore_Id(anyLong(), anyLong())).willReturn(Optional.of(rating));
 
             // when
             RatingUpdateResponseDto response = ratingService.updateRating(authUser, storeId, dto);
@@ -197,6 +220,17 @@ public class RatingServiceTest {
 
     @Nested
     class 평점_삭제 {
+        Long userId = 1L;
+        AuthUser authUser = new AuthUser(userId, "user@a.com", UserRole.ROLE_USER, "일반");
+        User user = User.fromAuthUser(authUser);
+
+        Long storeId = 1L;
+        Double storeRating = 5.0;
+        Integer ratingCount = 2;
+        Store store = Store.builder().id(storeId).rating(storeRating).ratingCount(ratingCount).build();
+
+        Long ratingId = 1L;
+        Rating rating = Rating.builder().id(1L).user(user).store(store).rating(4).build();
 
         @Test
         void 존재하지_않는_가게의_평점_삭제_시_예외_발생() {
@@ -216,7 +250,7 @@ public class RatingServiceTest {
         void 존재하지_않는_평점_삭제_시_예외_발생() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(ratingRepository.findByUserIdAndStoreId(anyLong(), anyLong())).willReturn(Optional.empty());
+            given(ratingRepository.findByUser_IdAndStore_Id(anyLong(), anyLong())).willReturn(Optional.empty());
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () -> {
@@ -231,7 +265,7 @@ public class RatingServiceTest {
             // given
             ReflectionTestUtils.setField(store, "ratingCount", 1);
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(ratingRepository.findByUserIdAndStoreId(anyLong(), anyLong())).willReturn(Optional.of(rating));
+            given(ratingRepository.findByUser_IdAndStore_Id(anyLong(), anyLong())).willReturn(Optional.of(rating));
 
             // when
             RatingDeleteResponseDto response = ratingService.deleteRating(authUser, storeId);
@@ -249,7 +283,7 @@ public class RatingServiceTest {
         void 삭제_성공() {
             // given
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(ratingRepository.findByUserIdAndStoreId(anyLong(), anyLong())).willReturn(Optional.of(rating));
+            given(ratingRepository.findByUser_IdAndStore_Id(anyLong(), anyLong())).willReturn(Optional.of(rating));
 
             // when
             RatingDeleteResponseDto response = ratingService.deleteRating(authUser, storeId);

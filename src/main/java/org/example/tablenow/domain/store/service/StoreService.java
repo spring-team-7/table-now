@@ -62,6 +62,7 @@ public class StoreService {
         validateStartTimeIsBeforeEndTime(request.getStartTime(), request.getEndTime());
 
         Long count = storeRepository.countActiveStoresByUser(user.getId());
+
         if (count >= MAX_STORES_COUNT) {
             throw new HandledException(ErrorCode.STORE_EXCEED_MAX);
         }
@@ -92,9 +93,9 @@ public class StoreService {
 
     @CacheEvict(value = "stores", allEntries = true)
     @Transactional
-    public StoreUpdateResponseDto updateStore(Long id, AuthUser authUser, StoreUpdateRequestDto request) {
+    public StoreUpdateResponseDto updateStore(Long storeId, AuthUser authUser, StoreUpdateRequestDto request) {
         User user = User.fromAuthUser(authUser);
-        Store store = getStore(id);
+        Store store = getStore(storeId);
         validateStoreOwnerId(store, user);
         validateUpdateStoreTime(request, store);
 
@@ -146,10 +147,10 @@ public class StoreService {
 
     @CacheEvict(value = "stores", allEntries = true)
     @Transactional
-    public StoreDeleteResponseDto deleteStore(Long id, AuthUser authUser) {
+    public StoreDeleteResponseDto deleteStore(Long storeId, AuthUser authUser) {
         User user = User.fromAuthUser(authUser);
 
-        Store store = getStore(id);
+        Store store = getStore(storeId);
 
         validateStoreOwnerId(store, user);
 
@@ -206,21 +207,9 @@ public class StoreService {
                 .toList();
     }
 
-    public Store getStore(Long id) {
-        return storeRepository.findByIdAndDeletedAtIsNull(id)
+    public Store getStore(Long storeId) {
+        return storeRepository.findByIdAndDeletedAtIsNull(storeId)
                 .orElseThrow(() -> new HandledException(ErrorCode.STORE_NOT_FOUND));
-    }
-
-    private Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
-        try {
-            Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
-            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
-
-            savePopularKeyword(authUser, keyword);
-            return storeRepository.searchStores(pageable, categoryId, keyword);
-        } catch (IllegalArgumentException e) {
-            throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
-        }
     }
 
     public void savePopularKeyword(AuthUser authUser, String keyword) {
@@ -267,6 +256,18 @@ public class StoreService {
 
     private String validateTimeKey(String timeKey) {
         return StringUtils.hasText(timeKey) ? timeKey : LocalDateTime.now().format(TIME_KEY_FORMATTER);
+    }
+
+    private Page<StoreSearchResponseDto> findAllStores(AuthUser authUser, int page, int size, String sort, String direction, Long categoryId, String keyword) {
+        try {
+            Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
+            Pageable pageable = PageRequest.of(page - 1, size, sortOption);
+
+            savePopularKeyword(authUser, keyword);
+            return storeRepository.searchStores(pageable, categoryId, keyword);
+        } catch (IllegalArgumentException e) {
+            throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
+        }
     }
 
     private Map<String, Integer> getRankMapByTimeKey(String timeKey) {

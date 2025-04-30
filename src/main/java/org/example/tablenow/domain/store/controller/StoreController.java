@@ -3,6 +3,7 @@ package org.example.tablenow.domain.store.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
+import org.example.tablenow.domain.store.dto.request.StoreSearchRequestDto;
 import org.example.tablenow.domain.store.dto.request.StoreUpdateRequestDto;
 import org.example.tablenow.domain.store.dto.response.*;
 import org.example.tablenow.domain.store.service.StoreService;
@@ -40,51 +41,41 @@ public class StoreController {
 
     // 가게 수정
     @Secured(UserRole.Authority.OWNER)
-    @PatchMapping("/v1/owner/stores/{id}")
-    public ResponseEntity<StoreUpdateResponseDto> updateStore(@PathVariable Long id,
+    @PatchMapping("/v1/owner/stores/{storeId}")
+    public ResponseEntity<StoreUpdateResponseDto> updateStore(@PathVariable Long storeId,
                                                               @AuthenticationPrincipal AuthUser authUser,
                                                               @Valid @RequestBody StoreUpdateRequestDto requestDto) {
-        return ResponseEntity.ok(storeService.updateStore(id, authUser, requestDto));
+        return ResponseEntity.ok(storeService.updateStore(storeId, authUser, requestDto));
     }
 
     // 가게 삭제
     @Secured(UserRole.Authority.OWNER)
-    @DeleteMapping("/v1/owner/stores/{id}")
-    public ResponseEntity<StoreDeleteResponseDto> deleteStore(@PathVariable Long id,
+    @DeleteMapping("/v1/owner/stores/{storeId}")
+    public ResponseEntity<StoreDeleteResponseDto> deleteStore(@PathVariable Long storeId,
                                                               @AuthenticationPrincipal AuthUser authUser) {
-        return ResponseEntity.ok(storeService.deleteStore(id, authUser));
+        return ResponseEntity.ok(storeService.deleteStore(storeId, authUser));
     }
 
-    // 가게 목록 조회 (RDBMS)
+    // 가게 검색 v1 (RDBMS)
     @GetMapping("/v1/stores")
     public ResponseEntity<Page<StoreSearchResponseDto>> getStoresV1(@AuthenticationPrincipal AuthUser authUser,
-                                                                     @RequestParam(defaultValue = "1") int page,
-                                                                     @RequestParam(defaultValue = "10") int size,
-                                                                     @RequestParam(defaultValue = "ratingCount") String sort,
-                                                                     @RequestParam(defaultValue = "desc") String direction,
-                                                                     @RequestParam(required = false) Long categoryId,
-                                                                     @RequestParam(required = false) String keyword
+                                                                    @ModelAttribute StoreSearchRequestDto request
     ) {
-        return ResponseEntity.ok(storeService.getStoresV1(authUser, page, size, sort, direction, categoryId, keyword));
+        return ResponseEntity.ok(storeService.getStoresV1(authUser, request.getPage(), request.getSize(), request.getSort(), request.getDirection(), request.getCategoryId(), request.getKeyword()));
     }
 
-    // 가게 목록 조회 (Redis)
+    // 가게 검색 v2 (Redis)
     @GetMapping("/v2/stores")
     public ResponseEntity<Page<StoreSearchResponseDto>> getStoresV2(@AuthenticationPrincipal AuthUser authUser,
-                                                                    @RequestParam(defaultValue = "1") int page,
-                                                                    @RequestParam(defaultValue = "10") int size,
-                                                                    @RequestParam(defaultValue = "ratingCount") String sort,
-                                                                    @RequestParam(defaultValue = "desc") String direction,
-                                                                    @RequestParam(required = false) Long categoryId,
-                                                                    @RequestParam(required = false) String keyword
+                                                                    @ModelAttribute StoreSearchRequestDto request
     ) {
-        return ResponseEntity.ok(storeService.getStoresV2(authUser, page, size, sort, direction, categoryId, keyword));
+        return ResponseEntity.ok(storeService.getStoresV2(authUser, request.getPage(), request.getSize(), request.getSort(), request.getDirection(), request.getCategoryId(), request.getKeyword()));
     }
 
     // 가게 정보 조회
-    @GetMapping("/v1/stores/{id}")
-    public ResponseEntity<StoreResponseDto> getStore(@PathVariable Long id) {
-        return ResponseEntity.ok(storeService.findStore(id));
+    @GetMapping("/v1/stores/{storeId}")
+    public ResponseEntity<StoreResponseDto> getStore(@PathVariable Long storeId) {
+        return ResponseEntity.ok(storeService.findStore(storeId));
     }
 
     // 가게 인기 검색 랭킹 조회
