@@ -1,9 +1,9 @@
 package org.example.tablenow.domain.user.dto.request;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@Builder
+@AllArgsConstructor
 @Getter
 public class UpdatePasswordRequest {
 

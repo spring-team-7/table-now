@@ -42,19 +42,19 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        signupRequest = SignupRequest.builder()
-                .email("user@test.com")
-                .password("password")
-                .name("이름")
-                .nickname("닉네임")
-                .phoneNumber("01012345678")
-                .userRole(UserRole.ROLE_USER)
-                .build();
+        signupRequest = new SignupRequest(
+                "user@test.com",
+                "password",
+                "이름",
+                "닉네임",
+                "01012345678",
+                UserRole.ROLE_USER
+        );
 
-        signinRequest = SigninRequest.builder()
-                .email(signupRequest.getEmail())
-                .password(signupRequest.getPassword())
-                .build();
+        signinRequest = new SigninRequest(
+                signupRequest.getEmail(),
+                signupRequest.getPassword()
+        );
     }
 
     @Nested
@@ -100,10 +100,10 @@ class AuthServiceTest {
         @Test
         void 존재하지_않는_이메일로_로그인_시_예외처리() {
             // given
-            SigninRequest invalidRequest = SigninRequest.builder()
-                    .email("invalid@test.com")
-                    .password("password")
-                    .build();
+            SigninRequest invalidRequest = new SigninRequest(
+                    "invalid@test.com",
+                    "password"
+            );
 
             // when & then
             assertThatThrownBy(() -> authService.signin(invalidRequest))
@@ -126,10 +126,10 @@ class AuthServiceTest {
         @Test
         void 비밀번호가_저장된_비밀번호와_일치하지_않을_시_예외처리() {
             // given
-            SigninRequest wrongPasswordRequest = SigninRequest.builder()
-                    .email("user@test.com")
-                    .password("wrongPassword")
-                    .build();
+            SigninRequest wrongPasswordRequest = new SigninRequest(
+                    "user@test.com",
+                    "wrongPassword"
+            );
 
             // when & then
             assertThatThrownBy(() -> authService.signin(wrongPasswordRequest))
@@ -195,14 +195,14 @@ class AuthServiceTest {
 
         @BeforeEach
         void setupLogout() {
-            SignupRequest request = SignupRequest.builder()
-                    .email("logout@test.com")
-                    .password("password")
-                    .name("로그아웃")
-                    .nickname("닉네임")
-                    .phoneNumber("01000000000")
-                    .userRole(UserRole.ROLE_USER)
-                    .build();
+            SignupRequest request = new SignupRequest(
+                    "logout@test.com",
+                    "password",
+                    "로그아웃",
+                    "닉네임",
+                    "01000000000",
+                    UserRole.ROLE_USER
+            );
 
             SignupResponse response = authService.signup(request);
             savedUser = userService.getUser(response.getId());

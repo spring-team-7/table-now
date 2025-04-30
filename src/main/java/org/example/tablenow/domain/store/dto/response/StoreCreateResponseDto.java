@@ -19,7 +19,9 @@ public class StoreCreateResponseDto {
     private final String address;
     private final String imageUrl;
     private final Integer capacity;
+    @JsonFormat(pattern = "HH:mm")
     private final LocalTime startTime;
+    @JsonFormat(pattern = "HH:mm")
     private final LocalTime endTime;
     private final Integer deposit;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -46,9 +48,9 @@ public class StoreCreateResponseDto {
         return StoreCreateResponseDto.builder()
                 .storeId(store.getId())
                 .name(store.getName())
-                .userId(store.getUser().getId())
-                .categoryId(store.getCategory().getId())
-                .categoryName(store.getCategory().getName())
+                .userId(store.getUserId())
+                .categoryId(store.getCategoryId())
+                .categoryName(store.getCategoryName())
                 .description(store.getDescription())
                 .address(store.getAddress())
                 .imageUrl(store.getImageUrl())

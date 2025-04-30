@@ -2,6 +2,7 @@ package org.example.tablenow.domain.store.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Id;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,7 @@ import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 import java.time.LocalDateTime;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document(indexName = "store", writeTypeHint = WriteTypeHint.FALSE)
 @Setting(settingPath = "elastic/store-setting.json")
 @Mapping(mappingPath = "elastic/store-mapping.json")
@@ -70,10 +71,10 @@ public class StoreDocument {
                 .ratingCount(store.getRatingCount())
                 .startTime(String.valueOf(store.getStartTime()))
                 .endTime(String.valueOf(store.getEndTime()))
-                .userId(store.getUser().getId())
-                .userName(store.getUser().getName())
-                .categoryId(store.getCategory().getId())
-                .categoryName(store.getCategory().getName())
+                .userId(store.getUserId())
+                .userName(store.getUserName())
+                .categoryId(store.getCategoryId())
+                .categoryName(store.getCategoryName())
                 .deletedAt(store.getDeletedAt())
                 .build();
     }

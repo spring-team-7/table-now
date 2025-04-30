@@ -4,12 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.example.tablenow.domain.user.enums.UserRole;
 import org.example.tablenow.global.constant.RegexConstants;
 
 @Getter
+@AllArgsConstructor
 public class SignupRequest {
 
     @Email
@@ -37,14 +38,4 @@ public class SignupRequest {
 
     @NotNull(message = "유저 타입 정보는 필수입니다.")
     private UserRole userRole;
-
-    @Builder
-    private SignupRequest(String email, String password, String name, String nickname, String phoneNumber, UserRole userRole) {
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.nickname = nickname;
-        this.phoneNumber = phoneNumber;
-        this.userRole = userRole;
-    }
 }

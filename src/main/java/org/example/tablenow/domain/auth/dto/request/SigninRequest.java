@@ -2,11 +2,11 @@ package org.example.tablenow.domain.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@Builder
 @Getter
+@AllArgsConstructor
 public class SigninRequest {
 
     @Email

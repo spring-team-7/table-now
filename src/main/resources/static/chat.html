@@ -48,7 +48,7 @@
     function openNewConnection() {
         const token = document.getElementById("accessToken").value;
 
-        const socket = new SockJS("/ws/chat?token=" + encodeURIComponent(token));
+        const socket = new WebSocket("/ws/chat?token=" + encodeURIComponent(token));
         stompClient = Stomp.over(socket);
         stompClient.debug = console.log;
 

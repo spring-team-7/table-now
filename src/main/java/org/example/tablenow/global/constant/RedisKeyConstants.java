@@ -15,5 +15,9 @@ public class RedisKeyConstants {
     public static final String EVENT_LOCK_KEY_PREFIX = LOCK_PREFIX + "event:";
     public static final String EVENT_OPEN_KEY = EVENT_PREFIX + "open:zset";
 
+    // 토큰 관련
+    public static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
+    public static final String BLACKLIST_TOKEN_KEY_PREFIX = "blacklistToken:";
+
     private RedisKeyConstants() {}
 }

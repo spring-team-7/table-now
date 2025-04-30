@@ -249,7 +249,7 @@ class UserServiceTest {
             User socialUser = createSocialUser(OAuthProvider.KAKAO, "kakao-user-id");
             given(userRepository.findById(USER_ID)).willReturn(Optional.of(socialUser));
 
-            UpdatePasswordRequest request = UpdatePasswordRequest.builder().build();
+            UpdatePasswordRequest request = new UpdatePasswordRequest("기존비번", "새비번");
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -263,10 +263,10 @@ class UserServiceTest {
             // given
             given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
 
-            UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                    .password(null)
-                    .newPassword("")
-                    .build();
+            UpdatePasswordRequest request = new UpdatePasswordRequest(
+                    null,
+                    ""
+            );
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -280,10 +280,10 @@ class UserServiceTest {
             // given
             given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
 
-            UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                    .password("encoded-password")
-                    .newPassword("0000") // 규칙에 안 맞는 비밀번호
-                    .build();
+            UpdatePasswordRequest request = new UpdatePasswordRequest(
+                    "encoded-password",
+                    "0000"
+            );
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -298,10 +298,10 @@ class UserServiceTest {
             given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
             given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
-            UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                    .password("wrong-password")
-                    .newPassword("newPassword123")
-                    .build();
+            UpdatePasswordRequest request = new UpdatePasswordRequest(
+                    "wrong-password",
+                    "newPassword123"
+            );
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -316,10 +316,10 @@ class UserServiceTest {
             given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
             given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
 
-            UpdatePasswordRequest request = UpdatePasswordRequest.builder()
-                    .password("encoded-password")
-                    .newPassword("newPassword123")
-                    .build();
+            UpdatePasswordRequest request = new UpdatePasswordRequest(
+                    "encoded-password",
+                    "newPassword123"
+            );
 
             // when
             SimpleUserResponse response = userService.updatePassword(authUser, request, REFRESH_TOKEN, ACCESS_TOKEN);

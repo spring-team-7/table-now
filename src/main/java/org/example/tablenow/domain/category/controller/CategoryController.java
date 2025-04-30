@@ -28,16 +28,16 @@ public class CategoryController {
 
     // 카테고리 수정
     @Secured("ROLE_ADMIN")
-    @PatchMapping("/v1/admin/categories/{id}")
-    public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequestDto requestDto) {
-        return ResponseEntity.ok(categoryService.updateCategory(id, requestDto));
+    @PatchMapping("/v1/admin/categories/{categoryId}")
+    public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Long categoryId, @Valid @RequestBody CategoryRequestDto requestDto) {
+        return ResponseEntity.ok(categoryService.updateCategory(categoryId, requestDto));
     }
 
     // 카테고리 삭제
     @Secured("ROLE_ADMIN")
-    @DeleteMapping("/v1/admin/categories/{id}")
-    public ResponseEntity<CategoryDeleteResponseDto> deleteCategory(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.deleteCategory(id));
+    @DeleteMapping("/v1/admin/categories/{categoryId}")
+    public ResponseEntity<CategoryDeleteResponseDto> deleteCategory(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(categoryService.deleteCategory(categoryId));
     }
 
     // 카테고리 목록 조회

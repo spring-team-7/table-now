@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.store.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.store.entity.Store;
@@ -14,7 +15,9 @@ public class StoreSearchResponseDto implements Serializable {
     private final Long categoryId;
     private final String categoryName;
     private final String imageUrl;
+    @JsonFormat(pattern = "HH:mm")
     private final LocalTime startTime;
+    @JsonFormat(pattern = "HH:mm")
     private final LocalTime endTime;
     private final Double rating;
     private final Integer ratingCount;
@@ -36,8 +39,8 @@ public class StoreSearchResponseDto implements Serializable {
         return StoreSearchResponseDto.builder()
                 .storeId(store.getId())
                 .name(store.getName())
-                .categoryId(store.getCategory().getId())
-                .categoryName(store.getCategory().getName())
+                .categoryId(store.getCategoryId())
+                .categoryName(store.getCategoryName())
                 .imageUrl(store.getImageUrl())
                 .startTime(store.getStartTime())
                 .endTime(store.getEndTime())
