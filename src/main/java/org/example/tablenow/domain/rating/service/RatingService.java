@@ -1,6 +1,5 @@
 package org.example.tablenow.domain.rating.service;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.rating.dto.request.RatingRequestDto;
 import org.example.tablenow.domain.rating.dto.response.RatingCreateResponseDto;
@@ -74,7 +73,7 @@ public class RatingService {
     }
 
     private Rating getRating(Long userId, Long storeId) {
-        return ratingRepository.findByUserIdAndStoreId(userId, storeId)
+        return ratingRepository.findByUser_IdAndStore_Id(userId, storeId)
                 .orElseThrow(() -> new HandledException(ErrorCode.RATING_NOT_FOUND));
     }
 

@@ -1,5 +1,6 @@
 package org.example.tablenow.domain.store.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 import org.example.tablenow.domain.store.entity.Store;
@@ -17,7 +18,9 @@ public class StoreResponseDto {
     private final String address;
     private final String imageUrl;
     private final Integer capacity;
+    @JsonFormat(pattern = "HH:mm")
     private final LocalTime startTime;
+    @JsonFormat(pattern = "HH:mm")
     private final LocalTime endTime;
     private final Integer deposit;
     private final Double rating;
@@ -45,9 +48,9 @@ public class StoreResponseDto {
         return StoreResponseDto.builder()
                 .storeId(store.getId())
                 .name(store.getName())
-                .userId(store.getUser().getId())
-                .categoryId(store.getCategory().getId())
-                .categoryName(store.getCategory().getName())
+                .userId(store.getUserId())
+                .categoryId(store.getCategoryId())
+                .categoryName(store.getCategoryName())
                 .description(store.getDescription())
                 .address(store.getAddress())
                 .imageUrl(store.getImageUrl())

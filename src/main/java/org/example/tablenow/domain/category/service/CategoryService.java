@@ -30,16 +30,16 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryResponseDto updateCategory(Long id, CategoryRequestDto requestDto) {
-        Category category = findCategory(id);
+    public CategoryResponseDto updateCategory(Long categoryId, CategoryRequestDto requestDto) {
+        Category category = findCategory(categoryId);
         validateExistCategoryName(requestDto.getName());
         category.updateName(requestDto.getName());
         return CategoryResponseDto.fromCategory(category);
     }
 
     @Transactional
-    public CategoryDeleteResponseDto deleteCategory(Long id) {
-        Category category = findCategory(id);
+    public CategoryDeleteResponseDto deleteCategory(Long categoryId) {
+        Category category = findCategory(categoryId);
         categoryRepository.delete(category);
         return CategoryDeleteResponseDto.fromCategory(category.getId());
     }
@@ -50,13 +50,13 @@ public class CategoryService {
         return categories.stream().map(CategoryResponseDto::fromCategory).collect(Collectors.toList());
     }
 
-    public Category findCategory(Long id) {
-        return categoryRepository.findById(id)
+    public Category findCategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new HandledException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
-    private void validateExistCategoryName(String name) {
-        if (categoryRepository.existsByName(name)) {
+    private void validateExistCategoryName(String categoryName) {
+        if (categoryRepository.existsByName(categoryName)) {
             throw new HandledException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         }
     }

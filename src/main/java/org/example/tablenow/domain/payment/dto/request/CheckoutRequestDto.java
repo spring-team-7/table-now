@@ -28,11 +28,11 @@ public class CheckoutRequestDto {
     public static CheckoutRequestDto fromReservation(Reservation reservation) {
         return CheckoutRequestDto.builder()
                 .orderId(String.valueOf(reservation.getId()))
-                .userId(reservation.getUser().getId())
-                .price(reservation.getStore().getDeposit())
-                .storeName(reservation.getStore().getName())
-                .userEmail(reservation.getUser().getEmail())
-                .userName(reservation.getUser().getName())
+                .userId(reservation.getUserId())
+                .price(reservation.getStoreDeposit())
+                .storeName(reservation.getStoreName())
+                .userEmail(reservation.getUserEmail())
+                .userName(reservation.getUserName())
                 .build();
 
     }
