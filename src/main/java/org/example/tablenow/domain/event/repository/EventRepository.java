@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
-    boolean existsByStoreIdAndEventTime(Long storeId, LocalDateTime eventTime);
+    boolean existsByStore_IdAndEventTime(Long storeId, LocalDateTime eventTime);
     Page<Event> findByStatus(EventStatus status, Pageable pageable);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Event e WHERE e.id = :id")
