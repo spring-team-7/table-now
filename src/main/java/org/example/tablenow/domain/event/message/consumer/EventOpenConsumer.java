@@ -25,7 +25,7 @@ public class EventOpenConsumer {
 
     private static final String EVENT_OPENED_MSG_TEMPLATE = "%s의 이벤트가 오픈되었습니다!";
 
-    @RabbitListener(queues = EVENT_OPEN_QUEUE)
+    @RabbitListener(queues = EVENT_OPEN_QUEUE, concurrency = "3")
     public void consume(EventOpenMessage message) {
         if (!isValid(message)) return;
 
