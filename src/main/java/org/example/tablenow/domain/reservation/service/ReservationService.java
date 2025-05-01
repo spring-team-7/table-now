@@ -111,7 +111,7 @@ public class ReservationService {
         User user = User.fromAuthUser(authUser);
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        return reservationRepository.findByUserIdAndStatus(user.getId(), status, pageable)
+        return reservationRepository.findByUser_IdAndStatus(user.getId(), status, pageable)
                 .map(ReservationResponseDto::fromReservation);
     }
 
@@ -123,7 +123,7 @@ public class ReservationService {
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        return reservationRepository.findByStoreIdAndStatus(store.getId(), status, pageable)
+        return reservationRepository.findByStore_IdAndStatus(store.getId(), status, pageable)
                 .map(ReservationResponseDto::fromReservation);
     }
 
