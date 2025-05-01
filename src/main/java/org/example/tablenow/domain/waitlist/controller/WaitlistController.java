@@ -3,8 +3,8 @@ package org.example.tablenow.domain.waitlist.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.waitlist.dto.request.WaitlistRequestDto;
-import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
 import org.example.tablenow.domain.waitlist.dto.response.WaitlistFindResponseDto;
+import org.example.tablenow.domain.waitlist.dto.response.WaitlistResponseDto;
 import org.example.tablenow.domain.waitlist.service.WaitlistService;
 import org.example.tablenow.global.dto.AuthUser;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +40,6 @@ public class WaitlistController {
     }
 
     // 내 대기 목록 조회
-    @GetMapping("/v1/waitlist/my")
     public ResponseEntity<List<WaitlistFindResponseDto>> getMyWaitlist(@AuthenticationPrincipal AuthUser authUser) {
         List<WaitlistFindResponseDto> myWaitlist = waitlistService.findMyWaitlist(authUser.getId());
         return ResponseEntity.ok(myWaitlist);

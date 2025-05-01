@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    boolean existsByUserIdAndStore_IdAndReservedAt(Long userId, Long storeId, LocalDateTime reservedAt);
+    boolean existsByUser_IdAndStore_IdAndReservedAt(Long userId, Long storeId, LocalDateTime reservedAt);
     boolean existsByStore_IdAndReservedAtAndIdNot(Long storeId, LocalDateTime reservedAt, Long id);
 
     @Query("""

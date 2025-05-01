@@ -44,7 +44,7 @@ public class EventService {
     public EventResponseDto createEvent(EventRequestDto request) {
         Store store = storeService.getStore(request.getStoreId());
 
-        if (eventRepository.existsByStoreIdAndEventTime(store.getId(), request.getEventTime())) {
+        if (eventRepository.existsByStore_IdAndEventTime(store.getId(), request.getEventTime())) {
             throw new HandledException(ErrorCode.EVENT_ALREADY_EXISTS);
         }
 

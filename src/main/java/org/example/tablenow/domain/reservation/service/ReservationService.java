@@ -209,7 +209,7 @@ public class ReservationService {
     }
 
     private void validateReservationDuplication(User user, Store store, LocalDateTime reservedAt) {
-        boolean exists = reservationRepository.existsByUserIdAndStore_IdAndReservedAt(
+        boolean exists = reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(
                 user.getId(), store.getId(), reservedAt
         );
 
