@@ -19,6 +19,7 @@ public class ReminderSendProducer {
     public void send(ReminderMessage message) {
         rabbitTemplate.convertAndSend(
                 RESERVATION_REMINDER_SEND_EXCHANGE,
+                "",
                 message
         );
 
