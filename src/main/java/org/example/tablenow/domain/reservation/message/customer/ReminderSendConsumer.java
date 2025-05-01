@@ -8,6 +8,7 @@ import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.reservation.message.dto.ReminderMessage;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +54,7 @@ public class ReminderSendConsumer {
 
         } catch (Exception e) {
             log.error("[ReminderSendConsumer][Notification] 알림 전송 실패 → userId={}, reservationId={}", user.getId(), message.getReservationId(), e);
+            throw new AmqpRejectAndDontRequeueException("[DLQ] 알림 전송 실패 → DLQ로 이동", e);
         }
     }
 }

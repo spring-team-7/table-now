@@ -1,21 +1,39 @@
 package org.example.tablenow.global.constant;
 
 public class RabbitConstant {
-    public static final String VACANCY_EXCHANGE = "vacancy.direct";
-    public static final String VACANCY_QUEUE = "vacancy.queue";
-    public static final String VACANCY_ROUTING_KEY = "vacancy.key";
+    // 빈자리 관련 PREFIX
+    public static final String VACANCY_PREFIX = "vacancy";
 
-    public static final String VACANCY_DLX = "vacancy.dlx";
-    public static final String VACANCY_DLQ = "vacancy.dlq";
+    // 예약 관련 PREFIX
+    public static final String RESERVATION_PREFIX = "reservation";
+    public static final String RESERVATION_REMINDER_PREFIX = RESERVATION_PREFIX + ".reminder";
 
-    public static final String EVENT_OPEN_EXCHANGE = "event.open.fanout";
-    public static final String EVENT_OPEN_QUEUE = "event.open.queue";
+    // 이벤트 관련 PREFIX
+    public static final String EVENT_PREFIX = "event";
+    public static final String EVENT_OPEN_PREFIX = EVENT_PREFIX + ".open";
 
-    public static final String RESERVATION_REMINDER_REGISTER_EXCHANGE = "reservation.reminder.register.exchange";
-    public static final String RESERVATION_REMINDER_REGISTER_QUEUE = "reservation.reminder.register.queue";
+    // 빈자리 알림
+    public static final String VACANCY_EXCHANGE = VACANCY_PREFIX + ".direct";
+    public static final String VACANCY_QUEUE = VACANCY_PREFIX + ".queue";
+    public static final String VACANCY_ROUTING_KEY = VACANCY_PREFIX + ".key";
 
-    public static final String RESERVATION_REMINDER_SEND_EXCHANGE = "reservation.reminder.send.exchange";
-    public static final String RESERVATION_REMINDER_SEND_QUEUE = "reservation.reminder.send.queue";
+    public static final String VACANCY_DLX = VACANCY_PREFIX + ".dlx";
+    public static final String VACANCY_DLQ = VACANCY_PREFIX + ".dlq";
+
+    // 예약 리마인드 알림
+    public static final String RESERVATION_REMINDER_SEND_EXCHANGE = RESERVATION_REMINDER_PREFIX + ".send.exchange";
+    public static final String RESERVATION_REMINDER_SEND_QUEUE = RESERVATION_REMINDER_PREFIX + ".send.queue";
+    public static final String RESERVATION_REMINDER_SEND_DLX = RESERVATION_REMINDER_PREFIX + ".send.dlx";
+    public static final String RESERVATION_REMINDER_SEND_DLQ = RESERVATION_REMINDER_PREFIX + ".send.dlq";
+    public static final String RESERVATION_REMINDER_SEND_RETRY_QUEUE = RESERVATION_REMINDER_PREFIX + ".send.retry.queue";
+    public static final String RESERVATION_REMINDER_SEND_RETRY_EXCHANGE = RESERVATION_REMINDER_PREFIX + ".send.retry.exchange";
+
+    public static final String RESERVATION_REMINDER_REGISTER_EXCHANGE = RESERVATION_REMINDER_PREFIX + ".register.exchange";
+    public static final String RESERVATION_REMINDER_REGISTER_QUEUE = RESERVATION_REMINDER_PREFIX + ".register.queue";
+
+    // 이벤트 오픈 알림
+    public static final String EVENT_OPEN_EXCHANGE = EVENT_OPEN_PREFIX + ".fanout";
+    public static final String EVENT_OPEN_QUEUE = EVENT_OPEN_PREFIX + ".queue";
 
     public static final String STORE_EXCHANGE = "store.exchange";
     public static final String STORE_CREATE = "store.create";
