@@ -8,6 +8,7 @@ import org.example.tablenow.domain.notification.enums.NotificationType;
 import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,8 @@ public class ChatConsumer {
                     receiverId, chatMessage.getReservationId());
 
         } catch (Exception e) {
-            log.error("[ChatConsumer] 채팅 알림 처리 중 예외 발생", e);
+            log.error("[ChatConsumer] 채팅 알림 처리 중 예외 발생 → chatMessage: {}", chatMessage, e);
+            throw new AmqpRejectAndDontRequeueException("[DLQ] 알림 전송 실패 → DLQ로 이동", e);
         }
     }
 

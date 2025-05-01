@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_EXCHANGE;
-import static org.example.tablenow.global.constant.RabbitConstant.VACANCY_ROUTING_KEY;
+import static org.example.tablenow.global.constant.RabbitConstant.CHAT_EXCHANGE;
+import static org.example.tablenow.global.constant.RabbitConstant.CHAT_ROUTING_KEY;
 
 @Slf4j
 @Component
@@ -70,7 +70,7 @@ public class ChatRetryService {
         props.setHeader(RETRY_HEADER, nextRetryCount);
 
         Message retryMessage = rabbitTemplate.getMessageConverter().toMessage(chatMessage, props);
-        rabbitTemplate.send(VACANCY_EXCHANGE, VACANCY_ROUTING_KEY, retryMessage);
+        rabbitTemplate.send(CHAT_EXCHANGE, CHAT_ROUTING_KEY, retryMessage);
 
         log.info("[DLQ] 재처리 시도 완료 → reservationId={}, senderId={}, retryCount={}",
                 chatMessage.getReservationId(), chatMessage.getSenderId(), nextRetryCount);
