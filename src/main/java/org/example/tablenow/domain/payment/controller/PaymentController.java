@@ -40,7 +40,7 @@ public class PaymentController {
     }
 
     @Secured(UserRole.Authority.USER)
-    @DeleteMapping("/v1/reservations/{reservationId}/payments/{paymentId}")
+    @PatchMapping("/v1/reservations/{reservationId}/payments/{paymentId}")
     public ResponseEntity<PaymentResponseDto> cancelPayment (
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long reservationId,
