@@ -93,7 +93,7 @@ public class SettlementCompleteJobConfig {
         writer.setDataSource(dataDBSource);
         writer.setSql("""
                 UPDATE `table-now`.settlement
-                SET status = :statusString,
+                SET status = :statusName,
                     updated_at = NOW()
                 WHERE id = :id
                 """);
