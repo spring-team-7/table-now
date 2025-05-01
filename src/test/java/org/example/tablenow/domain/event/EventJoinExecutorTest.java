@@ -50,33 +50,42 @@ public class EventJoinExecutorTest {
     @InjectMocks
     private EventJoinExecutor eventJoinExecutor;
 
-    Long eventId = 1L;
-    Long userId = 1L;
-    String userIdStr = String.valueOf(userId);
-    String zsetKey = "event:join:" + eventId;
+    private Long eventId;
+    private Long userId;
+    private String userIdStr;
+    private String zsetKey;
+    private AuthUser authUser;
+    private Event event;
 
-    AuthUser authUser = new AuthUser(userId, "test@test.com", UserRole.ROLE_USER, "일반회원");
-
-    Store store;
-    Event event;
+    private final LocalDateTime baseTime = LocalDateTime.of(2025, 4, 30, 0, 0);
 
     @BeforeEach
     void setUp() {
-        store = Store.builder()
+        eventId = 1L;
+        userId = 1L;
+        userIdStr = userId.toString();
+        zsetKey = "event:join:" + eventId;
+
+        authUser = new AuthUser(userId, "test@test.com", UserRole.ROLE_USER, "일반회원");
+
+        Store store = Store.builder()
                 .id(100L)
                 .capacity(10)
                 .build();
 
-        EventRequestDto dto = EventRequestDto.builder()
-                .storeId(store.getId())
-                .openAt(LocalDateTime.now().minusDays(1))
-                .eventTime(LocalDateTime.now().plusDays(1))
-                .limitPeople(5)
-                .build();
+        EventRequestDto dto = new EventRequestDto(
+                store.getId(),
+                "content",
+                baseTime.minusDays(1),
+                baseTime.plusHours(10),
+                baseTime.plusHours(18),
+                5
+        );
 
         event = Event.create(store, dto);
         ReflectionTestUtils.setField(event, "id", eventId);
         ReflectionTestUtils.setField(event, "status", EventStatus.OPENED);
+
         lenient().when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
     }
 
