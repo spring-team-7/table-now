@@ -55,14 +55,7 @@ public class EventService {
         Event event = Event.create(store, request);
         Event savedEvent = eventRepository.save(event);
 
-        long openEpoch = savedEvent.getOpenAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
-        EventOpenMessage message = EventOpenMessage.fromEvent(savedEvent);
-        try {
-            String messageJson = objectMapper.writeValueAsString(message);
-            redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, messageJson, openEpoch);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize EventOpenMessage", e);
-        }
+        saveEventOpenToRedis(savedEvent);
 
         return EventResponseDto.fromEvent(savedEvent);
     }
@@ -79,8 +72,7 @@ public class EventService {
                 request.getLimitPeople()
         );
 
-        long openEpoch = event.getOpenAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
-        redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, String.valueOf(event.getId()), openEpoch);
+        saveEventOpenToRedis(event);
 
         return EventResponseDto.fromEvent(event);
     }
@@ -103,8 +95,9 @@ public class EventService {
         validateReadyStatus(event);
 
         eventRepository.delete(event);
-        redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, String.valueOf(id));
-        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
+        eventRepository.save(event); // dirty checking 오류로 추가
+        removeEventOpenFromRedis(event);
+
         return EventDeleteResponseDto.fromEvent(event);
     }
 
@@ -113,9 +106,9 @@ public class EventService {
         Event event = getEvent(id);
 
         event.close();
+        eventRepository.save(event); // dirty checking 오류로 추가
+        removeEventOpenFromRedis(event);
 
-        redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, String.valueOf(id));
-        redisTemplate.delete(EVENT_JOIN_PREFIX + id);
         return EventCloseResponseDto.fromEvent(event);
     }
 
@@ -136,12 +129,13 @@ public class EventService {
                 if (!event.isReady()) continue;
 
                 event.open();
+                eventRepository.save(event); // dirty checking 오류로 추가
 
                 // MQ 발행
                 eventOpenProducer.send(message);
 
-                log.info("[EventOpenSuccess]: eventId={}, store={}, openAt={}",
-                        event.getId(), event.getStore().getName(), event.getOpenAt());
+//                log.info("[EventOpenSuccess]: eventId={}, store={}, openAt={}",
+//                        event.getId(), event.getStoreName(), event.getOpenAt());
 
                 // ZSet에서 제거
                 redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, messageJson);
@@ -161,5 +155,28 @@ public class EventService {
         if (!event.isReady()) {
             throw new HandledException(ErrorCode.INVALID_EVENT_STATUS);
         }
+    }
+
+    private void saveEventOpenToRedis(Event event) {
+        long openEpoch = event.getOpenAt().atZone(ZONE_ID_ASIA_SEOUL).toEpochSecond();
+        EventOpenMessage message = EventOpenMessage.fromEvent(event);
+
+        try {
+            String messageJson = objectMapper.writeValueAsString(message);
+            redisTemplate.opsForZSet().add(EVENT_OPEN_KEY, messageJson, openEpoch);
+        } catch (JsonProcessingException e) {
+            throw new HandledException(ErrorCode.EVENT_SERIALIZATION_FAILED);
+        }
+    }
+
+    private void removeEventOpenFromRedis(Event event) {
+        EventOpenMessage message = EventOpenMessage.fromEvent(event);
+        try {
+            String messageJson = objectMapper.writeValueAsString(message);
+            redisTemplate.opsForZSet().remove(EVENT_OPEN_KEY, messageJson);
+        } catch (JsonProcessingException e) {
+            throw new HandledException(ErrorCode.EVENT_SERIALIZATION_FAILED);
+        }
+        redisTemplate.delete(EVENT_JOIN_PREFIX + event.getId());
     }
 }
