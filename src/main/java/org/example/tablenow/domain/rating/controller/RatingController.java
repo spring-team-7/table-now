@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.rating.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.rating.dto.request.RatingRequestDto;
@@ -14,6 +16,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "평점 API")
 @Secured(UserRole.Authority.USER)
 @RestController
 @RequestMapping("/api")
@@ -23,6 +26,7 @@ public class RatingController {
     private final RatingService ratingService;
 
     // 평점 등록
+    @Operation(summary = "평점 등록")
     @PostMapping("/v1/stores/{storeId}/ratings")
     public ResponseEntity<RatingCreateResponseDto> createRating(@AuthenticationPrincipal AuthUser authUser,
                                                                 @PathVariable Long storeId,
@@ -31,6 +35,7 @@ public class RatingController {
     }
 
     // 평점 수정
+    @Operation(summary = "평점 수정")
     @PatchMapping("/v1/stores/{storeId}/ratings")
     public ResponseEntity<RatingUpdateResponseDto> updateRating(@AuthenticationPrincipal AuthUser authUser,
                                                                 @PathVariable Long storeId,
@@ -39,6 +44,7 @@ public class RatingController {
     }
 
     // 평점 삭제
+    @Operation(summary = "평점 삭제")
     @DeleteMapping("/v1/stores/{storeId}/ratings")
     public ResponseEntity<RatingDeleteResponseDto> deleteRating(@AuthenticationPrincipal AuthUser authUser,
                                                                 @PathVariable Long storeId) {
