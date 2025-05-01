@@ -6,6 +6,7 @@ import org.example.tablenow.domain.auth.dto.response.SignupResponse;
 import org.example.tablenow.domain.auth.dto.response.TokenResponse;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
+import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.global.exception.ErrorCode;
 import org.example.tablenow.global.exception.HandledException;
@@ -37,13 +38,17 @@ class AuthServiceTest {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private SignupRequest signupRequest;
     private SigninRequest signinRequest;
 
     @BeforeEach
     void setUp() {
+        String uniqueEmail = "user" + System.nanoTime() + "@test.com";
         signupRequest = new SignupRequest(
-                "user@test.com",
+                uniqueEmail,
                 "password",
                 "이름",
                 "닉네임",
@@ -116,6 +121,7 @@ class AuthServiceTest {
             // given
             User savedUser = userService.getUser(signupResponse.getId());
             savedUser.deleteUser();
+            userRepository.save(savedUser); // dirty checking을 못해서 save 처리 추가
 
             // when & then
             assertThatThrownBy(() -> authService.signin(signinRequest))
@@ -195,8 +201,9 @@ class AuthServiceTest {
 
         @BeforeEach
         void setupLogout() {
+            String uniqueEmail = "logout" + System.nanoTime() + "@test.com";
             SignupRequest request = new SignupRequest(
-                    "logout@test.com",
+                    uniqueEmail,
                     "password",
                     "로그아웃",
                     "닉네임",
