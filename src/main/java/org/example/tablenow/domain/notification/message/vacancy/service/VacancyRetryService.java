@@ -24,7 +24,7 @@ public class VacancyRetryService {
     private static final String RETRY_HEADER = "x-retry-count";
     private static final int MAX_RETRY_COUNT = 3;
 
-    public void process(Message message) {
+    public void  process(Message message) {
         try {
             VacancyEventDto event = parseMessage(message);
             int retryCount = extractRetryCount(message);
