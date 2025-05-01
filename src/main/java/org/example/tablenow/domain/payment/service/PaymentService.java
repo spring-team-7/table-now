@@ -35,7 +35,7 @@ public class PaymentService {
             throw new HandledException(ErrorCode.UNAUTHORIZED_RESERVATION_ACCESS);
         }
 
-        if (paymentRepository.existsByReservationId(reservationId)) {
+        if (paymentRepository.existsByReservation_Id(reservationId)) {
             throw new HandledException(ErrorCode.ALREADY_PAID);
         }
 
