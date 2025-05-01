@@ -23,13 +23,14 @@ public class ChatConsumer {
     @RabbitListener(queues = CHAT_QUEUE)
     public void consume(ChatMessageResponse chatMessage) {
         if (chatMessage == null) {
-            log.warn("[ChatConsumer] 수신한 메시지가 null입니다.");
+            log.warn("[ChatConsumer] 수신한 메시지가 null");
             return;
         }
 
         Long receiverId = determineReceiver(chatMessage);
         if (receiverId == null) {
-            log.warn("[ChatConsumer] receiverId를 결정할 수 없습니다. chatMessage: {}", chatMessage);
+            log.warn("[ChatConsumer] receiverId를 결정할 수 없음 → senderId={}, ownerId={}, reservationUserId={}",
+                    chatMessage.getSenderId(), chatMessage.getOwnerId(), chatMessage.getReservationUserId());
             return;
         }
 
@@ -44,9 +45,9 @@ public class ChatConsumer {
 
             log.info("[ChatConsumer] 채팅 알림 전송 완료 → receiverId={}, reservationId={}",
                     receiverId, chatMessage.getReservationId());
-
         } catch (Exception e) {
-            log.error("[ChatConsumer] 채팅 알림 처리 중 예외 발생 → chatMessage: {}", chatMessage, e);
+            log.error("[ChatConsumer] 채팅 알림 처리 중 예외 발생 → receiverId={}, reservationId={}",
+                    receiverId, chatMessage.getReservationId(), e);
             throw new AmqpRejectAndDontRequeueException("[DLQ] 알림 전송 실패 → DLQ로 이동", e);
         }
     }
