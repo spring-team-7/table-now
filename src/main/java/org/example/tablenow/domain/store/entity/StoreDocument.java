@@ -12,6 +12,12 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 import org.springframework.data.elasticsearch.annotations.WriteTypeHint;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+import static org.example.tablenow.global.constant.TimeConstants.TIME_HH_MM;
+import static org.example.tablenow.global.constant.TimeConstants.ZONE_ID_ASIA_SEOUL;
+import static org.example.tablenow.global.util.TimeFormatUtil.isValidUtcIso8601;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -77,5 +83,19 @@ public class StoreDocument {
                 .categoryName(store.getCategoryName())
                 .deletedAt(store.getDeletedAt())
                 .build();
+    }
+
+    public void convertTimeFormat() {
+        this.startTime = convertUtcIsoToKstHHmm(this.startTime);
+        this.endTime = convertUtcIsoToKstHHmm(this.endTime);
+    }
+
+    private String convertUtcIsoToKstHHmm(String timeStr) {
+        if (isValidUtcIso8601(timeStr)) {
+            ZonedDateTime utcTime = ZonedDateTime.parse(timeStr);
+            ZonedDateTime seoulTime = utcTime.withZoneSameInstant(ZONE_ID_ASIA_SEOUL);
+            return seoulTime.format(DateTimeFormatter.ofPattern(TIME_HH_MM));
+        }
+        return timeStr;
     }
 }

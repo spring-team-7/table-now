@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.store.service;
+package org.example.tablenow.domain.store.utils;
 
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
 import org.springframework.beans.factory.annotation.Qualifier;

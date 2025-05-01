@@ -9,6 +9,7 @@ import org.example.tablenow.domain.rating.entity.Rating;
 import org.example.tablenow.domain.rating.repository.RatingRepository;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.message.producer.StoreProducer;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.global.dto.AuthUser;
@@ -24,6 +25,7 @@ public class RatingService {
     private final RatingRepository ratingRepository;
     private final StoreService storeService;
     private final ReservationService reservationService;
+    private final StoreProducer storeProducer;
 
     @Transactional
     public RatingCreateResponseDto createRating(AuthUser authUser, Long storeId, RatingRequestDto requestDto) {
@@ -42,6 +44,7 @@ public class RatingService {
         Rating savedRating = ratingRepository.save(rating);
         store.applyRating(newRating);
 
+        storeProducer.publishStoreUpdate(store);
         return RatingCreateResponseDto.fromRating(savedRating);
     }
 
@@ -57,6 +60,7 @@ public class RatingService {
         rating.updateRating(newRating);
         store.updateRating(oldRating, newRating);
 
+        storeProducer.publishStoreUpdate(store);
         return RatingUpdateResponseDto.fromRating(rating);
     }
 
@@ -69,6 +73,7 @@ public class RatingService {
         store.removeRating(rating.getRating());
         ratingRepository.delete(rating);
 
+        storeProducer.publishStoreUpdate(store);
         return RatingDeleteResponseDto.fromRating(rating.getId());
     }
 

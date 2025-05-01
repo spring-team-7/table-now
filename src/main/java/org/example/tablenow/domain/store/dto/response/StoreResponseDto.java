@@ -7,6 +7,8 @@ import org.example.tablenow.domain.store.entity.Store;
 
 import java.time.LocalTime;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_HH_MM;
+
 @Getter
 public class StoreResponseDto {
     private final Long storeId;
@@ -18,9 +20,9 @@ public class StoreResponseDto {
     private final String address;
     private final String imageUrl;
     private final Integer capacity;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final LocalTime startTime;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final LocalTime endTime;
     private final Integer deposit;
     private final Double rating;

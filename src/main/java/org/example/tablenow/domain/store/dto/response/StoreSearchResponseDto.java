@@ -8,6 +8,8 @@ import org.example.tablenow.domain.store.entity.Store;
 import java.io.Serializable;
 import java.time.LocalTime;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_HH_MM;
+
 @Getter
 public class StoreSearchResponseDto implements Serializable {
     private final Long storeId;
@@ -15,9 +17,9 @@ public class StoreSearchResponseDto implements Serializable {
     private final Long categoryId;
     private final String categoryName;
     private final String imageUrl;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final LocalTime startTime;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final LocalTime endTime;
     private final Double rating;
     private final Integer ratingCount;

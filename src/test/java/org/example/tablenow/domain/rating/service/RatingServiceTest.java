@@ -8,6 +8,7 @@ import org.example.tablenow.domain.rating.entity.Rating;
 import org.example.tablenow.domain.rating.repository.RatingRepository;
 import org.example.tablenow.domain.reservation.service.ReservationService;
 import org.example.tablenow.domain.store.entity.Store;
+import org.example.tablenow.domain.store.message.producer.StoreProducer;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.enums.UserRole;
@@ -39,6 +40,8 @@ public class RatingServiceTest {
     private StoreService storeService;
     @Mock
     private ReservationService reservationService;
+    @Mock
+    private StoreProducer storeProducer;
     @InjectMocks
     private RatingService ratingService;
 
@@ -125,6 +128,7 @@ public class RatingServiceTest {
 
             // then
             verify(reservationService).validateCreateRating(anyLong(), anyLong());
+            verify(storeProducer).publishStoreUpdate(any(Store.class));
             assertAll(
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getUserId(), userId),
@@ -206,6 +210,7 @@ public class RatingServiceTest {
             RatingUpdateResponseDto response = ratingService.updateRating(authUser, storeId, dto);
 
             // then
+            verify(storeProducer).publishStoreUpdate(any(Store.class));
             assertAll(
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getUserId(), userId),
@@ -289,6 +294,7 @@ public class RatingServiceTest {
             RatingDeleteResponseDto response = ratingService.deleteRating(authUser, storeId);
 
             // then
+            verify(storeProducer).publishStoreUpdate(any(Store.class));
             assertAll(
                     () -> assertNotNull(response),
                     () -> assertEquals(response.getRatingId(), ratingId),
