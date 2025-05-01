@@ -70,6 +70,7 @@ public enum ErrorCode {
     EVENT_ALREADY_JOINED(HttpStatus.CONFLICT, "이미 해당 이벤트에 참가하였습니다."),
     EVENT_FULL(HttpStatus.BAD_REQUEST, "이벤트 정원이 초과되었습니다."),
     EVENT_LOCK_TIMEOUT(HttpStatus.CONFLICT, "이벤트 신청 대기 중 시간이 초과되었습니다."),
+    EVENT_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이벤트 메시지를 직렬화하는 데 실패했습니다."),
 
     // NOTIFICATION
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림이 존재하지 않습니다."),
