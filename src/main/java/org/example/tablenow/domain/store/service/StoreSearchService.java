@@ -138,10 +138,10 @@ public class StoreSearchService {
         Set<String> tokens = storeTextAnalyzerService.analyzeText(STORE_INDEX, STORE_ANALYZER, storeName);
 
         String emptyKeyword = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", "");
-        keys.add(emptyKeyword);
+        keys.addAll(scanKeys(emptyKeyword));
 
         for (String token : tokens) {
-            String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", token + "*");
+            String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", "*" + token + "*");
             keys.addAll(scanKeys(pattern));
         }
 
