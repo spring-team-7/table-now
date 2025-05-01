@@ -32,6 +32,8 @@ public class RabbitConstant {
     public static final String CHAT_EXCHANGE = "chat.exchange";
     public static final String CHAT_QUEUE = "chat.queue";
     public static final String CHAT_ROUTING_KEY = "chat.key";
+    public static final String CHAT_DLX = "chat.dlx";
+    public static final String CHAT_DLQ = "chat.dlq";
 
     public static final int TTL_MILLIS = 30000;
 }

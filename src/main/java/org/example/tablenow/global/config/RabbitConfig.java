@@ -192,7 +192,10 @@ public class RabbitConfig {
     // 채팅 알림 Queue, Exchange, Binding
     @Bean
     public Queue chatQueue() {
-        return new Queue(CHAT_QUEUE, true);
+        return QueueBuilder.durable(CHAT_QUEUE)
+                .withArgument("x-dead-letter-exchange", CHAT_DLX)
+                .withArgument("x-dead-letter-routing-key", CHAT_DLQ)
+                .build();
     }
 
     @Bean
@@ -206,6 +209,21 @@ public class RabbitConfig {
                 .bind(chatQueue())
                 .to(chatExchange())
                 .with(CHAT_ROUTING_KEY);
+    }
+
+    @Bean
+    public DirectExchange chatDlx() {
+        return new DirectExchange(CHAT_DLX);
+    }
+
+    @Bean
+    public Queue chatDlq() {
+        return QueueBuilder.durable(CHAT_DLQ).build();
+    }
+
+    @Bean
+    public Binding chatDlqBinding() {
+        return BindingBuilder.bind(chatDlq()).to(chatDlx()).with(CHAT_DLQ);
     }
 
     // 공통 설정
