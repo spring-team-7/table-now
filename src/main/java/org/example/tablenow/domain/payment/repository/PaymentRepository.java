@@ -11,5 +11,5 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    boolean existsByReservationId(Long reservationId);
+    boolean existsByReservation_Id(Long reservationId);
 }
