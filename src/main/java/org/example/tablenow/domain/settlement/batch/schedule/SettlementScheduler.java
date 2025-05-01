@@ -24,7 +24,7 @@ public class SettlementScheduler {
     private final JobLauncher jobLauncher;
     private final JobRegistry jobRegistry;
     private final RedissonClient redissonClient;
-// git commit -m "feat(settlement): SettlementScheduler에 Redisson Lock 적용 #"
+
     // 정산 등록: 1시간마다
     @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     public void runRegisterJob() throws Exception {
