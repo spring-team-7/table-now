@@ -120,7 +120,7 @@ public class PaymentServiceTest {
         void 이미_결제된_경우_예외_발생() {
             // given
             given(reservationService.getReservation(anyLong())).willReturn(reservation);
-            given(paymentRepository.existsByReservationId(reservationId)).willReturn(true);
+            given(paymentRepository.existsByReservation_Id(reservationId)).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -134,7 +134,7 @@ public class PaymentServiceTest {
         void Client에서_전달받은_금액과_가게의_예약금이_다른_경우_예외_발생() {
             // given
             given(reservationService.getReservation(anyLong())).willReturn(reservation);
-            given(paymentRepository.existsByReservationId(reservationId)).willReturn(false);
+            given(paymentRepository.existsByReservation_Id(reservationId)).willReturn(false);
 
             int forgedAmount = 25000;
             ReflectionTestUtils.setField(dto, "amount", forgedAmount);
@@ -151,7 +151,7 @@ public class PaymentServiceTest {
         void tosspayment에서_결제가_완료되지_않은_경우_예외_발생() {
             // given
             given(reservationService.getReservation(anyLong())).willReturn(reservation);
-            given(paymentRepository.existsByReservationId(reservationId)).willReturn(false);
+            given(paymentRepository.existsByReservation_Id(reservationId)).willReturn(false);
 
             TossPaymentConfirmResponseDto tossResponse = TossPaymentConfirmResponseDto.builder()
                     .paymentKey(dto.getPaymentKey())
@@ -175,7 +175,7 @@ public class PaymentServiceTest {
         void 결제_완료() {
             // given
             given(reservationService.getReservation(anyLong())).willReturn(reservation);
-            given(paymentRepository.existsByReservationId(reservationId)).willReturn(false);
+            given(paymentRepository.existsByReservation_Id(reservationId)).willReturn(false);
 
             TossPaymentConfirmResponseDto tossResponse = TossPaymentConfirmResponseDto.builder()
                     .paymentKey(dto.getPaymentKey())
