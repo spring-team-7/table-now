@@ -46,37 +46,36 @@ public class EventJoinServiceTest {
     @InjectMocks
     private EventJoinService eventJoinService;
 
-    Long eventId = 1L;
-    Long userId = 1L;
-    AuthUser authUser = new AuthUser(userId, "user@test.com", UserRole.ROLE_USER, "일반회원");
-    User user = User.fromAuthUser(authUser);
-
-    Store store;
-    Event event;
+    private Long eventId;
+    private AuthUser authUser;
+    private User user;
+    private Store store;
+    private Event event;
 
     @BeforeEach
     void setUp() {
+        eventId = 1L;
+        Long userId = 1L;
+        authUser = new AuthUser(userId, "user@test.com", UserRole.ROLE_USER, "일반회원");
+        user = User.fromAuthUser(authUser);
+
         store = Store.builder()
                 .id(100L)
                 .name("테스트 가게")
                 .capacity(10)
                 .build();
 
-        event = createEvent(eventId, EventStatus.OPENED);
-    }
-
-    private Event createEvent(Long id, EventStatus status) {
-        EventRequestDto dto = EventRequestDto.builder()
-                .storeId(store.getId())
-                .openAt(LocalDateTime.now().minusDays(1))
-                .eventTime(LocalDateTime.now().plusDays(1))
-                .limitPeople(10)
-                .build();
-
-        Event event = Event.create(store, dto);
-        ReflectionTestUtils.setField(event, "id", id);
-        ReflectionTestUtils.setField(event, "status", status);
-        return event;
+        EventRequestDto dto = new EventRequestDto(
+                store.getId(),
+                "content",
+                LocalDateTime.of(2025, 4, 29, 0, 0),
+                LocalDateTime.of(2025, 4, 30, 10, 0),
+                LocalDateTime.of(2025, 4, 30, 18, 0),
+                10
+        );
+        event = Event.create(store, dto);
+        ReflectionTestUtils.setField(event, "id", eventId);
+        ReflectionTestUtils.setField(event, "status", EventStatus.OPENED);
     }
 
     @Nested
