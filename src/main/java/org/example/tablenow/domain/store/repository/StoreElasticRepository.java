@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch.core.*;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.tablenow.domain.store.entity.StoreDocument;
@@ -20,7 +19,7 @@ import org.springframework.stereotype.Repository;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 import static org.example.tablenow.domain.store.util.StoreConstant.STORE_INDEX;
 
@@ -47,9 +46,7 @@ public class StoreElasticRepository {
 
             SearchResponse<StoreDocument> response = getStoreDocumentSearchResponse(pageable, boolQueryBuilder);
 
-            List<StoreDocument> results = response.hits().hits().stream()
-                    .map(Hit::source)
-                    .collect(Collectors.toList());
+            List<StoreDocument> results = convertResponseToList(response);
 
             long totalHits = response.hits().total().value();
 
@@ -58,6 +55,19 @@ public class StoreElasticRepository {
         } catch (IOException e) {
             throw new HandledException(ErrorCode.STORE_ELASTICSEARCH_QUERY_FAILED);
         }
+    }
+
+    private List<StoreDocument> convertResponseToList(SearchResponse<StoreDocument> response) {
+        return response.hits().hits().stream()
+                .map(h -> {
+                    StoreDocument doc = h.source();
+                    if (doc != null) {
+                        doc.convertTimeFormat();
+                    }
+                    return doc;
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     /**

@@ -9,6 +9,8 @@ import org.example.tablenow.domain.store.entity.StoreDocument;
 
 import java.io.Serializable;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_HH_MM;
+
 @Getter
 public class StoreDocumentResponseDto implements Serializable {
     private final Long storeId;
@@ -16,9 +18,9 @@ public class StoreDocumentResponseDto implements Serializable {
     private final Long categoryId;
     private final String categoryName;
     private final String imageUrl;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final String startTime;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final String endTime;
     private final Double rating;
     private final Integer ratingCount;
