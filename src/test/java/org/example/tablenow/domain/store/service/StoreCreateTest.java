@@ -1,10 +1,10 @@
 package org.example.tablenow.domain.store.service;
 
 import org.example.tablenow.domain.store.dto.request.StoreCreateRequestDto;
-import org.junit.jupiter.api.Test;
+import org.example.tablenow.domain.store.utils.StoreJdbcRepository;
+import org.example.tablenow.domain.store.utils.StoreRandomCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
