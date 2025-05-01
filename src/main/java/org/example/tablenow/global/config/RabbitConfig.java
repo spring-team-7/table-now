@@ -89,7 +89,10 @@ public class RabbitConfig {
     // 예약 리마인드 발송 Queue, Exchange, Binding
     @Bean
     public Queue reminderSendQueue() {
-        return new Queue(RESERVATION_REMINDER_SEND_QUEUE, true);
+        return QueueBuilder.durable(RESERVATION_REMINDER_SEND_QUEUE)
+                .withArgument("x-dead-letter-exchange", RESERVATION_REMINDER_SEND_DLX)
+                .withArgument("x-dead-letter-routing-key", RESERVATION_REMINDER_SEND_DLQ)
+                .build();
     }
 
     @Bean
@@ -100,6 +103,41 @@ public class RabbitConfig {
     @Bean
     public Binding reminderSendBinding() {
         return bindFanout(reminderSendQueue(), reminderSendExchange());
+    }
+
+    // 예약 리마인드 DLX 및 DLQ 설정
+    @Bean
+    public DirectExchange reminderSendDlx() {
+        return new DirectExchange(RESERVATION_REMINDER_SEND_DLX);
+    }
+
+    @Bean
+    public Queue reminderSendDlq() {
+        return buildDlqQueue(RESERVATION_REMINDER_SEND_DLQ);
+    }
+
+    @Bean
+    public Binding reminderSendDlqBinding() {
+        return bind(reminderSendDlq(), reminderSendDlx(), RESERVATION_REMINDER_SEND_DLQ);
+    }
+
+    // 예약 리마인드 RetryQueue
+    @Bean
+    public Queue reminderSendRetryQueue() {
+        return QueueBuilder.durable(RESERVATION_REMINDER_SEND_RETRY_QUEUE)
+                .withArgument("x-message-ttl", 30000)
+                .withArgument("x-dead-letter-exchange", RESERVATION_REMINDER_SEND_EXCHANGE)
+                .build();
+    }
+
+    @Bean
+    public FanoutExchange reminderSendRetryExchange() {
+        return new FanoutExchange(RESERVATION_REMINDER_SEND_RETRY_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Binding reminderSendRetryBinding() {
+        return bindFanout(reminderSendRetryQueue(), reminderSendRetryExchange());
     }
 
     // 가게 데이터 변경 (Create/Update/Delete) Queue, Exchange, Binding
