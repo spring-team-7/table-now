@@ -58,9 +58,12 @@ public class UserService {
         }
 
         user.deleteUser();
+        userRepository.save(user);
+
         if (StringUtils.hasText(user.getImageUrl())) {
             imageService.delete(user.getImageUrl());
         }
+
         tokenService.deleteRefreshToken(refreshToken);
         tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.WITHDRAWAL);
 
@@ -90,6 +93,7 @@ public class UserService {
         validatePassword(user, request.getPassword());
 
         user.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
 
         tokenService.deleteRefreshToken(refreshToken);
         tokenService.addToBlacklist(accessToken, user.getId(), BlacklistReason.PASSWORD_CHANGE);
@@ -126,6 +130,8 @@ public class UserService {
             }
             user.updateImageUrl(requestImageUrl);
         }
+
+        userRepository.save(user);
 
         return UserProfileResponse.fromUser(user);
     }
