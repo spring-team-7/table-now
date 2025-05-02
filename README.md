@@ -2,13 +2,28 @@
 
 실시간 식당 예약 및 방문 관리 시스템
 
-![Image](https://github.com/user-attachments/assets/847211cf-1514-4cf5-9407-1ae3a4ea67e3)
+<img src="https://github.com/user-attachments/assets/e35037b0-1ebd-47d9-8f68-0e7fbf5c5185" width="1200"/>
 
 Notion으로 보기: <a href="https://www.notion.so/teamsparta/7-Table-Now-1e32dc3ef514806f9160e0e3f16041fd#1e52dc3ef51480d28048de0d958e1f2f"><code>🍀 Table-Now</code></a>
 
 ---
 
-## 📌 프로젝트 소개
+## 📚 목차
+
+- [🚀 프로젝트 소개](#-프로젝트-소개)
+- [🎯 핵심 목표](#-핵심-목표)
+- [📌 주요 기능](#-주요-기능)
+- [🛠️ 사용 기술](#️-사용-기술)
+- [🏗️ 아키텍처](#️-아키텍처)
+- [🧠 기술적 의사결정](#-기술적-의사결정)
+- [🧯 트러블 슈팅](#-트러블-슈팅)
+- [🗂️ API 명세서](#-api-명세서)
+- [🗂️ ERD](#-erd)
+- [🧑‍💻 팀원 소개](#-팀원-소개)
+
+---
+
+## 🚀 프로젝트 소개
 
 TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원하는 실시간 예약 관리 시스템입니다.  
 고객, 사장님, 관리자 각각의 요구를 충족하는 다양한 기능을 제공합니다.
@@ -139,8 +154,6 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
   </tr>
 </table>
 
-<br>
-
 ---
 
 ## 🏗️ 아키텍처
@@ -183,7 +196,7 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
 
 ## 🗂️ API 명세서
 
-[API 명세서 보기](https://www.notion.so/teamsparta/7-Table-Now-1e32dc3ef514806f9160e0e3f16041fd?pvs=4#1e52dc3ef514803f9751e265bf112b3a)
+[API 명세서 보기](https://www.notion.so/teamsparta/1ce2dc3ef5148199b5c6ddb96bbfd911?v=1ce2dc3ef51481fb920d000c22c52449)
 
 ---
 
