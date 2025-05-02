@@ -27,6 +27,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
     private final RabbitMQProperties rabbitMQProperties;
 
+    @Value("${spring.rabbitmq.host}")
+    private String rabbitMqHost;
+
+    @Value("${spring.rabbitmq.port}")
+    private int rabbitMqPort;
+
+
     @Value("${chat.broker}")
     private String brokerType;
 
@@ -49,8 +56,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         } else if ("rabbit".equalsIgnoreCase(brokerType)) {
             // [RabbitMQ Relay] MQ로 relay
             registry.enableStompBrokerRelay(WebSocketConstants.TOPIC_PREFIX_RELAY)
-                    .setRelayHost("localhost")  // RabbitMQ 서버 주소
-                    .setRelayPort(61613)        // RabbitMQ STOMP 포트 (TCP)
+                    .setRelayHost(rabbitMqHost)  // RabbitMQ 서버 주소
+                    .setRelayPort(rabbitMqPort)    // RabbitMQ STOMP 포트 (TCP)
                     .setSystemLogin(rabbitMQProperties.getUsername())
                     .setSystemPasscode(rabbitMQProperties.getPassword())
                     .setClientLogin(rabbitMQProperties.getUsername())
