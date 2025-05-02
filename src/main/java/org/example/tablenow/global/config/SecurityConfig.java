@@ -38,7 +38,14 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                    .requestMatchers(
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**"
+                    ).permitAll()
+
+                    .requestMatchers(
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/refresh"
                         ).authenticated()

@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.chat.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.chat.dto.response.ChatAvailabilityResponse;
 import org.example.tablenow.domain.chat.dto.response.ChatMessageResponse;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "채팅 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -22,6 +25,7 @@ public class ChatController {
 
     private final ChatMessageService chatMessageService;
 
+    @Operation(summary = "채팅 가능 여부 확인")
     @GetMapping("/v1/chats/{reservationId}/availability")
     public ResponseEntity<ChatAvailabilityResponse> checkChatAvailability(
             @PathVariable Long reservationId,
@@ -30,6 +34,7 @@ public class ChatController {
         return ResponseEntity.ok(chatMessageService.isChatAvailable(reservationId, authUser.getId()));
     }
 
+    @Operation(summary = "채팅 메시지 목록 조회")
     @GetMapping("/v1/chats/{reservationId}")
     public ResponseEntity<PageResponse<ChatMessageResponse>> getChatMessages(
             @PathVariable Long reservationId,
@@ -40,6 +45,7 @@ public class ChatController {
         return ResponseEntity.ok(new PageResponse<>(page));
     }
 
+    @Operation(summary = "채팅 읽음 처리")
     @PatchMapping("/v1/chats/{reservationId}/read")
     public ResponseEntity<ChatReadStatusResponse> changeReadStatus(
             @PathVariable Long reservationId,

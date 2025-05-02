@@ -19,5 +19,8 @@ public class RedisKeyConstants {
     public static final String REFRESH_TOKEN_KEY_PREFIX = "refreshToken:";
     public static final String BLACKLIST_TOKEN_KEY_PREFIX = "blacklistToken:";
 
+    // 정산 관련
+    public static final String SETTLEMENT_SCHEDULE_LOCK_KEY = "settlement-schedule-lock";
+
     private RedisKeyConstants() {}
 }
