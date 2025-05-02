@@ -1,4 +1,4 @@
-package org.example.tablenow.domain.store.service;
+package org.example.tablenow.domain.store.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

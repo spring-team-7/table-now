@@ -8,6 +8,9 @@ import org.example.tablenow.domain.store.entity.Store;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_HH_MM;
+import static org.example.tablenow.global.constant.TimeConstants.TIME_YYYY_MM_DD_HH_MM_SS;
+
 @Getter
 public class StoreUpdateResponseDto {
     private final Long storeId;
@@ -19,12 +22,12 @@ public class StoreUpdateResponseDto {
     private final String address;
     private final String imageUrl;
     private final Integer capacity;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final LocalTime startTime;
-    @JsonFormat(pattern = "HH:mm")
+    @JsonFormat(pattern = TIME_HH_MM)
     private final LocalTime endTime;
     private final Integer deposit;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime updatedAt;
 
     @Builder

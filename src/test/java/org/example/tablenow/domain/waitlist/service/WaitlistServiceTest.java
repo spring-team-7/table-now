@@ -176,7 +176,7 @@ class WaitlistServiceTest {
             String lockKey = String.format("lock:store:10:date:%s", requestDto.getWaitDate());
             RLock mockLock = mock(RLock.class);
             given(redissonClient.getLock(lockKey)).willReturn(mockLock);
-            given(mockLock.tryLock(2, 1, TimeUnit.SECONDS)).willReturn(true);
+            given(mockLock.tryLock(2, 2, TimeUnit.SECONDS)).willReturn(true);
             given(mockLock.isHeldByCurrentThread()).willReturn(true);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
@@ -206,7 +206,7 @@ class WaitlistServiceTest {
             String lockKey = String.format("lock:store:10:date:%s", requestDto.getWaitDate());
             RLock mockLock = mock(RLock.class);
             given(redissonClient.getLock(lockKey)).willReturn(mockLock);
-            given(mockLock.tryLock(2, 1, TimeUnit.SECONDS)).willReturn(false);
+            given(mockLock.tryLock(2, 2, TimeUnit.SECONDS)).willReturn(false);
 
             HandledException exception = assertThrows(HandledException.class, () ->
                 waitlistService.registerLockWaitlist(1L, requestDto)
@@ -225,7 +225,7 @@ class WaitlistServiceTest {
             String lockKey = String.format("lock:store:10:date:%s", requestDto.getWaitDate());
             RLock mockLock = mock(RLock.class);
             given(redissonClient.getLock(lockKey)).willReturn(mockLock);
-            given(mockLock.tryLock(2, 1, TimeUnit.SECONDS)).willThrow(new InterruptedException());
+            given(mockLock.tryLock(2, 2, TimeUnit.SECONDS)).willThrow(new InterruptedException());
 
             HandledException exception = assertThrows(HandledException.class, () ->
                 waitlistService.registerLockWaitlist(1L, requestDto)

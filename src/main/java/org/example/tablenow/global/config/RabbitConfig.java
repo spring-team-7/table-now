@@ -89,7 +89,10 @@ public class RabbitConfig {
     // 예약 리마인드 발송 Queue, Exchange, Binding
     @Bean
     public Queue reminderSendQueue() {
-        return new Queue(RESERVATION_REMINDER_SEND_QUEUE, true);
+        return QueueBuilder.durable(RESERVATION_REMINDER_SEND_QUEUE)
+                .withArgument("x-dead-letter-exchange", RESERVATION_REMINDER_SEND_DLX)
+                .withArgument("x-dead-letter-routing-key", RESERVATION_REMINDER_SEND_DLQ)
+                .build();
     }
 
     @Bean
@@ -102,40 +105,131 @@ public class RabbitConfig {
         return bindFanout(reminderSendQueue(), reminderSendExchange());
     }
 
+    // 예약 리마인드 DLX 및 DLQ 설정
+    @Bean
+    public DirectExchange reminderSendDlx() {
+        return new DirectExchange(RESERVATION_REMINDER_SEND_DLX);
+    }
+
+    @Bean
+    public Queue reminderSendDlq() {
+        return buildDlqQueue(RESERVATION_REMINDER_SEND_DLQ);
+    }
+
+    @Bean
+    public Binding reminderSendDlqBinding() {
+        return bind(reminderSendDlq(), reminderSendDlx(), RESERVATION_REMINDER_SEND_DLQ);
+    }
+
+    // 예약 리마인드 RetryQueue
+    @Bean
+    public Queue reminderSendRetryQueue() {
+        return QueueBuilder.durable(RESERVATION_REMINDER_SEND_RETRY_QUEUE)
+                .withArgument("x-message-ttl", 30000)
+                .withArgument("x-dead-letter-exchange", RESERVATION_REMINDER_SEND_EXCHANGE)
+                .build();
+    }
+
+    @Bean
+    public FanoutExchange reminderSendRetryExchange() {
+        return new FanoutExchange(RESERVATION_REMINDER_SEND_RETRY_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Binding reminderSendRetryBinding() {
+        return bindFanout(reminderSendRetryQueue(), reminderSendRetryExchange());
+    }
+
     // 가게 데이터 변경 (Create/Update/Delete) Queue, Exchange, Binding
     @Bean
     public Queue storeCreateQueue() {
-        return new Queue(STORE_CREATE_QUEUE, true);
+        return buildMainQueue(STORE_CREATE_QUEUE, STORE_CREATE_DLQ);
     }
+
     @Bean
     public Queue storeUpdateQueue() {
-        return new Queue(STORE_UPDATE_QUEUE, true);
+        return buildMainQueue(STORE_UPDATE_QUEUE, STORE_UPDATE_DLQ);
     }
+
     @Bean
     public Queue storeDeleteQueue() {
-        return new Queue(STORE_DELETE_QUEUE, true);
+        return buildMainQueue(STORE_DELETE_QUEUE, STORE_DELETE_DLQ);
     }
+
     @Bean
-    public DirectExchange storeExchange(){
+    public Queue storeCreateDlq() {
+        return buildDlqQueue(STORE_CREATE_DLQ);
+    }
+
+    @Bean
+    public Queue storeUpdateDlq() {
+        return buildDlqQueue(STORE_UPDATE_DLQ);
+    }
+
+    @Bean
+    public Queue storeDeleteDlq() {
+        return buildDlqQueue(STORE_DELETE_DLQ);
+    }
+
+    private Queue buildMainQueue(String queueName, String dlqRoutingKey) {
+        return QueueBuilder.durable(queueName)
+                .withArgument("x-dead-letter-exchange", STORE_DLX)
+                .withArgument("x-dead-letter-routing-key", dlqRoutingKey)
+                .withArgument("x-message-ttl", TTL_MILLIS)
+                .build();
+    }
+
+    private Queue buildDlqQueue(String dlqName) {
+        return QueueBuilder.durable(dlqName).build();
+    }
+
+    @Bean
+    public DirectExchange storeExchange() {
         return new DirectExchange(STORE_EXCHANGE);
     }
+
     @Bean
-    public Binding storeCreateBinding(){
-        return BindingBuilder.bind(storeCreateQueue()).to(storeExchange()).with(STORE_CREATE);
+    public DirectExchange storeDlx() {
+        return new DirectExchange(STORE_DLX);
     }
+
     @Bean
-    public Binding storeUpdateBinding(){
-        return BindingBuilder.bind(storeUpdateQueue()).to(storeExchange()).with(STORE_UPDATE);
+    public Binding storeCreateBinding(Queue storeCreateQueue, DirectExchange storeExchange) {
+        return bind(storeCreateQueue, storeExchange, STORE_CREATE);
     }
+
     @Bean
-    public Binding storeDeleteBinding(){
-        return BindingBuilder.bind(storeDeleteQueue()).to(storeExchange()).with(STORE_DELETE);
+    public Binding storeUpdateBinding(Queue storeUpdateQueue, DirectExchange storeExchange) {
+        return bind(storeUpdateQueue, storeExchange, STORE_UPDATE);
+    }
+
+    @Bean
+    public Binding storeDeleteBinding(Queue storeDeleteQueue, DirectExchange storeExchange) {
+        return bind(storeDeleteQueue, storeExchange, STORE_DELETE);
+    }
+
+    @Bean
+    public Binding storeCreateDlqBinding(Queue storeCreateDlq, DirectExchange storeDlx) {
+        return bind(storeCreateDlq, storeDlx, STORE_CREATE_DLQ);
+    }
+
+    @Bean
+    public Binding storeUpdateDlqBinding(Queue storeUpdateDlq, DirectExchange storeDlx) {
+        return bind(storeUpdateDlq, storeDlx, STORE_UPDATE_DLQ);
+    }
+
+    @Bean
+    public Binding storeDeleteDlqBinding(Queue storeDeleteDlq, DirectExchange storeDlx) {
+        return bind(storeDeleteDlq, storeDlx, STORE_DELETE_DLQ);
     }
 
     // 채팅 알림 Queue, Exchange, Binding
     @Bean
     public Queue chatQueue() {
-        return new Queue(CHAT_QUEUE, true);
+        return QueueBuilder.durable(CHAT_QUEUE)
+                .withArgument("x-dead-letter-exchange", CHAT_DLX)
+                .withArgument("x-dead-letter-routing-key", CHAT_DLQ)
+                .build();
     }
 
     @Bean
@@ -144,11 +238,23 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding chatBinding() {
-        return BindingBuilder
-                .bind(chatQueue())
-                .to(chatExchange())
-                .with(CHAT_ROUTING_KEY);
+    public Binding chatBinding(Queue chatQueue, DirectExchange chatExchange) {
+        return bind(chatQueue, chatExchange, CHAT_ROUTING_KEY);
+    }
+
+    @Bean
+    public DirectExchange chatDlx() {
+        return new DirectExchange(CHAT_DLX);
+    }
+
+    @Bean
+    public Queue chatDlq() {
+        return QueueBuilder.durable(CHAT_DLQ).build();
+    }
+
+    @Bean
+    public Binding chatDlqBinding(Queue chatDlq, DirectExchange chatDlx) {
+        return bind(chatDlq, chatDlx, CHAT_DLQ);
     }
 
     // 공통 설정
@@ -175,5 +281,9 @@ public class RabbitConfig {
 
     private Binding bindFanout(Queue queue, FanoutExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange);
+    }
+
+    private Binding bind(Queue queue, DirectExchange exchange, String routingKey) {
+        return BindingBuilder.bind(queue).to(exchange).with(routingKey);
     }
 }

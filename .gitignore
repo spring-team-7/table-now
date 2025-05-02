@@ -54,3 +54,6 @@ out/
 ### logstash
 logs/
 /src/main/resources/logback-spring.xml
+
+### copilot
+/copilot/*

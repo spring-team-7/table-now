@@ -23,14 +23,14 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         WHERE r.user.id = :userId
           AND (:status IS NULL OR r.status = :status)
         """)
-    Page<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status, Pageable pageable);
+    Page<Reservation> findByUser_IdAndStatus(Long userId, ReservationStatus status, Pageable pageable);
 
     @Query("""
         SELECT r FROM Reservation r
         WHERE r.store.id = :storeId
           AND (:status IS NULL OR r.status = :status)
         """)
-    Page<Reservation> findByStoreIdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
+    Page<Reservation> findByStore_IdAndStatus(Long storeId, ReservationStatus status, Pageable pageable);
 
     @Query("""
         SELECT r FROM Reservation r
@@ -40,14 +40,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findAllByReservedAtBetween(LocalDateTime start, LocalDateTime end);
 
     @Query("""
-            SELECT COUNT(r)
-            FROM Reservation r
-            WHERE r.store = :store
-              AND r.status = 'RESERVED'
-        """)
-    long countReservedTables(@Param("store") Store store);
-
-    @Query("""
     SELECT COUNT(r)
     FROM Reservation r
     WHERE r.store = :store
@@ -55,7 +47,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       AND DATE(r.reservedAt) = :date
     """)
     long countReservedTablesByDate(@Param("store") Store store, @Param("date") LocalDate date);
-
 
     @Query("""
             SELECT r
@@ -73,5 +64,4 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
               AND r.status = 'COMPLETED'
             """)
     boolean existsReviewableReservation(Long userId, Long storeId);
-
 }

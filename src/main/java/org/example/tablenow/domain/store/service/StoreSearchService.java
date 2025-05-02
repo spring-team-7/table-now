@@ -68,7 +68,6 @@ public class StoreSearchService {
     public void evictSearchCacheForNewStore(StoreDocument storeDocument) {
         Set<String> keysToDelete = new HashSet<>();
         keysToDelete.addAll(scanKeysByKeywordTokens(storeDocument.getName()));
-        keysToDelete.addAll(scanKeysByCategoryId(storeDocument.getCategoryId()));
 
         if (!keysToDelete.isEmpty()) {
             stringRedisTemplate.delete(keysToDelete);
@@ -138,17 +137,15 @@ public class StoreSearchService {
         Set<String> keys = new HashSet<>();
         Set<String> tokens = storeTextAnalyzerService.analyzeText(STORE_INDEX, STORE_ANALYZER, storeName);
 
+        String emptyKeyword = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", "");
+        keys.addAll(scanKeys(emptyKeyword));
+
         for (String token : tokens) {
-            String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", token);
+            String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "keyword", "*" + token + "*");
             keys.addAll(scanKeys(pattern));
         }
 
         return keys;
-    }
-
-    private Set<String> scanKeysByCategoryId(Long categoryId) {
-        String pattern = StoreKeyGenerator.generateStoreKeyByPattern(STORE_SEARCH_KEY, "categoryId", String.valueOf(categoryId));
-        return scanKeys(pattern);
     }
 
     private Set<String> scanKeys(String pattern) {

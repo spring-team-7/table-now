@@ -118,7 +118,7 @@ public class ReservationServiceTest {
             ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
-            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(false);
+            given(reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(false);
             given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -151,7 +151,7 @@ public class ReservationServiceTest {
             ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
             given(reservationRepository.countReservedTablesByDate(any(), any())).willReturn(0L);
-            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(true);
+            given(reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(anyLong(), anyLong(), any())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -170,7 +170,7 @@ public class ReservationServiceTest {
             // given
             ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(true);
+            given(reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(true);
 
             // when & then
             HandledException exception = assertThrows(HandledException.class, () ->
@@ -184,7 +184,7 @@ public class ReservationServiceTest {
             // given
             ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             ReflectionTestUtils.setField(dto, "reservedAt", LocalDateTime.of(2025, 4, 10, 23, 0));
 
             // when & then
@@ -199,7 +199,7 @@ public class ReservationServiceTest {
             // given
             ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any(Reservation.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -216,7 +216,7 @@ public class ReservationServiceTest {
             // given
             ReservationRequestDto dto = new ReservationRequestDto(storeId, reservedAt);
             given(storeService.getStore(anyLong())).willReturn(store);
-            given(reservationRepository.existsByUserIdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
+            given(reservationRepository.existsByUser_IdAndStore_IdAndReservedAt(anyLong(), any(), any())).willReturn(false);
             given(reservationRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
@@ -291,7 +291,7 @@ public class ReservationServiceTest {
             // given
             ReservationStatus status = ReservationStatus.RESERVED;
             Page<Reservation> result = new PageImpl<>(List.of(reserved1, reserved2));
-            given(reservationRepository.findByUserIdAndStatus(eq(userId), eq(status), any(Pageable.class)))
+            given(reservationRepository.findByUser_IdAndStatus(eq(userId), eq(status), any(Pageable.class)))
                     .willReturn(result);
 
             // when
@@ -319,7 +319,7 @@ public class ReservationServiceTest {
             ReservationStatus status = ReservationStatus.CANCELED;
             Page<Reservation> result = new PageImpl<>(List.of(reserved1, reserved2));
 
-            given(reservationRepository.findByUserIdAndStatus(eq(userId), eq(status), any(Pageable.class)))
+            given(reservationRepository.findByUser_IdAndStatus(eq(userId), eq(status), any(Pageable.class)))
                     .willReturn(result);
 
             // when
@@ -339,7 +339,7 @@ public class ReservationServiceTest {
             ReservationStatus status = ReservationStatus.COMPLETED;
             Page<Reservation> result = new PageImpl<>(List.of(reserved1, reserved2));
 
-            given(reservationRepository.findByUserIdAndStatus(eq(userId), eq(status), any(Pageable.class)))
+            given(reservationRepository.findByUser_IdAndStatus(eq(userId), eq(status), any(Pageable.class)))
                     .willReturn(result);
 
             // when
@@ -380,7 +380,7 @@ public class ReservationServiceTest {
 
             given(storeService.getStore(eq(storeId))).willReturn(store);
             willDoNothing().given(storeService).validateStoreOwnerId(any(Store.class), any(User.class));
-            given(reservationRepository.findByStoreIdAndStatus(eq(storeId), eq(status), any(Pageable.class)))
+            given(reservationRepository.findByStore_IdAndStatus(eq(storeId), eq(status), any(Pageable.class)))
                     .willReturn(result);
 
             // when

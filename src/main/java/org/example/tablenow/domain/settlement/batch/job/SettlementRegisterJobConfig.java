@@ -90,7 +90,7 @@ public class SettlementRegisterJobConfig {
         return new JdbcBatchItemWriterBuilder<Settlement>()
                 .dataSource(dataDBSource)
                 .sql("""
-                        INSERT INTO settlement (payment_id, amount, status, createdAt, updatedAt)
+                        INSERT INTO settlement (payment_id, amount, status, created_at, updated_at)
                         VALUES (:payment.id, :amount, :statusName, now(), now())
                         """)
                 .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())

@@ -90,6 +90,7 @@ public class ReservationService {
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
+        reminderRegisterProducer.send(ReminderMessage.fromReservation(savedReservation));
         return ReservationResponseDto.fromReservation(savedReservation);
     }
 
@@ -101,6 +102,7 @@ public class ReservationService {
         validateUpdatableReservation(user, id, request, reservation);
         redisTemplate.opsForZSet().remove(REMINDER_ZSET_KEY, String.valueOf(id));
         reservation.updateReservedAt(request.getReservedAt());
+        reservationRepository.save(reservation);
         reminderRegisterProducer.send(ReminderMessage.fromReservation(reservation));
 
         return ReservationResponseDto.fromReservation(reservation);
@@ -111,7 +113,7 @@ public class ReservationService {
         User user = User.fromAuthUser(authUser);
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        return reservationRepository.findByUserIdAndStatus(user.getId(), status, pageable)
+        return reservationRepository.findByUser_IdAndStatus(user.getId(), status, pageable)
                 .map(ReservationResponseDto::fromReservation);
     }
 
@@ -123,7 +125,7 @@ public class ReservationService {
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        return reservationRepository.findByStoreIdAndStatus(store.getId(), status, pageable)
+        return reservationRepository.findByStore_IdAndStatus(store.getId(), status, pageable)
                 .map(ReservationResponseDto::fromReservation);
     }
 
@@ -134,6 +136,7 @@ public class ReservationService {
         storeService.validateStoreOwnerId(reservation.getStore(), user);
 
         reservation.updateStatus(request.getStatus());
+        reservationRepository.save(reservation);
 
         return ReservationStatusResponseDto.fromReservation(reservation);
     }
@@ -145,6 +148,7 @@ public class ReservationService {
         validateReservationOwner(reservation, user);
 
         reservation.tryCancel();
+        reservationRepository.save(reservation);
 
         vacancyProducer.sendVacancyEvent(
             reservation.getStore().getId(),

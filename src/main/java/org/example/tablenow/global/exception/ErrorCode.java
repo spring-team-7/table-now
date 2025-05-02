@@ -47,6 +47,8 @@ public enum ErrorCode {
     STORE_TABLE_CAPACITY_EXCEEDED(HttpStatus.BAD_REQUEST, "해당 가게의 하루 수용 가능한 테이블 수를 초과했습니다."),
     STORE_ELASTICSEARCH_QUERY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Elasticsearch 쿼리가 실패했습니다."),
     STORE_ELASTICSEARCH_INDEX_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Elasticsearch 인덱스 처리에 실패했습니다"),
+    STORE_RABBIT_MQ_MESSAGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "가게 데이터 메시지 처리 실패했습니다."),
+    STORE_SERIALIZATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "가게 메시지를 직렬화하는 데 실패했습니다."),
 
     // RATING
     RATING_NOT_FOUND(HttpStatus.NOT_FOUND, "평점이 존재하지 않습니다."),

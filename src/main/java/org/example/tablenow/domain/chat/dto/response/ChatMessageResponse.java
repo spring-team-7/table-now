@@ -8,6 +8,8 @@ import org.example.tablenow.domain.chat.entity.ChatMessage;
 
 import java.time.LocalDateTime;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_YYYY_MM_DD_HH_MM_SS;
+
 @Getter
 @Builder
 public class ChatMessageResponse {
@@ -16,7 +18,7 @@ public class ChatMessageResponse {
     private final String senderName;
     private final String content;
     private final String imageUrl;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime createdAt;
     @JsonProperty("isRead")
     private final boolean read;
