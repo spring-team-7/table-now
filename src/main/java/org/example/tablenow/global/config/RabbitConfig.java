@@ -223,10 +223,6 @@ public class RabbitConfig {
         return bind(storeDeleteDlq, storeDlx, STORE_DELETE_DLQ);
     }
 
-    private Binding bind(Queue queue, DirectExchange exchange, String routingKey) {
-        return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-    }
-
     // 채팅 알림 Queue, Exchange, Binding
     @Bean
     public Queue chatQueue() {
@@ -242,11 +238,8 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding chatBinding() {
-        return BindingBuilder
-                .bind(chatQueue())
-                .to(chatExchange())
-                .with(CHAT_ROUTING_KEY);
+    public Binding chatBinding(Queue chatQueue, DirectExchange chatExchange) {
+        return bind(chatQueue, chatExchange, CHAT_ROUTING_KEY);
     }
 
     @Bean
@@ -260,8 +253,8 @@ public class RabbitConfig {
     }
 
     @Bean
-    public Binding chatDlqBinding() {
-        return BindingBuilder.bind(chatDlq()).to(chatDlx()).with(CHAT_DLQ);
+    public Binding chatDlqBinding(Queue chatDlq, DirectExchange chatDlx) {
+        return bind(chatDlq, chatDlx, CHAT_DLQ);
     }
 
     // 공통 설정
@@ -288,5 +281,9 @@ public class RabbitConfig {
 
     private Binding bindFanout(Queue queue, FanoutExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange);
+    }
+
+    private Binding bind(Queue queue, DirectExchange exchange, String routingKey) {
+        return BindingBuilder.bind(queue).to(exchange).with(routingKey);
     }
 }
