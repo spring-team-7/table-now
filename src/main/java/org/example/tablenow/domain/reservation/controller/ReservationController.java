@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.reservation.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.reservation.dto.request.ReservationRequestDto;
@@ -18,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "예약 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -26,6 +29,7 @@ public class ReservationController {
 
     private final ReservationService reservationService;
 
+    @Operation(summary = "예약 생성")
     @PostMapping("/v1/reservations")
     public ResponseEntity<ReservationResponseDto> makeReservation(
             @AuthenticationPrincipal AuthUser authUser,
@@ -34,6 +38,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.makeReservation(authUser, request));
     }
 
+    @Operation(summary = "예약 생성 (Redisson Lock)")
     @PostMapping("/v2/reservations")
     public ResponseEntity<ReservationResponseDto> makeReservationWithLock(
             @AuthenticationPrincipal AuthUser authUser,
@@ -42,6 +47,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.makeReservationWithLock(authUser, request));
     }
 
+    @Operation(summary = "예약 수정")
     @PatchMapping("/v1/reservations/{id}")
     public ResponseEntity<ReservationResponseDto> updateReservation(
             @AuthenticationPrincipal AuthUser authUser,
@@ -51,6 +57,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.updateReservation(authUser, id, request));
     }
 
+    @Operation(summary = "내 예약 목록 조회")
     @GetMapping("/v1/reservations")
     public ResponseEntity<Page<ReservationResponseDto>> getReservations(
             @AuthenticationPrincipal AuthUser authUser,
@@ -61,6 +68,7 @@ public class ReservationController {
         );
     }
 
+    @Operation(summary = "사장님 예약 목록 조회")
     @Secured(UserRole.Authority.OWNER)
     @GetMapping("/v1/owner/stores/{storeId}/reservations")
     public ResponseEntity<Page<ReservationResponseDto>> getStoreReservations(
@@ -71,6 +79,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.getStoreReservations(authUser, storeId, request.getStatus(), request.getPage(), request.getSize()));
     }
 
+    @Operation(summary = "예약 확정/완료 처리 (사장님)")
     @Secured(UserRole.Authority.OWNER)
     @PatchMapping("/v1/owner/reservations/{id}")
     public ResponseEntity<ReservationStatusResponseDto> completeReservation(
@@ -81,6 +90,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.completeReservation(authUser, id, request));
     }
 
+    @Operation(summary = "예약 취소")
     @DeleteMapping("/v1/reservations/{id}")
     public ResponseEntity<ReservationStatusResponseDto> cancelReservation(
             @AuthenticationPrincipal AuthUser authUser,

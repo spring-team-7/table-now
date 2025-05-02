@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.chat.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Controller;
 
 import java.util.Map;
 
+@Tag(name = "채팅메시지 API")
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class ChatMessageController {
     @Value("${chat.broker}")
     private String brokerType;
 
+    @Operation(summary = "채팅 메시지 전송")
     @MessageMapping("/chat/message")
     public void handleMessage(@Payload @Valid ChatMessageRequest request,
                               SimpMessageHeaderAccessor headerAccessor) {

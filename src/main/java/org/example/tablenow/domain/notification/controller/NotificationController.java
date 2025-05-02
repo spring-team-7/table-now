@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.notification.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.tablenow.domain.notification.dto.request.NotificationAlarmRequestDto;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "알림 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -24,6 +27,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     // 알림 생성
+    @Operation(summary = "알림 생성")
     @PostMapping("/v1/notifications")
     public ResponseEntity<NotificationResponseDto> createNotification(
         @Valid @RequestBody NotificationRequestDto requestDto) {
@@ -32,6 +36,7 @@ public class NotificationController {
     }
 
     // 알림 조회
+    @Operation(summary = "알림 목록 조회")
     @GetMapping("/v1/notifications")
     public ResponseEntity<Page<NotificationResponseDto>> getNotifications(
         @AuthenticationPrincipal AuthUser authUser,
@@ -42,6 +47,7 @@ public class NotificationController {
     }
 
     // 알림 읽음 처리
+    @Operation(summary = "알림 읽음 처리")
     @PatchMapping("/v1/notifications/{notificationId}")
     public ResponseEntity<NotificationUpdateReadResponseDto> updateNotificationRead(
         @PathVariable Long notificationId,
@@ -51,6 +57,7 @@ public class NotificationController {
     }
 
     // 알림 전체 읽음 처리
+    @Operation(summary = "알림 전체 읽음 처리")
     @PatchMapping("/v1/notifications/readAll")
     public ResponseEntity<List<NotificationUpdateReadResponseDto>> updateAllNotificationRead(@AuthenticationPrincipal AuthUser authUser) {
         List<NotificationUpdateReadResponseDto> notificationUpdateReadResponseDtos = notificationService.updateAllNotificationRead(authUser.getId());
@@ -58,6 +65,7 @@ public class NotificationController {
     }
 
     // 알림 수신 여부
+    @Operation(summary = "알림 수신 설정 변경")
     @PatchMapping("/v1/notifications/settings")
     public ResponseEntity<NotificationAlarmResponseDto> updateNotificationAlarm(
         @RequestBody NotificationAlarmRequestDto requestDto,

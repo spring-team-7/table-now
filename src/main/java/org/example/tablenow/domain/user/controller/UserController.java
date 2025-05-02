@@ -1,5 +1,7 @@
 package org.example.tablenow.domain.user.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "사용자 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -25,6 +28,7 @@ public class UserController {
 
     private final UserService userService;
 
+    @Operation(summary = "회원 탈퇴")
     @DeleteMapping("/v1/users")
     public ResponseEntity<SimpleUserResponse> deleteUser(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
@@ -40,6 +44,7 @@ public class UserController {
         return ResponseEntity.ok(deletedUserResponse);
     }
 
+    @Operation(summary = "비밀번호 변경")
     @PatchMapping("/v1/users/password")
     public ResponseEntity<SimpleUserResponse> updatePassword(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
@@ -55,11 +60,13 @@ public class UserController {
         return ResponseEntity.ok(updatedPasswordResponse);
     }
 
+    @Operation(summary = "내 정보 조회")
     @GetMapping("/v1/users")
     public ResponseEntity<UserProfileResponse> getUserProfile(@AuthenticationPrincipal AuthUser authUser) {
         return ResponseEntity.ok(userService.getUserProfile(authUser));
     }
 
+    @Operation(summary = "내 정보 수정")
     @PatchMapping("/v1/users")
     public ResponseEntity<UserProfileResponse> updateUserProfile(
             @AuthenticationPrincipal AuthUser authUser,
