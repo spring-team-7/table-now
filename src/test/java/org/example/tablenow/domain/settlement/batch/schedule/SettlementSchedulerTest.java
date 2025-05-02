@@ -6,6 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
@@ -13,11 +15,13 @@ import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.launch.JobLauncher;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class SettlementScheduleTest {
+class SettlementSchedulerTest {
 
     @Mock
     private JobLauncher jobLauncher;
@@ -26,13 +30,19 @@ class SettlementScheduleTest {
     private JobRegistry jobRegistry;
 
     @Mock
+    private RedissonClient redissonClient;
+
+    @Mock
+    private RLock rLock;
+
+    @Mock
     private Job job;
 
     @Mock
     private JobExecution jobExecution;
 
     @InjectMocks
-    private SettlementSchedule settlementSchedule;
+    private SettlementScheduler settlementScheduler;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -44,13 +54,19 @@ class SettlementScheduleTest {
 
         // given
         given(jobRegistry.getJob("settlementRegisterJob")).willReturn(job);
+        given(redissonClient.getLock(anyString())).willReturn(rLock);
+
+        willDoNothing().given(rLock).lock();
+        willDoNothing().given(rLock).unlock();
 
         // when
-        settlementSchedule.runRegisterJob();
+        settlementScheduler.runRegisterJob();
 
         // then
         verify(jobRegistry).getJob("settlementRegisterJob");
         verify(jobLauncher).run(any(Job.class), any(JobParameters.class));
+        verify(rLock).lock();
+        verify(rLock).unlock();
     }
 
     @Test
@@ -58,12 +74,18 @@ class SettlementScheduleTest {
 
         // given
         given(jobRegistry.getJob("settlementCompleteJob")).willReturn(job);
+        given(redissonClient.getLock(anyString())).willReturn(rLock);
+
+        willDoNothing().given(rLock).lock();
+        willDoNothing().given(rLock).unlock();
 
         // when
-        settlementSchedule.runCompleteJob();
+        settlementScheduler.runCompleteJob();
 
         // then
         verify(jobRegistry).getJob("settlementCompleteJob");
         verify(jobLauncher).run(any(Job.class), any(JobParameters.class));
+        verify(rLock).lock();
+        verify(rLock).unlock();
     }
 }
