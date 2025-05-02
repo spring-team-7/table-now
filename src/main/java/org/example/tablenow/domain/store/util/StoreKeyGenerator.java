@@ -19,7 +19,7 @@ public class StoreKeyGenerator {
     }
 
     public static String generateStoreKeyByPattern(String header, String parameter, String keyword) {
-        String key = String.format("*%s*%s=%s*", header, parameter, keyword);
+        String key = String.format("*%s*%s=%s", header, parameter, keyword);
         log.info("[Radis 패턴 생성] {}", key);
         return key;
     }
