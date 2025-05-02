@@ -12,6 +12,9 @@ public class RabbitConstant {
     public static final String EVENT_PREFIX = "event";
     public static final String EVENT_OPEN_PREFIX = EVENT_PREFIX + ".open";
 
+    // 채팅 관련 PREFIX
+    public static final String CHAT_PREFIX = "chat";
+
     // 빈자리 알림
     public static final String VACANCY_EXCHANGE = VACANCY_PREFIX + ".direct";
     public static final String VACANCY_QUEUE = VACANCY_PREFIX + ".queue";
@@ -47,9 +50,12 @@ public class RabbitConstant {
     public static final String STORE_UPDATE_DLQ = "store.update.dlq";
     public static final String STORE_DELETE_DLQ = "store.delete.dlq";
 
-    public static final String CHAT_EXCHANGE = "chat.exchange";
-    public static final String CHAT_QUEUE = "chat.queue";
-    public static final String CHAT_ROUTING_KEY = "chat.key";
+    // 채팅 알림
+    public static final String CHAT_EXCHANGE = CHAT_PREFIX + ".exchange";
+    public static final String CHAT_QUEUE = CHAT_PREFIX + ".queue";
+    public static final String CHAT_ROUTING_KEY = CHAT_PREFIX + ".key";
+    public static final String CHAT_DLX = CHAT_PREFIX + ".dlx";
+    public static final String CHAT_DLQ = CHAT_PREFIX + ".dlq";
 
     public static final int TTL_MILLIS = 30000;
 }
