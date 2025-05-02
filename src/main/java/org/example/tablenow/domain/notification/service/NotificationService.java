@@ -14,6 +14,7 @@ import org.example.tablenow.domain.notification.repository.NotificationRepositor
 import org.example.tablenow.domain.store.entity.Store;
 import org.example.tablenow.domain.store.service.StoreService;
 import org.example.tablenow.domain.user.entity.User;
+import org.example.tablenow.domain.user.repository.UserRepository;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.domain.waitlist.entity.Waitlist;
 import org.example.tablenow.domain.waitlist.repository.WaitlistRepository;
@@ -38,6 +39,7 @@ public class NotificationService {
     private final WaitlistRepository waitlistRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
 
     private static final Duration CACHE_TTL = Duration.ofMinutes(10);
     private static final String CACHE_PREFIX = "notifications:";
@@ -55,6 +57,8 @@ public class NotificationService {
         if (NotificationType.VACANCY.equals(requestDto.getType())) {
             handleVacancyNotification(findUser, requestDto.getStoreId());
         }
+        stringRedisTemplate.delete(CACHE_PREFIX + requestDto.getUserId());
+
 
         return NotificationResponseDto.fromNotification(savedNotification);
     }
@@ -114,6 +118,7 @@ public class NotificationService {
         }
 
         findNotification.updateRead();
+        notificationRepository.save(findNotification);
 
         // 캐시에서 해당 알림 제거
         deleteNotificationCacheById(userId, notificationId);
@@ -132,6 +137,7 @@ public class NotificationService {
 
         for (Notification notification : notificationList) {
             notification.updateRead();
+            notificationRepository.save(notification);
             result.add(NotificationUpdateReadResponseDto.fromNotification(notification));
         }
         stringRedisTemplate.delete(CACHE_PREFIX + userId);
@@ -147,6 +153,7 @@ public class NotificationService {
 
         // 알람 수신 여부 업데이트
         findUser.updateAlarmSetting(isAlarmEnabled);
+        userRepository.save(findUser);
 
         return NotificationAlarmResponseDto.fromNotification(findUser);
     }
@@ -162,7 +169,8 @@ public class NotificationService {
             .findByUserAndStoreAndIsNotifiedFalse(user, store)
             .orElseThrow(() -> new HandledException(ErrorCode.WAITLIST_NOT_FOUND));
 
-        waitlist.updateNotified();
+        waitlist.updateNotified();;
+        waitlistRepository.save(waitlist);
     }
 
     // 전체 알림 리스트를 페이징된 Page 객체로 변환
