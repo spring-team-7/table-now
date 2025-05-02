@@ -8,6 +8,7 @@ import org.example.tablenow.domain.notification.service.NotificationService;
 import org.example.tablenow.domain.user.entity.User;
 import org.example.tablenow.domain.user.service.UserService;
 import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -68,6 +69,7 @@ public class EventOpenConsumer {
 
         } catch (Exception e) {
             log.error("[EventOpenConsumer][Notification] 알림 전송 실패 → userId={}, eventId={}", user.getId(), message.getEventId(), e);
+            throw new AmqpRejectAndDontRequeueException("[DLQ] 알림 전송 실패 → DLQ로 이동", e);
         }
     }
 }

@@ -32,9 +32,18 @@ public class RabbitConstant {
     public static final String RESERVATION_REMINDER_REGISTER_QUEUE = RESERVATION_REMINDER_PREFIX + ".register.queue";
 
     // 이벤트 오픈 알림
-    public static final String EVENT_OPEN_EXCHANGE = EVENT_OPEN_PREFIX + ".fanout";
+    public static final String EVENT_OPEN_EXCHANGE = EVENT_OPEN_PREFIX + ".exchange";
     public static final String EVENT_OPEN_QUEUE = EVENT_OPEN_PREFIX + ".queue";
 
+    public static final String EVENT_OPEN_DLX = EVENT_OPEN_PREFIX + ".dlx";
+    public static final String EVENT_OPEN_DLQ = EVENT_OPEN_PREFIX + ".dlq";
+    public static final String EVENT_OPEN_DLQ_ROUTING_KEY = EVENT_OPEN_PREFIX + ".dlq.key";
+
+    public static final String EVENT_OPEN_RETRY_QUEUE = EVENT_OPEN_PREFIX + ".retry.queue";
+    public static final String EVENT_OPEN_RETRY_EXCHANGE = EVENT_OPEN_PREFIX + ".retry.exchange";
+    public static final String EVENT_OPEN_RETRY_ROUTING_KEY = EVENT_OPEN_PREFIX + ".retry.key";
+
+    // 가게
     public static final String STORE_EXCHANGE = "store.exchange";
     public static final String STORE_CREATE = "store.create";
     public static final String STORE_UPDATE = "store.update";
@@ -47,9 +56,12 @@ public class RabbitConstant {
     public static final String STORE_UPDATE_DLQ = "store.update.dlq";
     public static final String STORE_DELETE_DLQ = "store.delete.dlq";
 
+    // 채팅
     public static final String CHAT_EXCHANGE = "chat.exchange";
     public static final String CHAT_QUEUE = "chat.queue";
     public static final String CHAT_ROUTING_KEY = "chat.key";
 
+    // 공통
     public static final int TTL_MILLIS = 30000;
+    public static final String RETRY_HEADER = "x-retry-count";
 }

@@ -2,11 +2,12 @@ package org.example.tablenow.domain.event.message.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.tablenow.global.constant.RabbitConstant;
 import org.example.tablenow.domain.event.message.dto.EventOpenMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import static org.example.tablenow.global.constant.RabbitConstant.EVENT_OPEN_EXCHANGE;
 
 @Slf4j
 @Component
@@ -17,7 +18,8 @@ public class EventOpenProducer {
 
     public void send(EventOpenMessage message) {
         rabbitTemplate.convertAndSend(
-                RabbitConstant.EVENT_OPEN_EXCHANGE,
+                EVENT_OPEN_EXCHANGE,
+                "",
                 message
         );
 
