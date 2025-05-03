@@ -112,6 +112,14 @@
         "fields": {
           "keyword": {
             "type": "keyword"
+          },
+          "ngram": {
+            "type": "text",
+            "analyzer": "ngram_analyzer"
+          },
+          "edge_ngram": {
+            "type": "text",
+            "analyzer": "edge_ngram_analyzer"
           }
         }
       },
@@ -120,6 +128,14 @@
         "fields": {
           "keyword": {
             "type": "keyword"
+          },
+          "ngram": {
+            "type": "text",
+            "analyzer": "ngram_analyzer"
+          },
+          "edge_ngram": {
+            "type": "text",
+            "analyzer": "edge_ngram_analyzer"
           }
         }
       },

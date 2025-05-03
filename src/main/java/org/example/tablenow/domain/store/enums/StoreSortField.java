@@ -9,7 +9,7 @@ import org.example.tablenow.global.exception.HandledException;
 import java.time.LocalDateTime;
 
 public enum StoreSortField {
-    NAME("name") {
+    NAME("name.keyword") {
         @Override
         public OrderSpecifier<?> toOrderSpecifier(PathBuilder<?> path, boolean isAsc) {
             return new OrderSpecifier<>(
@@ -56,7 +56,7 @@ public enum StoreSortField {
 
     public static StoreSortField from(String property) {
         for (StoreSortField field : values()) {
-            if (field.property.equals(property)) {
+            if (field.property.contains(property)) {
                 return field;
             }
         }
@@ -65,7 +65,7 @@ public enum StoreSortField {
 
     public static String fromString(String property) {
         for (StoreSortField field : values()) {
-            if (field.property.equals(property)) {
+            if (field.property.contains(property)) {
                 return field.property;
             }
         }

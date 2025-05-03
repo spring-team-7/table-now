@@ -87,7 +87,7 @@ public class StoreSearchService {
 
     private Pageable resolvePageable(int page, int size, String sort, String direction) {
         try {
-            Sort sortOption = Sort.by(Sort.Direction.fromString(direction), StoreSortField.fromString(sort));
+            Sort sortOption = Sort.by(Sort.Direction.fromString(direction.toUpperCase()), StoreSortField.fromString(sort));
             return PageRequest.of(page - 1, size, sortOption);
         } catch (IllegalArgumentException e) {
             throw new HandledException(ErrorCode.INVALID_ORDER_VALUE);
