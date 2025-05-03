@@ -53,10 +53,12 @@ spring:
     type: redis
 
   rabbitmq:
-    host: localhost
-    port: 5672
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+    ssl:
+      enabled: ${RABBITMQ_SSL}
 
 redisson:
   config:
@@ -65,3 +67,5 @@ redisson:
 
 chat:
   broker: rabbit  # or simple
+
+
