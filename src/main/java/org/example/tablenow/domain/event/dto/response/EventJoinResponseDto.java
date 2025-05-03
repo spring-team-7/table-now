@@ -7,15 +7,17 @@ import org.example.tablenow.domain.event.entity.EventJoin;
 
 import java.time.LocalDateTime;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_YYYY_MM_DD_HH_MM_SS;
+
 @Getter
 public class EventJoinResponseDto {
     private final Long eventJoinId;
     private final Long eventId;
     private final Long storeId;
     private final String storeName;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime eventTime;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime joinedAt;
     private final String message;
 
