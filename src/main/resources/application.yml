@@ -1,13 +1,18 @@
 spring:
   application:
     name: table-now
-  profiles:
-    active: local
   thymeleaf:
     cache: false
 
   config:
     import: optional:file:.env[.properties]
+
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always #배포 후에는 never로 수정 권장
+      schema: classpath:org/springframework/batch/core/schema-mysql.sql
 
   security:
     oauth2:
@@ -54,6 +59,54 @@ spring:
               - profile_image
               - mobile
 
+  datasource-meta:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: jdbc:mysql://${AWS_RDS_HOST}:${AWS_RDS_PORT}/${AWS_RDS_META_DB_NAME}
+    username: ${AWS_RDS_USERNAME}
+    password: ${AWS_RDS_PASSWORD}
+
+  datasource-data:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jdbc-url: jdbc:mysql://${AWS_RDS_HOST}:${AWS_RDS_PORT}/${AWS_RDS_DB_NAME}
+    username: ${AWS_RDS_USERNAME}
+    password: ${AWS_RDS_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  jpa-data:
+    hibernate:
+      ddl-auto: none
+      show-sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      ssl:
+        enabled: true
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+
+  cache:
+    type: redis
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    ssl:
+      enabled: true
+
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
@@ -77,3 +130,6 @@ oauth:
   kakao:
     admin-key: ${KAKAO_ADMIN_KEY}
     unlink-uri: https://kapi.kakao.com/v1/user/unlink
+
+chat:
+  broker: rabbit  # or simple
