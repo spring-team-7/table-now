@@ -1,6 +1,6 @@
 spring:
   config:
-    import: optional:file:.env.test[.properties]
+    import: optional:file:.env.local[.properties]
 
   datasource-meta:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         show_sql: true
@@ -26,7 +26,7 @@ spring:
 
   jpa-data:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
       show-sql: true
 
   data:
