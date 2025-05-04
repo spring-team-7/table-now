@@ -64,6 +64,7 @@ public class StoreController {
     }
 
     // 가게 검색 v1 (RDBMS)
+    @Deprecated
     @Operation(summary = "가게 검색 V1 (RDB)")
     @GetMapping("/v1/stores")
     public ResponseEntity<Page<StoreSearchResponseDto>> getStoresV1(@AuthenticationPrincipal AuthUser authUser,
@@ -73,6 +74,7 @@ public class StoreController {
     }
 
     // 가게 검색 v2 (Redis)
+    @Deprecated
     @Operation(summary = "가게 검색 V2 (Redis)")
     @GetMapping("/v2/stores")
     public ResponseEntity<Page<StoreSearchResponseDto>> getStoresV2(@AuthenticationPrincipal AuthUser authUser,
