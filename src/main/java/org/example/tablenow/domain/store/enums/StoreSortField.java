@@ -56,7 +56,7 @@ public enum StoreSortField {
 
     public static StoreSortField from(String property) {
         for (StoreSortField field : values()) {
-            if (field.property.equals(property)) {
+            if (field.property.contains(property)) {
                 return field;
             }
         }
@@ -65,7 +65,7 @@ public enum StoreSortField {
 
     public static String fromString(String property) {
         for (StoreSortField field : values()) {
-            if (field.property.equals(property)) {
+            if (field.property.contains(property)) {
                 return field.property;
             }
         }
