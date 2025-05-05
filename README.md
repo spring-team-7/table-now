@@ -142,6 +142,12 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
     <td><img src="https://img.shields.io/badge/AWS_EC2-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_S3-569A31?style=flat-square&logo=amazon-s3&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_RDS-527FFF?style=flat-square&logo=amazon-rds&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=flat-square&logo=amazon-ecs&logoColor=white"/></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/badge/AWS_Route_53-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/AWS_ALB-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/AWS_ElastiCache-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/></td>
   </tr>
 </table>
@@ -152,6 +158,7 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
   <tr>
     <td><img src="https://img.shields.io/badge/Notion-000000?style=flat-square&logo=notion&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=slack&logoColor=white"/></td>
   </tr>
 </table>
@@ -160,7 +167,7 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
 
 ## 🏗️ 아키텍처
 
-추가 예정
+![Image](https://github.com/user-attachments/assets/277c8634-7500-4cf3-934f-43c40342e505)
 
 ---
 
