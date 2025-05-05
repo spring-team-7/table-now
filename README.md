@@ -2,13 +2,30 @@
 
 실시간 식당 예약 및 방문 관리 시스템
 
-![Image](https://github.com/user-attachments/assets/847211cf-1514-4cf5-9407-1ae3a4ea67e3)
+<img src="https://github.com/user-attachments/assets/e35037b0-1ebd-47d9-8f68-0e7fbf5c5185" width="1200"/>
 
-Notion으로 보기: <a href="https://www.notion.so/teamsparta/7-Table-Now-1e32dc3ef514806f9160e0e3f16041fd#1e52dc3ef51480d28048de0d958e1f2f"><code>🍀 Table-Now</code></a>
+<div align="center">
+  📜 Notion으로 보기: <a href="https://www.notion.so/teamsparta/7-Table-Now-1e32dc3ef514806f9160e0e3f16041fd#1e52dc3ef51480d28048de0d958e1f2f"><code>Table-Now</code></a>
+</div>
 
 ---
 
-## 📌 프로젝트 소개
+## 📚 목차
+
+- [🚀 프로젝트 소개](#-프로젝트-소개)
+- [🎯 핵심 목표](#-핵심-목표)
+- [📌 주요 기능](#-주요-기능)
+- [🛠️ 사용 기술](#️-사용-기술)
+- [🏗️ 아키텍처](#️-아키텍처)
+- [🧠 기술적 의사결정](#-기술적-의사결정)
+- [🧯 트러블 슈팅](#-트러블-슈팅)
+- [🗂️ API 명세서](#-api-명세서)
+- [🗂️ ERD](#-erd)
+- [🧑‍💻 팀원 소개](#-팀원-소개)
+
+---
+
+## 🚀 프로젝트 소개
 
 TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원하는 실시간 예약 관리 시스템입니다.  
 고객, 사장님, 관리자 각각의 요구를 충족하는 다양한 기능을 제공합니다.
@@ -125,6 +142,12 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
     <td><img src="https://img.shields.io/badge/AWS_EC2-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_S3-569A31?style=flat-square&logo=amazon-s3&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_RDS-527FFF?style=flat-square&logo=amazon-rds&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=flat-square&logo=amazon-ecs&logoColor=white"/></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/badge/AWS_Route_53-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/AWS_ALB-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/AWS_ElastiCache-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/></td>
   </tr>
 </table>
@@ -135,61 +158,51 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
   <tr>
     <td><img src="https://img.shields.io/badge/Notion-000000?style=flat-square&logo=notion&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white"/></td>
+    <td><img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=slack&logoColor=white"/></td>
   </tr>
 </table>
-
-<br>
 
 ---
 
 ## 🏗️ 아키텍처
 
-추가 예정
+![Image](https://github.com/user-attachments/assets/277c8634-7500-4cf3-934f-43c40342e505)
 
 ---
 
 ## 🧠 기술적 의사결정
 
-<a href="https://www.notion.so/teamsparta/DB-Lock-vs-Redisson-Lock-1e52dc3ef51480d9be1bceede6bc30a1?pvs=4">🔐 동시성 제어를 위한 DB Lock vs Redisson Lock 비교</a>
-<br>
-<a href="https://www.notion.so/teamsparta/RDBMS-LIKE-VS-Elastic-Search-1e52dc3ef5148085af70f52d0366e2c1?pvs=4">🔎 RDBMS LIKE 검색 VS Elastic Search 의 키워드 검색</a>
-<br>
-<a href="https://www.notion.so/teamsparta/Kakao-Naver-WebClient-1e52dc3ef514804db2bad50ea0db2553?pvs=4">👤 소셜 로그인(Kakao, Naver)을 WebClient를 사용해서 구현한 이유</a>
-<br>
-<a href="https://www.notion.so/teamsparta/1-1-RabbitMQ-Relay-1e52dc3ef5148051be9fd024f97e32e5?pvs=4">💬 1:1(예약자:가게) 채팅 기능 고도화를 위해 RabbitMQ Relay를 적용한 이유</a>
-<br>
-<a href="https://www.notion.so/teamsparta/Waitlist-1e52dc3ef51480998e1bd348338c043b?pvs=4">🔒 기술적 의사 결정: Waitlist 등록 동시성 제어를 위한 락 방식 선택 배경</a>
-<br>
-<a href="https://www.notion.so/teamsparta/Spring-Batch-Reddison-Lock-1e52dc3ef51480a0a56dd53541b645bf?pvs=4">📗 Spring Batch와 Reddison Lock을 선택한 이유</a>
-<br>
-<a href="https://www.notion.so/teamsparta/Redis-RabbitMQ-1e52dc3ef51480629e0acf60363ee4d3?pvs=4">📙 Redis + RabbitMQ 기반 이벤트 오픈 구조 도입</a>
+- <a href="https://www.notion.so/teamsparta/DB-Lock-vs-Redisson-Lock-1e52dc3ef51480d9be1bceede6bc30a1?pvs=4">🔐 동시성 제어를 위한 DB Lock vs Redisson Lock 비교</a>
+- <a href="https://www.notion.so/teamsparta/RDBMS-LIKE-VS-Elastic-Search-1e52dc3ef5148085af70f52d0366e2c1?pvs=4">🔎 RDBMS LIKE 검색 VS Elastic Search 의 키워드 검색</a>
+- <a href="https://www.notion.so/teamsparta/Kakao-Naver-WebClient-1e52dc3ef514804db2bad50ea0db2553?pvs=4">👤 소셜 로그인(Kakao, Naver)을 WebClient를 사용해서 구현한 이유</a>
+- <a href="https://www.notion.so/teamsparta/1-1-RabbitMQ-Relay-1e52dc3ef5148051be9fd024f97e32e5?pvs=4">💬 1:1(예약자:가게) 채팅 기능 고도화를 위해 RabbitMQ Relay를 적용한 이유</a>
+- <a href="https://www.notion.so/teamsparta/Waitlist-1e52dc3ef51480998e1bd348338c043b?pvs=4">🔒 기술적 의사 결정: Waitlist 등록 동시성 제어를 위한 락 방식 선택 배경</a>
+- <a href="https://www.notion.so/teamsparta/Spring-Batch-Reddison-Lock-1e52dc3ef51480a0a56dd53541b645bf?pvs=4">📗 Spring Batch와 Reddison Lock을 선택한 이유</a>
+- <a href="https://www.notion.so/teamsparta/Redis-RabbitMQ-1e52dc3ef51480629e0acf60363ee4d3?pvs=4">📙 Redis + RabbitMQ 기반 이벤트 오픈 구조 도입</a>
 
 ---
 
 ## 🧯 트러블 슈팅
 
-<a href="https://www.notion.so/teamsparta/Redis-ES-1e52dc3ef51480739b47cb1ce00be803?pvs=4">⚠️ 데이터 정합성 오류: 데이터 변경 시 Redis + ES 반영</a>
-<br>
-<a href="https://www.notion.so/teamsparta/RabbitMQ-1e52dc3ef5148002af99c8cb2b8c9900?pvs=4">⚠️ 빈자리 알림 개선 : 스케줄러 → RabbitMQ</a>
-<br>
-<a href="https://www.notion.so/teamsparta/RepositoryItemReader-1e52dc3ef51480e8b68bd2ddcbff8744?pvs=4">⚠️ RepositoryItemReader의 페이징 처리 방식에 따른 데이터 변경 시 페이지 밀림 현상</a>
-<br>
-<a href="https://www.notion.so/teamsparta/WebSocket-Handshake-Authorization-1e52dc3ef514808aa166d3aaf58b69d2?pvs=4">⚠️ WebSocket Handshake 시 Authorization 헤더가 누락되는 이유와 테스트 환경의 한계</a>
-<br>
-<a href="https://www.notion.so/teamsparta/Redisson-self-invocation-1e52dc3ef51480fa898feb215960d334?pvs=4">⚠️ Redisson 락 적용 시 데이터 미반영 이슈와 self-invocation 문제</a>
+- <a href="https://www.notion.so/teamsparta/Redis-ES-1e52dc3ef51480739b47cb1ce00be803?pvs=4">⚠️ 데이터 정합성 오류: 데이터 변경 시 Redis + ES 반영</a>
+- <a href="https://www.notion.so/teamsparta/RabbitMQ-1e52dc3ef5148002af99c8cb2b8c9900?pvs=4">⚠️ 빈자리 알림 개선 : 스케줄러 → RabbitMQ</a>
+- <a href="https://www.notion.so/teamsparta/RepositoryItemReader-1e52dc3ef51480e8b68bd2ddcbff8744?pvs=4">⚠️ RepositoryItemReader의 페이징 처리 방식에 따른 데이터 변경 시 페이지 밀림 현상</a>
+- <a href="https://www.notion.so/teamsparta/WebSocket-Handshake-Authorization-1e52dc3ef514808aa166d3aaf58b69d2?pvs=4">⚠️ WebSocket Handshake 시 Authorization 헤더가 누락되는 이유와 테스트 환경의 한계</a>
+- <a href="https://www.notion.so/teamsparta/Redisson-self-invocation-1e52dc3ef51480fa898feb215960d334?pvs=4">⚠️ Redisson 락 적용 시 데이터 미반영 이슈와 self-invocation 문제</a>
 
 ---
 
 ## 🗂️ API 명세서
 
-[API 명세서 보기](https://www.notion.so/teamsparta/7-Table-Now-1e32dc3ef514806f9160e0e3f16041fd?pvs=4#1e52dc3ef514803f9751e265bf112b3a)
+<a href="https://www.notion.so/teamsparta/1ce2dc3ef5148199b5c6ddb96bbfd911?v=1ce2dc3ef51481fb920d000c22c52449"><code>[API 명세서 보러가기]</code></a>
 
 ---
 
 ## 🗂️ ERD
 
-[ERD 보기](https://www.erdcloud.com/p/G6gdPGhrWgMmHC4fh)
+<a href="https://www.erdcloud.com/p/G6gdPGhrWgMmHC4fh"><code>[ERD 보러가기]</code></a>
+
 ![Image](https://github.com/user-attachments/assets/3161b362-3dab-4974-8aa2-a04fd3d4d4a3)
 
 ---
@@ -227,7 +240,7 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
       <a href="https://github.com/ijieun0123">GitHub</a>
     </td>
     <td align="center" style="padding: 10px;">
-      <img src="https://avatars.githubusercontent.com/u/86907076?v=4" width="100px" alt="이채원"/><br />
+      <img src="https://avatars.githubusercontent.com/u/86907076?v=4" width="100px"/><br />
       <sub>🫅 멤버</sub><br />
       <b>이채원</b><br />
       예약 / 이벤트<br />
