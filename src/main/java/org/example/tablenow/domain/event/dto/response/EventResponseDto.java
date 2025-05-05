@@ -8,22 +8,24 @@ import org.example.tablenow.domain.event.enums.EventStatus;
 
 import java.time.LocalDateTime;
 
+import static org.example.tablenow.global.constant.TimeConstants.TIME_YYYY_MM_DD_HH_MM_SS;
+
 @Getter
 public class EventResponseDto {
     private final Long eventId;
     private final Long storeId;
     private final String storeName;
     private final String content;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime openAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime endAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime eventTime;
     private final int limitPeople;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime createdAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = TIME_YYYY_MM_DD_HH_MM_SS)
     private final LocalDateTime updatedAt;
     private final EventStatus status;
 

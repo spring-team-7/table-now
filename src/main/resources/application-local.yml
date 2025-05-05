@@ -2,29 +2,17 @@ spring:
   config:
     import: optional:file:.env.local[.properties]
 
-  batch:
-    job:
-      enabled: false
-    jdbc:
-      initialize-schema: always
-      schema: classpath:org/springframework/batch/core/schema-mysql.sql
-
   datasource-meta:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    jdbc-url: ${DB_URL_META}
-    username: ${DB_USER_META}
-    password: ${DB_PASSWORD_META}
+    jdbc-url: jdbc:mysql://${AWS_RDS_HOST}:${AWS_RDS_PORT}/${AWS_RDS_META_DB_NAME}
+    username: ${AWS_RDS_USERNAME}
+    password: ${AWS_RDS_PASSWORD}
 
   datasource-data:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    jdbc-url: ${DB_URL_DATA}
-    username: ${DB_USER_DATA}
-    password: ${DB_PASSWORD_DATA}
-
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
+    jdbc-url: jdbc:mysql://${AWS_RDS_HOST}:${AWS_RDS_PORT}/${AWS_RDS_DB_NAME}
+    username: ${AWS_RDS_USERNAME}
+    password: ${AWS_RDS_PASSWORD}
 
   jpa:
     hibernate:
@@ -53,15 +41,64 @@ spring:
     type: redis
 
   rabbitmq:
-    host: localhost
-    port: 5672
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+    ssl:
+      enabled: ${RABBITMQ_SSL}
+
+data:
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    ssl:
+      enabled: true
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+
+  cache:
+    type: redis
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    ssl:
+      enabled: true
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+
+toss:
+  secret:
+    key: ${TOSS_SECRET_KEY}
+
+cloud:
+  aws:
+    credentials:
+      accessKey: ${AWS_ACCESS_KEY}
+      secretKey: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+      presigned-url-expiration: ${AWS_S3_PRESIGNED_EXPIRATION}
+
+oauth:
+  kakao:
+    admin-key: ${KAKAO_ADMIN_KEY}
+    unlink-uri: https://kapi.kakao.com/v1/user/unlink
 
 redisson:
   config:
     singleServerConfig:
-      address: "redis://localhost:6379"
+      address: redis://${REDIS_HOST}:${REDIS_PORT}
 
 chat:
   broker: rabbit  # or simple
+
+

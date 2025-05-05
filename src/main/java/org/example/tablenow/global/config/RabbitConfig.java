@@ -57,7 +57,10 @@ public class RabbitConfig {
     // 이벤트 오픈 Queue, Exchange, Binding
     @Bean
     public Queue eventOpenQueue() {
-        return new Queue(EVENT_OPEN_QUEUE, true);
+        return QueueBuilder.durable(EVENT_OPEN_QUEUE)
+                .withArgument("x-dead-letter-exchange", EVENT_OPEN_DLX)
+                .withArgument("x-dead-letter-routing-key", EVENT_OPEN_DLQ_ROUTING_KEY)
+                .build();
     }
 
     @Bean
@@ -68,6 +71,43 @@ public class RabbitConfig {
     @Bean
     public Binding eventOpenBinding() {
         return bindFanout(eventOpenQueue(), eventOpenExchange());
+    }
+
+    // 이벤트 오픈 DLX 및 DLQ 설정
+    @Bean
+    public DirectExchange eventOpenDlx() {
+        return new DirectExchange(EVENT_OPEN_DLX);
+    }
+
+    @Bean
+    public Queue eventOpenDlq() {
+        return buildDlqQueue(EVENT_OPEN_DLQ);
+    }
+
+    @Bean
+    public Binding eventOpenDlqBinding() {
+        return bind(eventOpenDlq(), eventOpenDlx(), EVENT_OPEN_DLQ_ROUTING_KEY);
+    }
+
+    // 이벤트 오픈 RetryQueue
+    @Bean
+    public Queue eventOpenRetryQueue() {
+        return QueueBuilder.durable(EVENT_OPEN_RETRY_QUEUE)
+                .withArgument("x-message-ttl", TTL_MILLIS)
+                .withArgument("x-dead-letter-exchange", EVENT_OPEN_EXCHANGE)
+                .build();
+    }
+
+    @Bean
+    public DirectExchange eventOpenRetryExchange() {
+        return new DirectExchange(EVENT_OPEN_RETRY_EXCHANGE);
+    }
+
+    @Bean
+    public Binding eventOpenRetryBinding() {
+        return BindingBuilder.bind(eventOpenRetryQueue())
+                .to(eventOpenRetryExchange())
+                .with(EVENT_OPEN_RETRY_ROUTING_KEY);
     }
 
     // 예약 리마인드 등록 Queue, Exchange, Binding
@@ -125,7 +165,7 @@ public class RabbitConfig {
     @Bean
     public Queue reminderSendRetryQueue() {
         return QueueBuilder.durable(RESERVATION_REMINDER_SEND_RETRY_QUEUE)
-                .withArgument("x-message-ttl", 30000)
+                .withArgument("x-message-ttl", TTL_MILLIS)
                 .withArgument("x-dead-letter-exchange", RESERVATION_REMINDER_SEND_EXCHANGE)
                 .build();
     }
@@ -169,18 +209,6 @@ public class RabbitConfig {
     @Bean
     public Queue storeDeleteDlq() {
         return buildDlqQueue(STORE_DELETE_DLQ);
-    }
-
-    private Queue buildMainQueue(String queueName, String dlqRoutingKey) {
-        return QueueBuilder.durable(queueName)
-                .withArgument("x-dead-letter-exchange", STORE_DLX)
-                .withArgument("x-dead-letter-routing-key", dlqRoutingKey)
-                .withArgument("x-message-ttl", TTL_MILLIS)
-                .build();
-    }
-
-    private Queue buildDlqQueue(String dlqName) {
-        return QueueBuilder.durable(dlqName).build();
     }
 
     @Bean
@@ -279,11 +307,23 @@ public class RabbitConfig {
         return factory;
     }
 
-    private Binding bindFanout(Queue queue, FanoutExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange);
+    private Queue buildMainQueue(String queueName, String dlqRoutingKey) {
+        return QueueBuilder.durable(queueName)
+                .withArgument("x-dead-letter-exchange", STORE_DLX)
+                .withArgument("x-dead-letter-routing-key", dlqRoutingKey)
+                .withArgument("x-message-ttl", TTL_MILLIS)
+                .build();
+    }
+
+    private Queue buildDlqQueue(String dlqName) {
+        return QueueBuilder.durable(dlqName).build();
     }
 
     private Binding bind(Queue queue, DirectExchange exchange, String routingKey) {
         return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    }
+
+    private Binding bindFanout(Queue queue, FanoutExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange);
     }
 }

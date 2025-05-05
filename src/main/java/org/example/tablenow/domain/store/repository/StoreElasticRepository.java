@@ -122,7 +122,11 @@ public class StoreElasticRepository {
                                     "name.edge_ngram^1.5",
                                     "description^2.5",
                                     "description.keyword^3",
-                                    "address^2.5", "address.keyword^3")
+                                    "description.ngram^1.5",
+                                    "description.edge_ngram^1.5",
+                                    "address^2.5", "address.keyword^3",
+                                    "address.ngram^1.5",
+                                    "address.edge_ngram^1.5")
                     )
             );
         }
