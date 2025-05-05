@@ -1,0 +1,61 @@
+{
+  "family": "table-now-backend-task",
+  "containerDefinitions": [
+    {
+      "name": "table-now-backend",
+      "image": "257394467546.dkr.ecr.ap-northeast-2.amazonaws.com/table-now-backend:latest",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "spring-boot-port",
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "entryPoint": [
+        "java",
+        "-jar",
+        "/app/myapp.jar"
+      ],
+      "environment": [],
+      "environmentFiles": [
+        {
+          "type": "s3",
+          "value": "arn:aws:s3:::table-now-env/prod/.env"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/table-now-backend-task",
+          "mode": "non-blocking",
+          "awslogs-create-group": "true",
+          "max-buffer-size": "25m",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "systemControls": []
+    }
+  ],
+  "taskRoleArn": "arn:aws:iam::257394467546:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::257394467546:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "3072",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "enableFaultInjection": false
+}
