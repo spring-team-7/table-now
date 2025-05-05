@@ -139,16 +139,15 @@ TableNow는 사용자가 식당을 예약하고 방문할 수 있도록 지원�
 
 <table>
   <tr>
+    <td><img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_EC2-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_S3-569A31?style=flat-square&logo=amazon-s3&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_RDS-527FFF?style=flat-square&logo=amazon-rds&logoColor=white"/></td>
-    <td><img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=flat-square&logo=amazon-ecs&logoColor=white"/></td>
   </tr>
   <tr>
+    <td><img src="https://img.shields.io/badge/AWS_ECS-FF9900?style=flat-square&logo=amazon-ecs&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_Route_53-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
     <td><img src="https://img.shields.io/badge/AWS_ALB-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
-    <td><img src="https://img.shields.io/badge/AWS_ElastiCache-FF9900?style=flat-square&logo=amazon-aws&logoColor=white"/></td>
-    <td><img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/></td>
   </tr>
 </table>
 
