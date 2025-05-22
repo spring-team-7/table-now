@@ -62,9 +62,8 @@ public class EventJoinService {
             throw new HandledException(ErrorCode.EVENT_ALREADY_JOINED);
         }
 
-        if (eventJoinRepository.countByEvent(event) >= event.getLimitPeople()) {
-            throw new HandledException(ErrorCode.EVENT_FULL);
-        }
+        event.decreaseAvailableSeats();
+        eventRepository.save(event);
 
         EventJoin eventJoin = EventJoin.builder()
                 .user(user)

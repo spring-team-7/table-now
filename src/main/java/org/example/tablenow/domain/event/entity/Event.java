@@ -43,6 +43,9 @@ public class Event extends TimeStamped {
     @Column(nullable = false)
     private int limitPeople;
 
+    @Column(nullable = false)
+    private int availableSeats;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventStatus status;
@@ -55,13 +58,25 @@ public class Event extends TimeStamped {
         this.endAt = endAt;
         this.eventTime = eventTime;
         this.limitPeople = limitPeople;
+        this.availableSeats = limitPeople;
         this.status = EventStatus.READY;
     }
 
     public void update(LocalDateTime openAt, LocalDateTime eventTime, Integer limitPeople) {
         if (openAt != null) this.openAt = openAt;
         if (eventTime != null) this.eventTime = eventTime;
-        if (limitPeople != null) this.limitPeople = limitPeople;
+        if (limitPeople != null) {
+            this.limitPeople = limitPeople;
+            this.availableSeats = limitPeople;
+        }
+    }
+
+    public void decreaseAvailableSeats() {
+        if (this.availableSeats > 0) {
+            this.availableSeats--;
+        } else {
+            throw new HandledException(ErrorCode.EVENT_FULL);
+        }
     }
 
     public boolean isReady() {
